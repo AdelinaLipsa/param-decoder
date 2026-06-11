@@ -34,16 +34,18 @@ async function read() {
     const assumed = !!out.querySelector(".base .note .tag");
     const fragNote = [...out.querySelectorAll(".base .note")].find(n => n.querySelector(".tag.frag"));
     const rows = [...out.querySelectorAll(".prow:not(.colhead)")].map(r => {
-      const cells = r.querySelectorAll(".cell");
-      const raw = cells[2]?.querySelector(".v"); // cells = [key, value, raw]
+      const cells = r.querySelectorAll(".cell"); // [key, value]
+      const rawLine = r.querySelector(".raw-line");
+      const rawText = rawLine && rawLine.textContent ? rawLine.textContent.replace(/^raw:\s*/, "") : null;
       const gutter = r.querySelector(".gutter");
       const status = ["ok","warn","error"].find(s => gutter.classList.contains(s)) ?? null;
       return {
         key: r.querySelector(".k")?.textContent ?? null,
         value: cells[1]?.querySelector(".v")?.textContent ?? null,
         valueEmpty: (cells[1]?.querySelector(".v")?.textContent ?? "") === "",
-        rawShown: !!(raw && !raw.classList.contains("same")),
-        rawText: raw && !raw.classList.contains("same") ? raw.textContent : null,
+        rawShown: !!rawText,
+        rawText,
+        decoded: r.querySelector(".decoded-line")?.textContent?.replace(/^↳\s*/, "") ?? null,
         status,
         note: r.querySelector(".snote")?.textContent ?? null,
         fix: r.querySelector(".fixbox .fixbtn")?.textContent ?? null,
@@ -835,7 +837,7 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   const r = await inspect("https://buygoods.com/secure/checkout.html?account_id=11292&product_codename=vis2fnn2&redirect=aHR0cDovL3Zpc2l1bXByby5jb20vZm5uMi91cDE%3D&sub20=v3_abc&sub19=v3_abc");
   check("CK1 product_codename known", /offer\/product/i.test(rowFor(r, "product_codename").note ?? ""), JSON.stringify(rowFor(r,"product_codename")));
   check("CK1 account_id ok", rowFor(r, "account_id").status === "ok", "");
-  check("CK1 redirect decoded", /visiumpro\.com\/fnn2\/up1/.test(rowFor(r, "redirect").note ?? ""), rowFor(r,"redirect").note);
+  check("CK1 redirect decoded", /visiumpro\.com\/fnn2\/up1/.test(rowFor(r, "redirect").decoded ?? ""), rowFor(r,"redirect").decoded);
   check("CK1 sub20 recognized", rowFor(r, "sub20").status === "ok" && /Checkout/.test(rowFor(r,"sub20").note ?? ""), JSON.stringify(rowFor(r,"sub20")));
   check("CK1 sub19 recognized", rowFor(r, "sub19").status === "ok", JSON.stringify(rowFor(r,"sub19")));
 }
@@ -915,7 +917,7 @@ async function pathChips() {
   // "r" is not a configured param; its value is base64 of a URL
   const b64 = Buffer.from("https://visiumpro.com/fnn2/up1").toString("base64");
   const r = await inspect("https://x.com/p?aff_id=639&r=" + encodeURIComponent(b64));
-  check("B64 decoded on any key", /visiumpro\.com\/fnn2\/up1/.test(rowFor(r, "r").note ?? ""), rowFor(r,"r").note);
+  check("B64 decoded on any key", /visiumpro\.com\/fnn2\/up1/.test(rowFor(r, "r").decoded ?? ""), rowFor(r,"r").decoded);
   // a normal value is NOT mistaken for base64
   const r2 = await inspect("https://x.com/p?aff_id=639&subid=facebook");
   check("B64 no false positive", !/→ http/.test(rowFor(r2, "subid").note ?? ""), rowFor(r2,"subid").note);
@@ -1022,8 +1024,8 @@ async function pathChips() {
 // ============================================================
 {
   await inspect("https://qatest.com/p?aff_id=639&subid=fb&utm_source=news");
-  check("QT1 no template prompt", await page.isVisible('.tmpl-card button:has-text("Save this link as the template")'), "no save button");
-  await page.click('.tmpl-card button:has-text("Save this link as the template")');
+  check("QT1 no template prompt", await page.isVisible('.tmpl-card button:has-text("Save this link")'), "no save button");
+  await page.click('.tmpl-card button:has-text("Save this link")');
   // a link missing one param + an extra one
   await inspect("https://qatest.com/p?aff_id=639&utm_source=news&debug=1");
   const tmplText = await page.textContent(".tmpl-card");

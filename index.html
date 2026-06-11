@@ -253,7 +253,7 @@
   }
   .prow {
     display: grid;
-    grid-template-columns: var(--gut) 190px 1fr 1fr;
+    grid-template-columns: var(--gut) 230px 1fr;
     align-items: stretch;
     border-bottom: 1px solid var(--rule);
   }
@@ -279,10 +279,31 @@
     margin-top: 5px;
     margin-left: 16px;        /* align under the key, past the dot */
     line-height: 1.4;
+    overflow-wrap: anywhere;  /* never let a long note spill into other columns */
   }
   .snote.ok    { color: var(--ink-faint); }
   .snote.warn  { color: var(--warn); font-weight: 500; }
   .snote.error { color: var(--error); font-weight: 600; }
+
+  /* decoded Base64 destination, shown under the value */
+  .decoded-line {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ok);
+    margin-top: 6px;
+    word-break: break-all;
+  }
+  .decoded-line:empty { display: none; }
+
+  /* raw/encoded form — only rendered when it differs from the value */
+  .raw-line {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 5px;
+    word-break: break-all;
+  }
+  .raw-line:empty { display: none; }
 
   /* ---------- summary bar ---------- */
   .summary {
@@ -400,6 +421,7 @@
   }
   .rebuilt-url.bare { color: var(--ink-faint); font-style: italic; }
   .actions { display: flex; gap: 9px; margin-top: 12px; flex-wrap: wrap; }
+  .rebuild-hint { margin: 10px 0 0; font-size: 11.5px; color: var(--ink-faint); }
   .btn {
     font-family: var(--sans);
     font-size: 13px;
@@ -1069,7 +1091,7 @@
               <div class="mr fixrow"><span class="mg"></span><span class="ml"></span><span class="tick">✓</span></div>
             </div>
             <h3>Inspect</h3>
-            <p>Read and repair one link. Every param is labelled in plain English; flags are <em>red / amber / green</em>; edit values inline, toggle params off, then copy a clean rebuilt link.</p>
+            <p>Read and repair one link. Every param is labelled in plain English; flags are <em>red / amber / green</em>; edit values inline, toggle params off, then copy a clean rebuilt link. Decodes Base64 redirects, reads the funnel from the path, catches typo'd param names, tolerates messy pasted input, checks against a saved QA template, and exports a ticket-ready <em>diagnosis</em>.</p>
             <button class="btn ghost" data-open="inspect" type="button">Open Inspect</button>
           </div>
 
@@ -1313,8 +1335,12 @@ function base64Url(value) {
 function lookupConfig(key) {
   const direct = PARAM_CONFIG[key] || PARAM_CONFIG[key.toLowerCase()];
   if (direct) return direct;
-  const m = /^sub(\d+)$/i.exec(key);
-  if (m) return { label: "Checkout sub " + m[1], desc: "Checkout-level tracking value.", required: true };
+  const sub = /^sub(\d+)$/i.exec(key);
+  if (sub) return { label: "Checkout sub " + sub[1], desc: "Checkout-level tracking value.", required: true };
+  const vid = /^vid(\d+)$/i.exec(key);
+  if (vid) return { label: "Visitor ID " + vid[1], desc: "Visitor / transaction identifier — often mirrors external_order_id." };
+  const sess = /^sessid(\d*)$/i.exec(key);
+  if (sess) return { label: "Session ID" + (sess[1] ? " " + sess[1] : ""), desc: "Checkout session identifier (often embeds a timestamp)." };
   return null;
 }
 
@@ -1388,6 +1414,14 @@ const PARAM_CONFIG = {
   product_codename: { label: "Product codename", desc: "Which BuyGoods offer/product this checkout sells." },
   product_code:     { label: "Product code", desc: "Which BuyGoods offer/product this link points at." },
   redirect:         { label: "Redirect target", desc: "Where the buyer goes after checkout (Base64-encoded).", decodeBase64: true },
+
+  // — secure-checkout session / funnel params (BuyGoods-internal, undocumented;
+  //   descriptions inferred from real links — refine as the team confirms them) —
+  external_order_id: { label: "External order ID", desc: "Order ID carried through from the merchant / external system." },
+  vtid:              { label: "Visitor tracking ID", desc: "The v3 token identifying this visitor/session (often mirrors subid5)." },
+  pfnid:             { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with fnid)." },
+  fnid:              { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with pfnid)." },
+  template:          { label: "Checkout template", desc: "Which checkout page template / variant to show." },
 
   // — UTM family: where ad-platform traffic came from —
   utm_source:   { label: "UTM source",   validate: utmToken("UTM source", "Where the traffic came from (ad platform / placement).") },
@@ -1606,17 +1640,18 @@ function classifyParam(key, value) {
   if (isPlaceholder(value)) return { status: STATUS.ok, note: "Template placeholder — filled in at click time.", label };
 
   // 2. Base64-carrying params (e.g. redirect) → decode and show the destination
+  //    (the decoded URL renders on its own line in the value cell, not the note)
   if (cfg && cfg.decodeBase64 && value !== "") {
     const decoded = decodeBase64(value);
     return decoded
-      ? { ...ok(`${desc} → ${decoded}`), label, decoded }
+      ? { ...ok(desc), label, decoded }
       : { ...warn(`${label} doesn't decode as Base64.`), label };
   }
 
   // 2b. ANY param whose value Base64-decodes to a URL → show the destination
   if (!(cfg && cfg.validate)) {
     const url = base64Url(value);
-    if (url) return { ...ok(`${desc ? desc + " " : "Base64-encoded "}→ ${url}`), label, decoded: url };
+    if (url) return { ...ok(desc || "Base64-encoded value."), label, decoded: url };
   }
 
   // 3. custom validator wins when present (UTM token rules)
@@ -2044,8 +2079,7 @@ function buildTable(model, animate) {
   colhead.style.setProperty("--i", 0);
   colhead.append(el("div", "gutter"));
   colhead.append(el("div", "cell key", "Key"));
-  colhead.append(el("div", "cell", "Decoded value"));
-  colhead.append(el("div", "cell", "Raw / encoded"));
+  colhead.append(el("div", "cell", "Value"));
   table.append(colhead);
 
   model.forEach((row, i) => {
@@ -2078,25 +2112,22 @@ function buildRow(row) {
   keyCell.append(fixbox);
   rowEl.append(keyCell);
 
-  // editable decoded value
+  // editable value (+ a decoded-target line and a raw/encoded line, shown only when relevant)
   const valCell = el("div", "cell");
-  valCell.dataset.label = "Decoded value";
+  valCell.dataset.label = "Value";
   const editable = el("span", "v edit");
   editable.contentEditable = "plaintext-only";
   editable.setAttribute("role", "textbox");
   editable.setAttribute("aria-label", "Value for " + row.key);
   editable.textContent = row.value;
   valCell.append(editable);
+  const decodedLine = el("div", "decoded-line");
+  valCell.append(decodedLine);
+  const rawLine = el("div", "raw-line");
+  valCell.append(rawLine);
   rowEl.append(valCell);
 
-  // raw / encoded (derived, patched in recompute)
-  const rawCell = el("div", "cell");
-  rawCell.dataset.label = "Raw / encoded";
-  const rawSpan = el("span", "v raw");
-  rawCell.append(rawSpan);
-  rowEl.append(rawCell);
-
-  row.el = { rowEl, gutter, dot, snote, fixbox, toggle, editable, rawSpan };
+  row.el = { rowEl, gutter, dot, snote, fixbox, toggle, editable, rawLine, decodedLine };
 
   toggle.addEventListener("change", () => {
     row.enabled = toggle.checked;
@@ -2112,7 +2143,7 @@ function buildRow(row) {
 }
 
 function patchRow(row) {
-  const { gutter, dot, snote, fixbox, rawSpan } = row.el;
+  const { gutter, dot, snote, fixbox, rawLine, decodedLine } = row.el;
   const status = row.enabled ? row.status : "off";
 
   gutter.className = "gutter " + (row.enabled ? row.status : "");
@@ -2120,15 +2151,12 @@ function patchRow(row) {
   snote.className = "snote " + status;
   snote.textContent = row.enabled ? (row.note || "") : "Excluded from rebuilt link";
 
-  // raw column reflects the CURRENT (possibly edited) value's encoding
+  // decoded Base64 target, on its own line in the value column
+  decodedLine.textContent = row.enabled && row.decoded ? "↳ " + row.decoded : "";
+
+  // raw/encoded form — shown ONLY when it differs from the value you see
   const encoded = encodeForUrl(row.value);
-  if (encoded !== row.value && row.value !== "") {
-    rawSpan.className = "v raw";
-    rawSpan.textContent = encoded;
-  } else {
-    rawSpan.className = "v raw same";
-    rawSpan.textContent = "—";
-  }
+  rawLine.textContent = (encoded !== row.value && row.value !== "") ? "raw: " + encoded : "";
 
   // inline fix-it button (recomputed each pass)
   fixbox.replaceChildren();
@@ -2182,7 +2210,7 @@ function recompute() {
   const { rows: annotated, banners, summary } =
     validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })));
 
-  active.forEach((r, i) => { r.status = annotated[i].status; r.note = annotated[i].note; });
+  active.forEach((r, i) => { r.status = annotated[i].status; r.note = annotated[i].note; r.decoded = annotated[i].decoded || null; });
   state.rows.forEach((r) => { r._fix = computeFix(r, active); });
 
   state.rows.forEach(patchRow);
@@ -2217,12 +2245,13 @@ function fillTemplateCard(box, parsed, active) {
 
   if (!tmpl) {
     const row = el("div", "tmpl-empty");
-    row.append(document.createTextNode("No expected param set saved for "));
+    row.append(document.createTextNode("Remember what a correct link for "));
     row.append(el("span", "tmpl-host", host));
-    row.append(document.createTextNode("."));
+    row.append(document.createTextNode(" should contain, then every future link for this offer gets checked against it — flagging anything missing or extra."));
     card.append(row);
-    const save = el("button", "btn ghost", "Save this link as the template");
+    const save = el("button", "btn ghost", "Save this link's params as the template");
     save.type = "button";
+    save.title = "Store this link's param set as the expected one for " + host + " (this device only)";
     save.addEventListener("click", () => { saveTemplate(host, presentKeys); recompute(); });
     card.append(save);
   } else {
@@ -2246,9 +2275,11 @@ function fillTemplateCard(box, parsed, active) {
     const actions = el("div", "tmpl-actions");
     const upd = el("button", "btn ghost", "Update template");
     upd.type = "button";
+    upd.title = "Replace the saved param set for " + host + " with this link's params";
     upd.addEventListener("click", () => { saveTemplate(host, presentKeys); recompute(); });
     const rm = el("button", "binspect", "Remove template");
     rm.type = "button";
+    rm.title = "Forget the saved template for " + host;
     rm.addEventListener("click", () => { removeTemplate(host); recompute(); });
     actions.append(upd, rm);
     card.append(actions);
@@ -2351,10 +2382,12 @@ function buildRebuildCard() {
   const actions = el("div", "actions");
   const cleanBtn = el("button", "btn primary", "Copy clean link");
   cleanBtn.dataset.label = "Copy clean link";
+  cleanBtn.title = "Copy the rebuilt link above — re-encoded, with any toggled-off params removed";
   cleanBtn.addEventListener("click", () => copyAndFlash(ui.rebuiltUrl, cleanBtn));
 
-  const asIsBtn = el("button", "btn", "Copy as-is");
-  asIsBtn.dataset.label = "Copy as-is";
+  const asIsBtn = el("button", "btn", "Copy original");
+  asIsBtn.dataset.label = "Copy original";
+  asIsBtn.title = "Copy exactly what you pasted, unchanged";
   asIsBtn.addEventListener("click", () => copyAndFlash(out.value, asIsBtn));
 
   const diagBtn = el("button", "btn", "Copy diagnosis");
@@ -2364,6 +2397,8 @@ function buildRebuildCard() {
 
   actions.append(cleanBtn, asIsBtn, diagBtn);
   card.append(actions);
+  card.append(el("p", "rebuild-hint",
+    "Clean = rebuilt & fixed  ·  Original = exactly as pasted  ·  Diagnosis = full report for a ticket"));
 
   ui.urlBox = urlBox;
   return card;
@@ -2391,6 +2426,7 @@ function buildDiagnosis() {
   active.forEach((r, i) => {
     const v = r.value === "" ? "(empty)" : r.value;
     lines.push(`  [${ann[i].status.toUpperCase()}] ${r.key} = ${v}` + (ann[i].note ? "  — " + ann[i].note : ""));
+    if (ann[i].decoded) lines.push(`      ↳ ${ann[i].decoded}`);
   });
 
   const segs = interpretPath(parsed.path);
