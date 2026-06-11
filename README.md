@@ -15,13 +15,14 @@ It's a single self-contained `index.html` — no build, no install. Either:
 
 ## Modes
 
-- **Inspect** — decode one link: plain-English summary, a labelled param table with status flags, inline edits and one-click fixes, and a rebuilt "clean" link to copy. Reads the funnel out of the path (VSL variant, lander, geo) and decodes Base64 `redirect=` targets.
+- **Inspect** — decode one link: plain-English summary, a labelled param table with status flags, inline edits and one-click fixes, and a rebuilt "clean" link to copy. Reads the funnel out of the path (VSL variant, lander, geo), decodes Base64 `redirect=` targets, flags typo'd param names, tolerates messy pasted input, checks against a saved QA template, and exports a ticket-ready **Copy diagnosis** report.
 - **Compare** — two links side by side, merged by param, so you can see *why one tracks and the other doesn't* (`aff_id` and `subid` differences stand out most).
 - **Batch** — paste a column of links and get a green/red pass-fail audit, with CSV export and a bulk "fill missing `aff_id`" action.
 - **Postback** — check a tracker's postback URL against the exact tokens BuyGoods fills (`{SUBID}`…`{SUBID5}`, `{ORDERID}`, `{COMMISSION_AMOUNT}`, …).
+- **Decline** — paste a Stripe/Braintree/NMI decline code for a plain-language read: soft vs hard, whether it's worth retrying, and the message to give the customer. (Static lookup table — verify before trusting.)
 - **How to use** — a built-in guide.
 
-You can save affiliate and offer names (stored on your device only) and share an exact view via the page URL.
+You can save affiliate/offer names and per-offer QA templates (stored on your device only) and share an exact view via the page URL.
 
 ## Tests
 

@@ -495,6 +495,32 @@
   .batch-actions .btn { font-size: 12.5px; padding: 7px 12px; }
   @media (max-width: 640px) { .batch-actions .ba-spacer { display: none; } }
 
+  /* ---------- decline ---------- */
+  .code-input {
+    display: block; box-sizing: border-box; width: 100%;
+    font-family: var(--mono); font-size: 14px; color: var(--ink);
+    background: var(--field); border: 1px solid var(--rule-strong);
+    border-radius: var(--radius); padding: 13px 15px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .code-input::placeholder { color: var(--ink-faint); }
+  .code-input:focus { outline: none; border-color: var(--ink-soft); box-shadow: 0 0 0 3px rgba(20,24,29,0.07); }
+
+  .decline-card { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); padding: 18px 20px; }
+  .dc-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .dc-code { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink); }
+  .dc-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--rule-strong); color: var(--ink-faint); }
+  .dc-chip.error { color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); background: var(--error-bg); }
+  .dc-chip.warn  { color: var(--warn);  border-color: color-mix(in srgb, var(--warn) 40%, transparent);  background: var(--warn-bg); }
+  .dc-chip.ok    { color: var(--ok);    border-color: color-mix(in srgb, var(--ok) 40%, transparent);    background: var(--ok-bg); }
+  .dc-title { font-size: 17px; font-weight: 600; margin: 0 0 16px; color: var(--ink); }
+  .dc-eyebrow { margin: 0 0 8px; }
+  .dc-msg { display: flex; align-items: flex-start; gap: 12px; background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 13px 15px; }
+  .dc-msg-text { flex: 1 1 auto; font-size: 14px; line-height: 1.5; color: var(--ink); }
+  .dc-copy { flex: none; font-size: 12px; padding: 6px 11px; }
+  .dc-seen { margin: 14px 0 0; font-size: 12px; color: var(--ink-faint); }
+  .dc-seen code { font-family: var(--mono); color: var(--ink-soft); }
+
   /* ---------- postback ---------- */
   .prow.pb { grid-template-columns: var(--gut) 200px 1fr; }
   .pbtok { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); word-break: break-all; }
@@ -759,6 +785,23 @@
   .hs-remove { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--ink-faint); background: none; border: none; cursor: pointer; text-decoration: underline; }
   .hs-remove:hover { color: var(--error); }
 
+  /* ---------- QA template card ---------- */
+  .tmpl-card {
+    background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius);
+    padding: 14px 16px; margin-top: 18px;
+  }
+  .tmpl-card .eyebrow { margin-bottom: 10px; }
+  .tmpl-empty { font-size: 13px; color: var(--ink-soft); margin-bottom: 11px; }
+  .tmpl-host { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .tmpl-ok { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--ink); }
+  .tmpl-line { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 8px; font-size: 13px; }
+  .tl-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; padding: 1px 7px; border-radius: 4px; }
+  .tmpl-line.warn .tl-label { color: var(--warn); background: var(--warn-bg); }
+  .tmpl-line.info .tl-label { color: var(--ink-soft); background: var(--field); }
+  .tl-key { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--ink); border: 1px solid var(--rule-strong); border-radius: 4px; padding: 1px 6px; }
+  .tmpl-actions { display: flex; gap: 9px; align-items: center; margin-top: 12px; }
+  .tmpl-actions .btn { font-size: 12.5px; padding: 7px 12px; }
+
   /* ---------- inline fix-it ---------- */
   .fixbox:empty { display: none; }
   .fixbox { margin-top: 7px; }
@@ -914,6 +957,7 @@
         <button class="mode"    id="modeCompare"  data-mode="compare"  role="tab" aria-selected="false">Compare</button>
         <button class="mode"    id="modeBatch"    data-mode="batch"    role="tab" aria-selected="false">Batch</button>
         <button class="mode"    id="modePostback" data-mode="postback" role="tab" aria-selected="false">Postback</button>
+        <button class="mode"    id="modeDecline"  data-mode="decline"  role="tab" aria-selected="false">Decline</button>
         <button class="mode help-tab" id="modeHelp" data-mode="help" role="tab" aria-selected="false">How to use</button>
       </div>
       <button class="btn share" id="shareBtn" data-label="Copy share link" title="Copy a link that reopens this exact view">Copy share link</button>
@@ -962,6 +1006,15 @@
       <div id="pbOut" aria-live="polite"></div>
     </section>
 
+    <section id="declinePanel" role="tabpanel" aria-labelledby="modeDecline" hidden>
+      <div class="input-block">
+        <p class="eyebrow">Paste a decline code</p>
+        <input id="srcDecline" class="code-input" spellcheck="false" autocomplete="off"
+          placeholder="e.g. insufficient_funds, 2001, or 51 — Stripe / Braintree / NMI">
+      </div>
+      <div id="declineOut" aria-live="polite"></div>
+    </section>
+
     <section id="helpPanel" role="tabpanel" aria-labelledby="modeHelp" hidden>
       <div class="help">
         <div class="help-hero">
@@ -1007,7 +1060,7 @@
           <button class="btn primary" id="tryExample" type="button">Try this in Inspect →</button>
         </div>
 
-        <p class="eyebrow help-sec">The four modes</p>
+        <p class="eyebrow help-sec">The modes</p>
         <div class="help-modes">
           <div class="help-card mode-card">
             <div class="mc-demo demo-inspect" aria-hidden="true">
@@ -1060,6 +1113,16 @@
             <p>Check a tracker's postback URL against the five tokens BuyGoods actually fills (<span class="mono">{SUBID}…{SUBID5}, {ORDERID}, {COMMISSION_AMOUNT}…</span>). Catches tokens BuyGoods will never send.</p>
             <button class="btn ghost" data-open="postback" type="button">Open Postback</button>
           </div>
+
+          <div class="help-card mode-card">
+            <div class="mc-demo demo-postback" aria-hidden="true">
+              <span class="chip bad">2001 ✗</span>
+              <span class="chip ok">soft · retry</span>
+            </div>
+            <h3>Decline</h3>
+            <p>Paste a Stripe, Braintree, or NMI decline code and get it in plain language — soft vs hard, whether it's worth a retry, and the message to give the customer or HG agent.</p>
+            <button class="btn ghost" data-open="decline" type="button">Open Decline</button>
+          </div>
         </div>
 
         <p class="eyebrow help-sec">What the flags mean</p>
@@ -1072,6 +1135,9 @@
 
         <p class="eyebrow help-sec">Saved names <span class="hs-note">— stored on this device only, never sent</span></p>
         <div class="help-card" id="savedNames"></div>
+
+        <p class="eyebrow help-sec">QA templates <span class="hs-note">— expected param sets per offer, this device only</span></p>
+        <div class="help-card" id="savedTemplates"></div>
       </div>
     </section>
   </div>
@@ -1120,12 +1186,43 @@ function parseQuery(search) {
   }).filter(Boolean);
 }
 
+/** Decode the HTML entities that show up when URLs are pasted from emails/logs. */
+function decodeEntities(s) {
+  return s
+    .replace(/&amp;/gi, "&").replace(/&#0*38;/g, "&")
+    .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"').replace(/&#0*39;/g, "'").replace(/&apos;/gi, "'");
+}
+
+/**
+ * Pull a usable URL out of a messy paste: decode entities, lift the URL out
+ * of surrounding text/log lines, and trim wrapping quotes/brackets/punctuation.
+ * Returns { url, cleaned } where `cleaned` is true if anything was stripped.
+ */
+function extractUrl(text) {
+  const original = text.trim();
+  let t = decodeEntities(original).replace(/^[<("'\[\s]+/, ""); // shed leading wrappers
+
+  if (/^https?:\/\//i.test(t)) {
+    // standalone URL — keep it whole (URL() encodes any raw spaces in values),
+    // only trim trailing wrappers/punctuation glued on the end.
+    t = t.replace(/[>)"'\].,;\s]+$/, "");
+  } else {
+    // URL embedded in prose/a log line — lift the http… run out, bounded by space.
+    const m = t.match(/\bhttps?:\/\/[^\s"'<>`]+/i);
+    if (m) t = m[0].replace(/[>)"'\].,;]+$/, "");
+    else t = t.replace(/[>)"'\].,;\s]+$/, ""); // schemeless best-effort
+  }
+  return { url: t, cleaned: t !== original };
+}
+
 /**
  * Parse pasted text into a structured result. Never throws.
- * Returns { ok, error?, assumedScheme, scheme, host, path, fragment, params }.
+ * Returns { ok, error?, assumedScheme, cleaned, scheme, host, path, fragment, params }.
  */
 function parseInput(text) {
-  const trimmed = text.trim();
+  if (text.trim() === "") return { ok: false, empty: true };
+  const { url: trimmed, cleaned } = extractUrl(text);
   if (trimmed === "") return { ok: false, empty: true };
 
   let url = null;
@@ -1150,6 +1247,7 @@ function parseInput(text) {
   return {
     ok: true,
     assumedScheme,
+    cleaned,
     scheme: url.protocol.replace(":", ""),
     host: url.host,
     path: url.pathname,
@@ -1299,6 +1397,48 @@ const PARAM_CONFIG = {
   utm_content:  { label: "UTM content",  desc: "Which ad/creative variant this click came from." },
 };
 
+/* ------------------------------------------------------------
+   TYPO / NEAR-MISS PARAM DETECTION
+   ------------------------------------------------------------
+   Support chases malformed param names for an hour (af_id, affid,
+   utm-source...). Suggest the intended key for unknown params.
+   ------------------------------------------------------------ */
+const CANON_KEYS = Object.keys(PARAM_CONFIG);
+const normKey = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const curr = [i];
+    for (let j = 1; j <= n; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+    }
+    prev = curr;
+  }
+  return prev[n];
+}
+
+/** For an UNKNOWN key, suggest the known key it probably meant (or null). */
+function suggestParam(key) {
+  const nk = normKey(key);
+  if (nk.length < 3) return null;
+  // bare UTM dimension, e.g. "source" -> utm_source
+  if (/^(source|medium|campaign|term|content)$/i.test(key)) return "utm_" + key.toLowerCase();
+  // same key apart from separators/case, e.g. "utm-source", "AFF_ID"
+  for (const c of CANON_KEYS) if (normKey(c) === nk) return c;
+  // closest by edit distance (tight threshold to avoid false positives)
+  let best = null, bestD = Infinity;
+  for (const c of CANON_KEYS) {
+    const d = levenshtein(nk, normKey(c));
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best && bestD <= 2 ? best : null;
+}
+
 /** BuyGoods' five tracking slots (+ the non-standard sid2 alias). */
 const SUBID_KEYS = ["subid", "subid2", "subid3", "subid4", "subid5", "sid2"];
 
@@ -1363,6 +1503,28 @@ function userSavedNames() {
 loadSavedNames();
 
 /* ------------------------------------------------------------
+   QA TEMPLATES  (per-host expected param set, device-only)
+   ------------------------------------------------------------
+   Save what a correct link for an offer should carry, then check
+   any link against it: what's missing, what's extra.
+   ------------------------------------------------------------ */
+const TEMPLATES_LS_KEY = "param-decoder-templates-v1";
+let TEMPLATES = {};
+
+function loadTemplates() {
+  try { TEMPLATES = JSON.parse(localStorage.getItem(TEMPLATES_LS_KEY) || "{}"); }
+  catch { TEMPLATES = {}; }
+}
+function persistTemplates() {
+  try { localStorage.setItem(TEMPLATES_LS_KEY, JSON.stringify(TEMPLATES)); } catch { /* blocked */ }
+}
+const getTemplate = (host) => TEMPLATES[offerHost(host)] || null;
+function saveTemplate(host, params) { TEMPLATES[offerHost(host)] = { params: [...new Set(params)] }; persistTemplates(); }
+function removeTemplate(host) { delete TEMPLATES[offerHost(host)]; persistTemplates(); }
+
+loadTemplates();
+
+/* ------------------------------------------------------------
    POSTBACK TOKENS  —  the fixed set BuyGoods will fill
    ------------------------------------------------------------ */
 const POSTBACK_TOKENS = {
@@ -1371,6 +1533,64 @@ const POSTBACK_TOKENS = {
   ORDERID: "Unique order ID", PRODUCT_CODENAME: "Product code",
   COMMISSION_AMOUNT: "Commission amount", EMAILHASH: "Hashed buyer email",
 };
+
+/* ------------------------------------------------------------
+   DECLINE CODES  —  static starter table (verify before trusting)
+   ------------------------------------------------------------
+   Each entry lists synonymous codes across Stripe (strings),
+   Braintree (2xxx) and NMI / ISO (numeric). type: soft|hard.
+   retry: is an automatic/customer retry worth it? customer: the
+   message to give the buyer or HG agent. Extend freely.
+   ------------------------------------------------------------ */
+const DECLINE_CODES = [
+  { codes: ["insufficient_funds", "2001", "202", "51"], title: "Insufficient funds", type: "soft", retry: true,
+    customer: "Your card was declined for insufficient funds. Try a different card, or try again later." },
+  { codes: ["do_not_honor", "2000", "200", "201", "05"], title: "Do not honor (generic bank decline)", type: "hard", retry: false,
+    customer: "Your bank declined the charge. Please contact your bank or use a different card." },
+  { codes: ["generic_decline", "card_declined", "2046", "204"], title: "Declined (no reason given)", type: "hard", retry: false,
+    customer: "The card was declined. Please try a different card." },
+  { codes: ["expired_card", "2004", "223", "54"], title: "Expired card", type: "hard", retry: false,
+    customer: "That card has expired. Please use a different card." },
+  { codes: ["incorrect_cvc", "invalid_cvc", "2010", "225", "n7", "82"], title: "Wrong security code (CVC/CVV)", type: "hard", retry: true,
+    customer: "The security code (CVC) didn't match. Please re-enter it carefully." },
+  { codes: ["incorrect_number", "invalid_number", "2005", "221", "14"], title: "Invalid card number", type: "hard", retry: true,
+    customer: "The card number looks invalid. Please check and re-enter it." },
+  { codes: ["invalid_expiry_month", "invalid_expiry_year", "invalid_expiration", "2006"], title: "Invalid expiry date", type: "hard", retry: true,
+    customer: "The expiry date is invalid. Please check it and re-enter." },
+  { codes: ["lost_card", "252", "41"], title: "Lost card", type: "hard", retry: false,
+    customer: "This card can't be used. Please use a different card." },
+  { codes: ["stolen_card", "253", "43"], title: "Stolen card", type: "hard", retry: false,
+    customer: "This card can't be used. Please use a different card." },
+  { codes: ["pickup_card", "250", "251", "04"], title: "Pick-up card", type: "hard", retry: false,
+    customer: "This card can't be used. Please use a different card." },
+  { codes: ["fraudulent", "suspected_fraud", "2127"], title: "Flagged as fraudulent", type: "hard", retry: false,
+    customer: "We couldn't process this card. Please use a different one." },
+  { codes: ["card_velocity_exceeded", "withdrawal_count_limit_exceeded", "2002", "2003", "203", "65", "61"], title: "Limit / velocity exceeded", type: "soft", retry: true,
+    customer: "This card hit a limit. Try a smaller amount, a different card, or again later." },
+  { codes: ["processing_error", "2038", "300", "96"], title: "Processor error", type: "soft", retry: true,
+    customer: "Something went wrong processing the card. Please try again." },
+  { codes: ["issuer_not_available", "try_again_later", "91", "907"], title: "Issuer unavailable", type: "soft", retry: true,
+    customer: "Your bank couldn't be reached. Please try again in a few minutes." },
+  { codes: ["authentication_required", "1a"], title: "3DS / authentication required", type: "soft", retry: true,
+    customer: "Your bank needs to verify this purchase. Please complete the verification step." },
+  { codes: ["card_not_supported", "2018"], title: "Card type not supported", type: "hard", retry: false,
+    customer: "This card type isn't supported. Please use a different card." },
+  { codes: ["currency_not_supported"], title: "Currency not supported", type: "hard", retry: false,
+    customer: "This card can't be charged in this currency. Please use a different card." },
+  { codes: ["restricted_card", "62"], title: "Restricted card", type: "hard", retry: false,
+    customer: "This card is restricted. Please use a different card." },
+  { codes: ["no_such_issuer", "invalid_account", "2009", "222", "15"], title: "No such account / issuer", type: "hard", retry: false,
+    customer: "We couldn't find that account. Please check the number or use a different card." },
+  { codes: ["reenter_transaction", "19"], title: "Re-enter transaction", type: "soft", retry: true,
+    customer: "Something interrupted the charge. Please try again." },
+];
+
+/** Look up a decline code (case-insensitive). Returns the entry or null. */
+function lookupDecline(code) {
+  const c = code.trim().toLowerCase();
+  if (!c) return null;
+  return DECLINE_CODES.find((e) => e.codes.includes(c)) || null;
+}
 
 /* ============================================================
    VALIDATION PASS — annotates rows + produces banners & counts
@@ -1418,8 +1638,13 @@ function classifyParam(key, value) {
   // 5. general empty-value → quiet warning
   if (value === "") return { ...warn("Empty value."), label };
 
-  // 6. known-but-unchecked → describe it; unknown param → ok, no note
-  return { ...ok(desc), label };
+  // 6. known-but-unchecked → describe it
+  if (cfg) return { ...ok(desc), label };
+
+  // 7. unknown param → maybe a typo of a known one; else default OK
+  const suggestion = suggestParam(key);
+  if (suggestion) return { ...warn(`Unrecognised — did you mean "${suggestion}"?`), label };
+  return { ...ok(null), label };
 }
 
 /**
@@ -1656,6 +1881,12 @@ function renderBase(result, animate) {
   url.append(el("span", "path", result.path));
   card.append(url);
 
+  if (result.cleaned) {
+    const note = el("div", "note");
+    note.append(el("span", "tag", "cleaned"));
+    note.append(el("span", null, "Lifted the URL out of the pasted text and decoded entities / quotes."));
+    card.append(note);
+  }
   if (result.assumedScheme) {
     const note = el("div", "note");
     note.append(el("span", "tag", "assumed"));
@@ -1958,6 +2189,7 @@ function recompute() {
   fillSummary(ui.summary, summary);
   fillBanners(ui.banners, banners);
   fillPlainSummary(ui.plainsum, composeSummary(state.parsed, state.rows), summary);
+  if (ui.templateCard) fillTemplateCard(ui.templateCard, state.parsed, active);
 
   const url = rebuildUrl(state.parsed, active);
   const changed = ui.rebuiltUrl !== undefined && ui.rebuiltUrl !== url;
@@ -1969,6 +2201,59 @@ function recompute() {
     void ui.urlBox.offsetWidth;   // restart the animation
     ui.urlBox.classList.add("flash");
   }
+}
+
+/** QA template check for the link's host: save the expected param set, then diff against it. */
+function fillTemplateCard(box, parsed, active) {
+  box.replaceChildren();
+  const host = offerHost(parsed.host);
+  const presentKeys = [...new Set(active.map((r) => r.key))];
+  const tmpl = getTemplate(host);
+
+  const card = el("div", "tmpl-card");
+  const head = el("div", "tmpl-head");
+  head.append(el("p", "eyebrow", "QA template"));
+  card.append(head);
+
+  if (!tmpl) {
+    const row = el("div", "tmpl-empty");
+    row.append(document.createTextNode("No expected param set saved for "));
+    row.append(el("span", "tmpl-host", host));
+    row.append(document.createTextNode("."));
+    card.append(row);
+    const save = el("button", "btn ghost", "Save this link as the template");
+    save.type = "button";
+    save.addEventListener("click", () => { saveTemplate(host, presentKeys); recompute(); });
+    card.append(save);
+  } else {
+    const missing = tmpl.params.filter((k) => !presentKeys.includes(k));
+    const extra = presentKeys.filter((k) => !tmpl.params.includes(k));
+    if (!missing.length && !extra.length) {
+      const ok = el("div", "tmpl-ok");
+      ok.append(el("span", "dot ok"));
+      ok.append(document.createTextNode("Matches the saved template for " + host + "."));
+      card.append(ok);
+    } else {
+      const line = (cls, label, keys) => {
+        const d = el("div", "tmpl-line " + cls);
+        d.append(el("span", "tl-label", label));
+        keys.forEach((k) => d.append(el("span", "tl-key", k)));
+        card.append(d);
+      };
+      if (missing.length) line("warn", "Missing", missing);
+      if (extra.length) line("info", "Extra", extra);
+    }
+    const actions = el("div", "tmpl-actions");
+    const upd = el("button", "btn ghost", "Update template");
+    upd.type = "button";
+    upd.addEventListener("click", () => { saveTemplate(host, presentKeys); recompute(); });
+    const rm = el("button", "binspect", "Remove template");
+    rm.type = "button";
+    rm.addEventListener("click", () => { removeTemplate(host); recompute(); });
+    actions.append(upd, rm);
+    card.append(actions);
+  }
+  box.append(card);
 }
 
 /** Render the plain-English sentence + a status chip into a container. */
@@ -2072,11 +2357,48 @@ function buildRebuildCard() {
   asIsBtn.dataset.label = "Copy as-is";
   asIsBtn.addEventListener("click", () => copyAndFlash(out.value, asIsBtn));
 
-  actions.append(cleanBtn, asIsBtn);
+  const diagBtn = el("button", "btn", "Copy diagnosis");
+  diagBtn.dataset.label = "Copy diagnosis";
+  diagBtn.title = "Copy a plain-text report to paste into a ticket";
+  diagBtn.addEventListener("click", () => copyAndFlash(buildDiagnosis(), diagBtn));
+
+  actions.append(cleanBtn, asIsBtn, diagBtn);
   card.append(actions);
 
   ui.urlBox = urlBox;
   return card;
+}
+
+/** Plain-text report of the current view — for pasting into a support ticket. */
+function buildDiagnosis() {
+  if (!state) return "";
+  const parsed = state.parsed;
+  const active = state.rows.filter((r) => r.enabled);
+  const { rows: ann, banners } = validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })));
+
+  const lines = ["PARAM DECODER — DIAGNOSIS"];
+  lines.push("Base: " + parsed.scheme + "://" + parsed.host + parsed.path);
+
+  const parts = composeSummary(parsed, state.rows);
+  lines.push("Summary: " + parts.filter((p) => !p.name).map((p) => p.t).join(""));
+
+  if (banners.length) {
+    lines.push("");
+    banners.forEach((b) => lines.push(`[${b.level.toUpperCase()}] ${b.title} — ${b.message}`));
+  }
+
+  lines.push("", "Parameters:");
+  active.forEach((r, i) => {
+    const v = r.value === "" ? "(empty)" : r.value;
+    lines.push(`  [${ann[i].status.toUpperCase()}] ${r.key} = ${v}` + (ann[i].note ? "  — " + ann[i].note : ""));
+  });
+
+  const segs = interpretPath(parsed.path);
+  if (segs.length) lines.push("", "Path: " + segs.map((s) => `${s.segment} (${s.meaning})`).join(" · "));
+
+  lines.push("", "Rebuilt: " + rebuildUrl(parsed, active));
+  lines.push("Reopen in tool: " + location.href);
+  return lines.join("\n");
 }
 
 /* ============================================================
@@ -2107,15 +2429,18 @@ function render() {
 
   const tableWrap = buildTable(state.rows, animate);
   ui.tableWrap = tableWrap;
+  const templateCard = el("div", "tmpl-wrap");
+  ui.templateCard = templateCard;
 
   target.append(summary);
   target.append(banners);
   target.append(plainsum);
   target.append(renderBase(result, animate));
   target.append(tableWrap);
+  target.append(templateCard);
   target.append(buildRebuildCard());
 
-  recompute(); // populate statuses, banners, counts, rebuilt URL, summary sentence
+  recompute(); // populate statuses, banners, counts, rebuilt URL, summary sentence, template check
 }
 
 out.addEventListener("input", () => { render(); syncHash(); });
@@ -2650,6 +2975,79 @@ function renderPostback() {
 srcPostback.addEventListener("input", () => { renderPostback(); syncHash(); });
 
 /* ============================================================
+   DECLINE MODE — plain-language lookup for a gateway decline code
+   ============================================================ */
+
+const srcDecline = document.getElementById("srcDecline");
+const declineTarget = document.getElementById("declineOut");
+
+function renderDecline() {
+  const code = srcDecline.value.trim();
+  declineTarget.replaceChildren();
+
+  if (code === "") {
+    const box = el("div", "empty reveal");
+    box.append(el("div", "big", "✗→"));
+    box.append(el("div", null, "Paste a Stripe, Braintree, or NMI decline code for a plain-language read."));
+    box.append(exampleButton(() => { srcDecline.value = "insufficient_funds"; renderDecline(); syncHash(); }));
+    declineTarget.append(box);
+    return;
+  }
+
+  const entry = lookupDecline(code);
+  if (!entry) {
+    const box = el("div", "msg warn reveal");
+    box.append(el("span", "dot"));
+    const body = el("div", "body");
+    body.append(el("span", "title", "Not in the table yet"));
+    const span = el("span", null, "No match for ");
+    span.append(el("code", null, code));
+    span.append(document.createTextNode(" — it can be added to the lookup table."));
+    body.append(span);
+    box.append(body);
+    declineTarget.append(box);
+    return;
+  }
+
+  const card = el("div", "decline-card reveal");
+
+  const head = el("div", "dc-head");
+  head.append(el("span", "dc-code", code));
+  const sev = el("span", "dc-chip " + (entry.type === "hard" ? "error" : "warn"));
+  sev.append(el("span", "dot " + (entry.type === "hard" ? "error" : "warn")));
+  sev.append(document.createTextNode(entry.type === "hard" ? "Hard decline" : "Soft decline"));
+  head.append(sev);
+  const retry = el("span", "dc-chip " + (entry.retry ? "ok" : ""));
+  retry.append(el("span", "dot " + (entry.retry ? "ok" : "")));
+  retry.append(document.createTextNode(entry.retry ? "Worth a retry" : "Don't retry"));
+  head.append(retry);
+  card.append(head);
+
+  card.append(el("p", "dc-title", entry.title));
+
+  card.append(el("p", "eyebrow dc-eyebrow", "Tell the customer / HG agent"));
+  const msg = el("div", "dc-msg");
+  msg.append(el("span", "dc-msg-text", entry.customer));
+  const copy = el("button", "btn ghost dc-copy", "Copy message");
+  copy.type = "button"; copy.dataset.label = "Copy message";
+  copy.addEventListener("click", () => copyAndFlash(entry.customer, copy));
+  msg.append(copy);
+  card.append(msg);
+
+  const seen = el("p", "dc-seen");
+  seen.append(document.createTextNode("Also seen as: "));
+  entry.codes.filter((c) => c !== code.toLowerCase()).forEach((c, i, arr) => {
+    seen.append(el("code", null, c));
+    if (i < arr.length - 1) seen.append(document.createTextNode(", "));
+  });
+  if (entry.codes.length > 1) card.append(seen);
+
+  declineTarget.append(card);
+}
+
+srcDecline.addEventListener("input", () => { renderDecline(); syncHash(); });
+
+/* ============================================================
    SHAREABLE URL HASH — fully client-side, restores the view
    ============================================================ */
 
@@ -2661,6 +3059,7 @@ function syncHash() {
   if (activeMode === "compare") { add("a", srcA.value); add("b", srcB.value); }
   if (activeMode === "batch")    add("k", srcBatch.value);
   if (activeMode === "postback") add("p", srcPostback.value);
+  if (activeMode === "decline")  add("d", srcDecline.value);
   history.replaceState(null, "", location.pathname + location.search + "#" + p.toString());
 }
 
@@ -2673,6 +3072,7 @@ function restoreFromHash() {
   if (p.get("b")) srcB.value = p.get("b");
   if (p.get("k")) srcBatch.value = p.get("k");
   if (p.get("p")) srcPostback.value = p.get("p");
+  if (p.get("d")) srcDecline.value = p.get("d");
   setMode(mode);
   return true;
 }
@@ -2686,7 +3086,8 @@ const PANELS = {
   compare:  { panel: document.getElementById("comparePanel"),  render: renderCompare },
   batch:    { panel: document.getElementById("batchPanel"),    render: renderBatch },
   postback: { panel: document.getElementById("postbackPanel"), render: renderPostback },
-  help:     { panel: document.getElementById("helpPanel"),     render: renderSavedNames },
+  decline:  { panel: document.getElementById("declinePanel"),  render: renderDecline },
+  help:     { panel: document.getElementById("helpPanel"),     render: renderHelpManagers },
 };
 
 /** Help-tab manager for the device-saved aff_id / offer names. */
@@ -2720,6 +3121,32 @@ function renderSavedNames() {
   section("Affiliates", aff, "aff");
   section("Offers", offer, "offer");
 }
+
+/** Help-tab manager for device-saved QA templates. */
+function renderSavedTemplates() {
+  const box = document.getElementById("savedTemplates");
+  box.replaceChildren();
+  const hosts = Object.keys(TEMPLATES);
+  if (hosts.length === 0) {
+    box.classList.add("emptynames");
+    box.append(el("p", "hs-empty", "No QA templates yet. In Inspect, open a known-good link for an offer and click “Save this link as the template” — then any link for that host gets checked against it."));
+    return;
+  }
+  box.classList.remove("emptynames");
+  hosts.forEach((host) => {
+    const row = el("div", "hs-row");
+    row.append(el("span", "hs-key", host));
+    row.append(el("span", "hs-arrow", "→"));
+    row.append(el("span", "hs-name", (TEMPLATES[host].params || []).join("  ·  ")));
+    const rm = el("button", "hs-remove", "Remove");
+    rm.type = "button";
+    rm.addEventListener("click", () => { removeTemplate(host); renderSavedTemplates(); });
+    row.append(rm);
+    box.append(row);
+  });
+}
+
+function renderHelpManagers() { renderSavedNames(); renderSavedTemplates(); }
 
 /* the real BuyGoods checkout link used as the worked example */
 const EXAMPLE_URL = "https://buygoods.com/secure/checkout.html?account_id=11292&product_codename=vis2fnn2&redirect=aHR0cDovL3Zpc2l1bXByby5jb20vZm5uMi91cDE=&sub20=v3_a962a533-4eb3-46e0-8096-a9da5e4c9466_684a48ea058670622823097e_3340_t-12_s-2&sub19=v3_a962a533-4eb3-46e0-8096-a9da5e4c9466_684a48ea058670622823097e_3340_t-12_s-2";

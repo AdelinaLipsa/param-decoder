@@ -976,6 +976,115 @@ async function pathChips() {
   check("SN2 removed", /No saved names yet/.test(await page.textContent("#savedNames")), "not cleared");
 }
 
+// ============================================================
+//  FEATURE 21 — eat messy input
+// ============================================================
+{
+  const r = await inspect('the affiliate link is <https://x.com/p?aff_id=639&amp;subid=fb> thanks!');
+  check("MI1 lifted from prose", r.base === "https://x.com/p", r.base);
+  check("MI1 entity decoded", rowFor(r, "subid")?.value === "fb", JSON.stringify(r.rows.map(x=>x.key)));
+  check("MI1 cleaned note", await page.isVisible("#out .base .note .tag"), "no cleaned tag");
+}
+{
+  // a standalone URL with a raw space in a value is NOT truncated
+  const r = await inspect("https://x.com/p?aff_id=639&utm_source=Summer Sale");
+  check("MI2 raw space kept", rowFor(r, "utm_source")?.value === "Summer Sale", JSON.stringify(rowFor(r,"utm_source")));
+}
+
+// ============================================================
+//  FEATURE 22 — typo / near-miss param detection
+// ============================================================
+{
+  const r = await inspect("https://x.com/p?af_id=639&utm-source=facebook&color=blue");
+  check("TY1 af_id suggests aff_id", /did you mean .?aff_id/i.test(rowFor(r, "af_id")?.note ?? ""), rowFor(r,"af_id")?.note);
+  check("TY1 af_id warn", rowFor(r, "af_id")?.status === "warn", "");
+  check("TY1 utm-source suggests utm_source", /utm_source/.test(rowFor(r, "utm-source")?.note ?? ""), rowFor(r,"utm-source")?.note);
+  check("TY1 genuine unknown stays ok", rowFor(r, "color")?.status === "ok", JSON.stringify(rowFor(r,"color")));
+}
+
+// ============================================================
+//  FEATURE 23 — Copy diagnosis
+// ============================================================
+{
+  await inspect("https://nationlifenews.com/br/vsl7/l1/af/?aff_id=&subid5=alphabite_ml1");
+  await page.click('.actions button:has-text("Copy diagnosis")');
+  const diag = await copied();
+  check("CD1 has header", /PARAM DECODER — DIAGNOSIS/.test(diag), diag?.slice(0,40));
+  check("CD1 has base", /Base: https:\/\/nationlifenews\.com\/br\/vsl7\/l1\/af\//.test(diag), diag);
+  check("CD1 has summary", /Summary:/.test(diag) && /no valid affiliate ID/i.test(diag), diag);
+  check("CD1 has flagged param", /\[ERROR\] aff_id/.test(diag), diag);
+  check("CD1 has path", /Path:/.test(diag) && /VSL page/.test(diag), diag);
+  check("CD1 has rebuilt", /Rebuilt: https:/.test(diag), diag);
+}
+
+// ============================================================
+//  FEATURE 24 — QA template compare
+// ============================================================
+{
+  await inspect("https://qatest.com/p?aff_id=639&subid=fb&utm_source=news");
+  check("QT1 no template prompt", await page.isVisible('.tmpl-card button:has-text("Save this link as the template")'), "no save button");
+  await page.click('.tmpl-card button:has-text("Save this link as the template")');
+  // a link missing one param + an extra one
+  await inspect("https://qatest.com/p?aff_id=639&utm_source=news&debug=1");
+  const tmplText = await page.textContent(".tmpl-card");
+  check("QT2 flags missing", /Missing/.test(tmplText) && /subid/.test(tmplText), tmplText);
+  check("QT2 flags extra", /Extra/.test(tmplText) && /debug/.test(tmplText), tmplText);
+  // an exact match shows OK
+  await inspect("https://qatest.com/p?aff_id=111&subid=x&utm_source=y");
+  check("QT3 matches", /Matches the saved template/.test(await page.textContent(".tmpl-card")), await page.textContent(".tmpl-card"));
+  // listed + removable in Help
+  await page.click("#modeHelp");
+  check("QT4 listed in help", /qatest\.com/.test(await page.textContent("#savedTemplates")), "");
+  await page.click("#savedTemplates .hs-remove");
+  check("QT4 removed", /No QA templates yet/.test(await page.textContent("#savedTemplates")), "");
+}
+
+// ============================================================
+//  FEATURE 25 — decline-code lookup
+// ============================================================
+async function decline(code) {
+  await page.click("#modeDecline");
+  await page.fill("#srcDecline", "");
+  await page.fill("#srcDecline", code);
+  return page.evaluate(() => {
+    const out = document.getElementById("declineOut");
+    const card = out.querySelector(".decline-card");
+    return {
+      title: card?.querySelector(".dc-title")?.textContent ?? null,
+      chips: [...out.querySelectorAll(".dc-chip")].map(c => c.textContent.trim()),
+      message: card?.querySelector(".dc-msg-text")?.textContent ?? null,
+      unknown: !!out.querySelector(".msg.warn"),
+      empty: out.querySelector(".empty")?.textContent ?? null,
+    };
+  });
+}
+{
+  const r = await decline("insufficient_funds");
+  check("DC1 title", /Insufficient funds/.test(r.title ?? ""), JSON.stringify(r));
+  check("DC1 soft", r.chips.some(c => /Soft decline/.test(c)), JSON.stringify(r.chips));
+  check("DC1 retry", r.chips.some(c => /Worth a retry/.test(c)), JSON.stringify(r.chips));
+  check("DC1 customer message", /insufficient funds/i.test(r.message ?? ""), r.message);
+}
+{
+  const r = await decline("2004"); // Braintree expired card
+  check("DC2 braintree code maps", /Expired card/.test(r.title ?? ""), JSON.stringify(r));
+  check("DC2 hard", r.chips.some(c => /Hard decline/.test(c)), JSON.stringify(r.chips));
+}
+{
+  const r = await decline("51"); // ISO insufficient funds
+  check("DC3 numeric iso maps", /Insufficient funds/.test(r.title ?? ""), JSON.stringify(r));
+}
+{
+  const r = await decline("not_a_real_code_xyz");
+  check("DC4 unknown handled", r.unknown === true, JSON.stringify(r));
+}
+{
+  // copy the customer message
+  await decline("expired_card");
+  await page.click('.dc-msg button:has-text("Copy message")');
+  check("DC5 copied message", /expired/i.test(await copied() ?? ""), await copied());
+}
+
 await browser.close();
 
 console.log(`\n  PASS ${pass}   FAIL ${fail}\n`);
