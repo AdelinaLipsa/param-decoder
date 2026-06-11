@@ -1,0 +1,9 @@
+# local Claude project data — never commit
+.claude/
+
+# node / tooling
+node_modules/
+package-lock.json
+
+# os junk
+.DS_Store

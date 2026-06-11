@@ -1,0 +1,13 @@
+{
+  "name": "param-decoder",
+  "version": "1.0.0",
+  "description": "Internal tool to read, validate, fix, and compare BuyGoods checkout and offer URLs — 100% client-side.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}

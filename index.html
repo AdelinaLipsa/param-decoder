@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Param Decoder · BuyGoods</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     TOKENS — neutral everywhere, colour reserved for status only
+     ============================================================ */
+  :root {
+    --paper:      #f5f6f8;
+    --panel:      #ffffff;
+    --ink:        #14181d;
+    --ink-soft:   #4a525c;
+    --ink-faint:  #8a929c;
+    --rule:       #e3e7ec;
+    --rule-strong:#cfd5dd;
+    --field:      #fbfcfd;
+
+    /* status — the ONLY colour in the instrument */
+    --ok:    #16855a;
+    --warn:  #b25e09;
+    --error: #c02622;
+    --ok-bg:    #e8f4ee;
+    --warn-bg:  #fbefdf;
+    --error-bg: #fbe9e8;
+
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --sans: "IBM Plex Sans", system-ui, sans-serif;
+
+    --gut: 4px;          /* status gutter bar width */
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--paper);
+    /* faint engineering grid in the background for atmosphere */
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+  }
+
+  .wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 32px 96px;
+  }
+
+  /* ---------- masthead ---------- */
+  header.mast {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .mast h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .mast h1 .glyph {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--ink-soft);
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    padding: 1px 7px;
+    font-size: 13px;
+  }
+  .mast .org {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+
+  /* ---------- privacy line ---------- */
+  .privacy {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 24px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .privacy .lock {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 0 3px var(--ok-bg);
+    flex: none;
+  }
+  .privacy strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- labels ---------- */
+  .eyebrow {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-faint);
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  /* ---------- mode toggle ---------- */
+  .modebar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .modebar {
+    display: inline-flex;
+    gap: 3px;
+    padding: 3px;
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: 9px;
+  }
+  .btn.share { font-size: 12.5px; padding: 7px 13px; }
+  .mode {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 18px;
+    cursor: pointer;
+    transition: background-color .14s, color .14s;
+  }
+  .mode:hover { color: var(--ink); }
+  .mode.on { background: var(--ink); color: #fff; }
+  .mode:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* ---------- input ---------- */
+  .input-block { margin-bottom: 22px; }
+  .cmp-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .cmp-inputs .input-block { margin-bottom: 22px; }
+  .cmp-inputs textarea { min-height: 80px; }
+  .input-block textarea {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 92px;
+    resize: vertical;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .input-block textarea::placeholder { color: var(--ink-faint); }
+  .input-block textarea:focus {
+    outline: none;
+    border-color: var(--ink-soft);
+    box-shadow: 0 0 0 3px rgba(20,24,29,0.07);
+  }
+
+  /* ---------- base url card ---------- */
+  .base {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .base .url {
+    font-family: var(--mono);
+    font-size: 14px;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+  .base .url .scheme { color: var(--ink-faint); }
+  .base .url .host   { color: var(--ink); font-weight: 600; }
+  .base .url .path   { color: var(--ink-soft); }
+  .base .note {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex; gap: 7px; align-items: baseline;
+  }
+  .base .note .tag {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+    font-weight: 600; color: var(--warn);
+    border: 1px solid var(--warn); border-radius: 4px;
+    padding: 0 5px; flex: none;
+  }
+  .base .note .tag.frag { color: var(--ink-faint); border-color: var(--rule-strong); }
+
+  .base .pathread { margin-top: 11px; padding-top: 11px; border-top: 1px dashed var(--rule); }
+  .pathread-label {
+    display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .14em;
+    font-weight: 600; color: var(--ink-faint); margin-bottom: 8px;
+  }
+  .pathchips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pathchip {
+    display: inline-flex; align-items: baseline; gap: 7px;
+    border: 1px solid var(--rule); border-radius: 5px; padding: 3px 9px; background: var(--field);
+  }
+  .pathchip .ps { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink); }
+  .pathchip .pm { font-size: 11.5px; color: var(--ink-soft); }
+
+  /* ---------- param table ---------- */
+  .table-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 9px;
+  }
+  .count {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .ptable {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .prow {
+    display: grid;
+    grid-template-columns: var(--gut) 190px 1fr 1fr;
+    align-items: stretch;
+    border-bottom: 1px solid var(--rule);
+  }
+  .prow:last-child { border-bottom: none; }
+
+  /* status gutter — coloured strictly by validation status */
+  .gutter { background: var(--rule-strong); }
+  .gutter.ok    { background: var(--ok); }
+  .gutter.warn  { background: var(--warn); }
+  .gutter.error { background: var(--error); }
+
+  /* per-row status: dot beside key + a small note line under it */
+  .kline { display: flex; align-items: center; gap: 8px; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex: none; background: var(--rule-strong);
+  }
+  .dot.ok    { background: var(--ok); }
+  .dot.warn  { background: var(--warn); }
+  .dot.error { background: var(--error); }
+  .snote {
+    font-size: 11.5px;
+    margin-top: 5px;
+    margin-left: 16px;        /* align under the key, past the dot */
+    line-height: 1.4;
+  }
+  .snote.ok    { color: var(--ink-faint); }
+  .snote.warn  { color: var(--warn); font-weight: 500; }
+  .snote.error { color: var(--error); font-weight: 600; }
+
+  /* ---------- summary bar ---------- */
+  .summary {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .pill {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    font-size: 12px; font-weight: 500;
+    padding: 5px 11px;
+    border-radius: 100px;
+    border: 1px solid var(--rule-strong);
+    color: var(--ink-faint);
+    background: var(--panel);
+  }
+  .pill b { font-family: var(--mono); font-weight: 600; font-size: 12.5px; }
+  .pill.on.error { color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); background: var(--error-bg); }
+  .pill.on.warn  { color: var(--warn);  border-color: color-mix(in srgb, var(--warn) 40%, transparent);  background: var(--warn-bg); }
+  .pill.on.ok    { color: var(--ok);    border-color: color-mix(in srgb, var(--ok) 40%, transparent);    background: var(--ok-bg); }
+
+  .cell {
+    padding: 10px 14px;
+    min-width: 0;
+    border-left: 1px solid var(--rule);
+  }
+  .cell.key   { border-left: none; }
+  .colhead .cell {
+    font-family: var(--sans);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    font-weight: 600;
+    background: var(--field);
+    padding-top: 9px; padding-bottom: 9px;
+  }
+  .colhead { border-bottom: 1px solid var(--rule-strong); }
+
+  .k {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    word-break: break-all;
+  }
+  .v {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
+    word-break: break-all;
+  }
+  .v.empty { color: var(--ink-faint); font-style: italic; }
+  .v.raw   { color: var(--ink-faint); }
+  .v.raw.same { color: var(--ink-faint); opacity: .55; }
+
+  /* editable decoded value */
+  .v.edit {
+    display: inline-block;
+    min-width: 8px;
+    padding: 1px 4px;
+    margin: -1px -4px;
+    border-radius: 4px;
+    cursor: text;
+    transition: background-color .12s, box-shadow .12s;
+  }
+  .v.edit:hover { background: var(--field); box-shadow: inset 0 0 0 1px var(--rule); }
+  .v.edit:focus {
+    outline: none;
+    background: var(--panel);
+    box-shadow: inset 0 0 0 1px var(--ink-soft), 0 0 0 3px rgba(20,24,29,0.07);
+    color: var(--ink);
+  }
+  .v.edit:empty::before {
+    content: "empty";
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  /* include / exclude toggle */
+  .toggle {
+    width: 15px; height: 15px;
+    margin: 0; flex: none;
+    accent-color: var(--ink);
+    cursor: pointer;
+  }
+  .toggle:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+
+  /* excluded row */
+  .prow.off .gutter { background: var(--rule) !important; }
+  .prow.off .k,
+  .prow.off .v.edit { color: var(--ink-faint); text-decoration: line-through; }
+  .prow.off .v.raw { opacity: .4; }
+  .prow.off .snote { text-decoration: none; }
+  .snote.off { color: var(--ink-faint); font-style: italic; font-weight: 400; }
+
+  /* ---------- rebuild card ---------- */
+  .rebuild {
+    margin-top: 22px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 15px 16px;
+  }
+  .rebuild .eyebrow { margin-bottom: 10px; }
+  .rebuilt-url {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.55;
+    word-break: break-all;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 11px 13px;
+  }
+  .rebuilt-url.bare { color: var(--ink-faint); font-style: italic; }
+  .actions { display: flex; gap: 9px; margin-top: 12px; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background-color .12s, border-color .12s, transform .05s;
+  }
+  .btn:hover { background: var(--field); border-color: var(--ink-faint); }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+  .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn.primary:hover { background: #000; }
+  .btn.copied { background: var(--ok-bg); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+  .btn.primary.copied { background: var(--ok); color: #fff; border-color: var(--ok); }
+  .btn.failed { background: var(--error-bg); color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); }
+
+  /* ---------- compare ---------- */
+  .basepair { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+  .basepair .row {
+    display: grid; grid-template-columns: 60px 1fr; gap: 10px;
+    align-items: baseline;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+  }
+  .basepair .tag {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: var(--ink-faint);
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .basepair .url { font-family: var(--mono); font-size: 13px; word-break: break-all; color: var(--ink-soft); }
+  .basepair .url .host { color: var(--ink); font-weight: 600; }
+  .basepair .diffnote {
+    font-size: 12px; color: var(--warn); font-weight: 500;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .basepair .diffnote::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); flex: none;
+  }
+
+  .prow.cmp { grid-template-columns: var(--gut) 180px 1fr 1fr; }
+  .cmpv {
+    font-family: var(--mono); font-size: 13px;
+    word-break: break-all; color: var(--ink-soft);
+  }
+  .cmpv.absent { color: var(--ink-faint); font-style: italic; }
+  /* a differing / one-sided cell is tinted by status to make it pop */
+  .cell.hl-warn  { background: var(--warn-bg); }
+  .cell.hl-error { background: var(--error-bg); }
+  .cell.hl-warn  .cmpv { color: var(--warn); font-weight: 500; }
+  .cell.hl-error .cmpv { color: var(--error); font-weight: 600; }
+
+  .ktag {
+    font-size: 9px; text-transform: uppercase; letter-spacing: .1em;
+    font-weight: 600; color: var(--ink-faint);
+    border: 1px solid var(--rule-strong); border-radius: 4px;
+    padding: 0 5px; margin-left: 8px;
+  }
+
+  /* ---------- batch ---------- */
+  textarea.tall { min-height: 150px; }
+  .prow.batch { grid-template-columns: var(--gut) 34px 1fr 110px 1.1fr; }
+  .prow.batch .cell { display: flex; align-items: center; }
+  .bnum { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  .blink { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .baff  { font-family: var(--mono); font-size: 12.5px; color: var(--ink); }
+  .baff.miss { color: var(--error); font-style: italic; }
+  .bverdict { font-size: 12.5px; }
+  .bverdict.ok    { color: var(--ok); }
+  .bverdict.warn  { color: var(--warn); }
+  .bverdict.error { color: var(--error); font-weight: 600; }
+  .binspect {
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--ink-soft); background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 0; margin-left: 10px;
+  }
+  .binspect:hover { color: var(--ink); }
+
+  .batch-actions {
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .batch-actions .ba-spacer { flex: 1 1 auto; }
+  .bulkfill { display: flex; gap: 7px; }
+  .bulkfill .fix-input { width: 110px; border-color: var(--rule-strong); }
+  .bulkfill .fix-input:focus { box-shadow: 0 0 0 3px rgba(20,24,29,0.07); }
+  .batch-actions .btn { font-size: 12.5px; padding: 7px 12px; }
+  @media (max-width: 640px) { .batch-actions .ba-spacer { display: none; } }
+
+  /* ---------- postback ---------- */
+  .prow.pb { grid-template-columns: var(--gut) 200px 1fr; }
+  .pbtok { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); word-break: break-all; }
+  .pbmean { font-family: var(--sans); font-size: 12.5px; color: var(--ink-soft); }
+  .pbmean.bad  { color: var(--error); }
+  .pbmean.lit  { color: var(--ink-soft); }
+
+  /* ---------- help tab ---------- */
+  .help-hero { margin-bottom: 22px; }
+  .help-hero h2 {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+    margin: 4px 0 10px; line-height: 1.2;
+  }
+  .help-hero .lead { font-size: 15px; color: var(--ink-soft); margin: 0; max-width: 60ch; }
+  .help-sec { margin: 30px 0 12px; }
+
+  /* looping screencast (a CSS "GIF" of the tool working) */
+  .screencast { margin-bottom: 8px; }
+  .sc-cap {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em;
+    font-weight: 600; color: var(--ink-faint); margin-bottom: 9px;
+  }
+  .sc-rec { width: 8px; height: 8px; border-radius: 50%; background: var(--error); }
+  .sc-frame {
+    background: var(--panel); border: 1px solid var(--rule-strong);
+    border-radius: 10px; padding: 18px;
+  }
+  .sc-bar {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink);
+    background: var(--field); border: 1px solid var(--rule-strong);
+    border-radius: 6px; padding: 10px 13px; margin-bottom: 16px;
+    overflow: hidden; white-space: nowrap;
+  }
+  .sc-typed { display: inline-block; }
+  .sc-body { display: flex; flex-direction: column; gap: 14px; }
+  .sc-summary { position: relative; padding-left: 19px; min-height: 46px; }
+  .sc-chip { position: absolute; left: 0; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); }
+  .sc-sum { position: absolute; left: 19px; right: 0; top: 0; font-size: 15.5px; color: var(--ink-soft); line-height: 1.5; }
+  .sc-sum b { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .sc-bad b:first-of-type { color: var(--error); }
+  .sc-bad { opacity: 0; }   /* reduced-motion: show the fixed (OK) state */
+  .sc-ok  { opacity: 1; }
+  .sc-rows { display: flex; flex-direction: column; gap: 9px; }
+  .sc-row { display: flex; align-items: center; gap: 11px; font-family: var(--mono); font-size: 13px; }
+  .sc-g { width: 3px; height: 15px; border-radius: 2px; background: var(--ok); flex: none; }
+  .sc-k { font-weight: 600; color: var(--ink); min-width: 58px; }
+  .sc-v { color: var(--ink-soft); }
+  .sc-affv { position: relative; display: inline-block; min-width: 64px; height: 1.4em; }
+  .sc-affv span { position: absolute; left: 0; top: 0; }
+  .av-empty { color: var(--error); font-style: italic; opacity: 0; }
+  .av-set { color: var(--ink-soft); opacity: 1; }
+  .sc-tick { color: var(--ok); font-weight: 600; font-size: 12px; opacity: 1; }
+
+  .help-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .help-card.example { margin-bottom: 6px; }
+
+  .demo-url {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.6;
+    color: var(--ink-soft); word-break: break-all;
+    background: var(--field); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 11px 13px; margin-bottom: 14px;
+  }
+  .demo-url .hl { color: var(--ink); font-weight: 600; }
+
+  .demo-decode { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .dline {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    font-size: 13px; padding-left: 14px; position: relative;
+  }
+  .dline::before {
+    content: ""; position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; border-radius: 2px; background: var(--ok);
+  }
+  .dline .dk { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .dline .dv { font-family: var(--mono); color: var(--ink-soft); }
+  .dline .dv.decoded { color: var(--ok); font-weight: 600; }
+  .dline .arrow { color: var(--ink-faint); }
+  .dline .dm { font-size: 12px; color: var(--ink-faint); }
+
+  .help-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .mode-card h3 { font-size: 15px; margin: 0 0 6px; }
+  .mode-card p { font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
+  .mode-card p em { font-style: normal; font-weight: 600; color: var(--ink); }
+  .mono { font-family: var(--mono); font-size: .92em; }
+
+  /* mini demos inside mode cards */
+  .mc-demo {
+    height: 76px; margin-bottom: 14px; padding: 12px;
+    background: var(--field); border: 1px solid var(--rule); border-radius: 6px;
+    overflow: hidden;
+  }
+  .demo-inspect { display: flex; flex-direction: column; justify-content: center; gap: 7px; }
+  .mr { display: flex; align-items: center; gap: 7px; }
+  .mg { width: 3px; height: 13px; border-radius: 2px; background: var(--rule-strong); flex: none; }
+  .mg.ok { background: var(--ok); }
+  .ml { height: 7px; border-radius: 3px; background: var(--rule-strong); width: 70%; }
+  .ml.short { width: 45%; }
+  .ml.mini { width: 28%; }
+  .tick { color: var(--ok); font-size: 12px; font-weight: 700; opacity: 0; }
+
+  .demo-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .demo-compare .cc { display: flex; flex-direction: column; gap: 7px; justify-content: center; }
+  .demo-compare .mr.diff .ml { background: color-mix(in srgb, var(--error) 45%, var(--rule-strong)); }
+
+  .demo-batch { display: flex; flex-direction: column; justify-content: center; gap: 7px; }
+  .mdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .mdot.ok { background: var(--ok); }
+  .mdot.warn { background: var(--warn); }
+  .mdot.error { background: var(--error); }
+
+  .demo-postback { display: flex; flex-wrap: wrap; gap: 7px; align-content: center; }
+  .demo-postback .chip {
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    padding: 4px 8px; border-radius: 5px; border: 1px solid var(--rule-strong);
+  }
+  .demo-postback .chip.ok  { color: var(--ok);    border-color: color-mix(in srgb, var(--ok) 40%, transparent);    background: var(--ok-bg); }
+  .demo-postback .chip.bad { color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); background: var(--error-bg); }
+
+  .legend { display: flex; flex-direction: column; gap: 12px; }
+  .leg { display: flex; gap: 11px; align-items: baseline; font-size: 13px; color: var(--ink-soft); }
+  .leg strong { color: var(--ink); }
+  .leg .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; position: relative; top: 1px; }
+  .leg .dot.error { background: var(--error); }
+  .leg .dot.warn  { background: var(--warn); }
+  .leg .dot.ok    { background: var(--ok); }
+  .leg .dot.info  { background: var(--ink-faint); }
+
+  .btn.ghost { background: var(--field); }
+
+  @media (max-width: 640px) {
+    .cmp-inputs { grid-template-columns: 1fr; }
+    .prow.cmp { grid-template-columns: var(--gut) 1fr; }
+    .prow.batch { grid-template-columns: var(--gut) 1fr; }
+    .prow.pb { grid-template-columns: var(--gut) 1fr; }
+    .help-modes { grid-template-columns: 1fr; }
+  }
+
+  /* help animations — gentle, gated, freeze to a meaningful state */
+  @media (prefers-reduced-motion: no-preference) {
+    /* worked-example rows reveal each time the Help tab opens */
+    .demo-decode .dline { opacity: 0; animation: rise .4s ease forwards; }
+    .demo-decode .d1 { animation-delay: .15s; }
+    .demo-decode .d2 { animation-delay: .45s; }
+    .demo-decode .d3 { animation-delay: .75s; }
+    .demo-decode .d4 { animation-delay: 1.05s; }
+    .demo-decode .d3 .arrow,
+    .demo-decode .d3 .decoded { opacity: 0; animation: rise .4s ease 1.3s forwards; }
+
+    /* Inspect mini-demo: a red row gets fixed to green, looping */
+    .demo-inspect .fixrow .mg { animation: fixGutter 3.4s ease-in-out infinite; }
+    .demo-inspect .fixrow .tick { animation: fixTick 3.4s ease-in-out infinite; }
+    @keyframes fixGutter { 0%,45% { background: var(--error); } 60%,100% { background: var(--ok); } }
+    @keyframes fixTick   { 0%,45% { opacity: 0; } 65%,100% { opacity: 1; } }
+
+    /* Compare mini-demo: the differing rows pulse */
+    .demo-compare .mr.diff .ml { animation: diffPulse 3s ease-in-out infinite; }
+    @keyframes diffPulse {
+      0%,100% { background: color-mix(in srgb, var(--error) 20%, var(--rule-strong)); }
+      50%     { background: color-mix(in srgb, var(--error) 60%, var(--rule-strong)); }
+    }
+
+    /* Batch mini-demo: dots settle in sequence */
+    .demo-batch .mr { opacity: 0; animation: rise .4s ease forwards; }
+    .demo-batch .mr:nth-child(1) { animation-delay: .1s; }
+    .demo-batch .mr:nth-child(2) { animation-delay: .25s; }
+    .demo-batch .mr:nth-child(3) { animation-delay: .4s; }
+    .demo-batch .mr:nth-child(4) { animation-delay: .55s; }
+  }
+
+  /* ---------- messages / empty ---------- */
+  .msg {
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    font-size: 13px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .msg.error {
+    background: var(--error-bg);
+    border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+    color: var(--error);
+  }
+  .msg.warn {
+    background: var(--warn-bg);
+    border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+    color: var(--warn);
+  }
+  .msg.info {
+    background: var(--field);
+    border: 1px solid var(--rule-strong);
+    color: var(--ink-soft);
+  }
+  .msg .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex: none; }
+  .msg.error .dot { background: var(--error); }
+  .msg.warn  .dot { background: var(--warn); }
+  .msg.info  .dot { background: var(--ink-faint); }
+  .msg.info  .title { color: var(--ink); }
+  .msg .body { min-width: 0; }
+  .msg .title { font-weight: 700; display: block; margin-bottom: 2px; }
+  .msg code { font-family: var(--mono); word-break: break-all; }
+
+  .banners { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .banners:empty { display: none; margin: 0; }
+
+  /* ---------- plain-English summary ---------- */
+  .plainsum {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 15px 17px;
+    margin-bottom: 18px;
+  }
+  .plainsum .chip { margin-top: 7px; width: 9px; height: 9px; }
+  .plainsum .sentence {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .plainsum .sentence .val {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .plainsum .sentence .tone-error { color: var(--error); font-weight: 600; }
+  .plainsum .sentence .tone-warn  { color: var(--warn);  font-weight: 600; }
+  .nameaff { display: inline-flex; align-items: baseline; }
+  .namebtn {
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--ink-faint); background: none; border: 1px dashed var(--rule-strong);
+    border-radius: 4px; padding: 1px 6px; margin-left: 2px; cursor: pointer;
+    transition: color .12s, border-color .12s;
+  }
+  .namebtn:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .namebtn:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+  .name-input {
+    font-family: var(--mono); font-size: 13px; color: var(--ink);
+    border: 1px solid var(--ink-soft); border-radius: 4px; padding: 1px 6px;
+    width: 130px; margin-left: 2px;
+  }
+  .name-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(20,24,29,0.07); }
+
+  .hs-note { font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink-faint); }
+  #savedNames.emptynames { color: var(--ink-faint); }
+  .hs-empty { margin: 0; font-size: 13px; color: var(--ink-faint); }
+  .hs-group { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; font-weight: 600; color: var(--ink-faint); margin: 4px 0 8px; }
+  .hs-group:not(:first-child) { margin-top: 16px; }
+  .hs-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+  .hs-row:last-child { border-bottom: none; }
+  .hs-key { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+  .hs-arrow { color: var(--ink-faint); }
+  .hs-name { font-size: 13.5px; color: var(--ink-soft); flex: 1 1 auto; }
+  .hs-remove { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--ink-faint); background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .hs-remove:hover { color: var(--error); }
+
+  /* ---------- inline fix-it ---------- */
+  .fixbox:empty { display: none; }
+  .fixbox { margin-top: 7px; }
+  .fixbtn {
+    font-family: var(--sans);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--ink);
+    background: var(--panel);
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: background-color .12s, border-color .12s;
+  }
+  .fixbox .fixbtn::before { content: "✓ "; color: var(--ink-faint); }
+  .fixbtn:hover { background: var(--field); border-color: var(--ink-faint); }
+  .fixbtn:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+  .fixbtn.error { color: var(--error); border-color: color-mix(in srgb, var(--error) 35%, transparent); }
+  .fixbtn.warn  { color: var(--warn);  border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+  .fixbtn.error:hover { background: var(--error-bg); }
+  .fixbtn.warn:hover  { background: var(--warn-bg); }
+
+  .banner-fix { display: flex; gap: 7px; margin-top: 10px; }
+  .fix-input {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--panel);
+    border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+    border-radius: 5px;
+    padding: 6px 10px;
+    width: 150px;
+  }
+  .fix-input:focus { outline: none; box-shadow: 0 0 0 3px var(--error-bg); }
+
+  .empty {
+    text-align: center;
+    color: var(--ink-faint);
+    padding: 38px 24px;
+    border: 1px dashed var(--rule-strong);
+    border-radius: var(--radius);
+    background:
+      repeating-linear-gradient(135deg, transparent 0 11px, color-mix(in srgb, var(--rule) 45%, transparent) 11px 12px),
+      var(--panel);
+    font-size: 13px;
+  }
+  .empty .big {
+    font-family: var(--mono);
+    font-size: 22px;
+    letter-spacing: .04em;
+    color: var(--rule-strong);
+    margin-bottom: 8px;
+  }
+  .empty .ex-btn { margin-top: 16px; }
+
+  /* ---------- motion ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    /* entrance fade, used only on fresh renders (not on every keystroke) */
+    .reveal { animation: rise .3s ease both; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* staggered table rows — the signature reveal */
+    .ptable.stagger .prow { animation: rowIn .36s cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--i, 0) * 26ms); }
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* status colour glides during live edits */
+    .gutter, .dot { transition: background-color .3s ease; }
+    .snote { transition: color .2s ease; }
+
+    /* panel crossfade on Inspect/Compare switch */
+    .panelIn { animation: panelFade .3s ease both; }
+    @keyframes panelFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* rebuilt link pulses when its value changes */
+    .rebuilt-url.flash { animation: urlFlash .6s ease; }
+    @keyframes urlFlash {
+      0%   { background: color-mix(in srgb, var(--ink) 8%, var(--field)); }
+      100% { background: var(--field); }
+    }
+
+    /* one-shot pulse on the privacy dot at load */
+    .privacy .lock { animation: lockPulse 2s ease-out 2; }
+    @keyframes lockPulse {
+      0%   { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 3px  rgba(22,133,90,.5); }
+      100% { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 13px rgba(22,133,90,0); }
+    }
+
+    /* ===== looping help screencast — one 13s timeline, all synced ===== */
+    .sc-typed { clip-path: inset(0 100% 0 0); animation: scType 13s linear infinite; }
+    @keyframes scType {
+      0% { clip-path: inset(0 100% 0 0); } 14% { clip-path: inset(0 0 0 0); }
+      92% { clip-path: inset(0 0 0 0); } 96%,100% { clip-path: inset(0 100% 0 0); }
+    }
+    .sc-rows .sc-row { opacity: 0; animation: scRow 13s ease infinite; }
+    @keyframes scRow {
+      0%,16% { opacity: 0; transform: translateY(5px); }
+      24%,90% { opacity: 1; transform: none; } 96%,100% { opacity: 0; }
+    }
+    .sc-bad { animation: scBad 13s ease infinite; }
+    @keyframes scBad { 0%,17% { opacity: 0; } 23%,42% { opacity: 1; } 50%,100% { opacity: 0; } }
+    .sc-ok  { opacity: 0; animation: scOk 13s ease infinite; }
+    @keyframes scOk { 0%,48% { opacity: 0; } 56%,90% { opacity: 1; } 96%,100% { opacity: 0; } }
+    .sc-g.aff, .sc-chip { animation: scAff 13s ease infinite; }
+    @keyframes scAff { 0%,44% { background: var(--error); } 54%,100% { background: var(--ok); } }
+    .av-empty { animation: scBad 13s ease infinite; }
+    .av-set   { opacity: 0; animation: scOk 13s ease infinite; }
+    .sc-tick  { opacity: 0; animation: scOk 13s ease infinite; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 640px) {
+    .wrap { padding: 22px 14px 72px; }
+    .prow { grid-template-columns: var(--gut) 1fr; }
+    .cell { border-left: none; border-top: 1px solid var(--rule); }
+    .cell.key { border-top: none; }
+    .colhead { display: none; }
+    .cell::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 9.5px; text-transform: uppercase; letter-spacing: .12em;
+      color: var(--ink-faint); font-weight: 600; margin-bottom: 3px;
+    }
+    .cell.key::before { content: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="mast">
+      <h1><span class="glyph">?=</span> Param Decoder</h1>
+      <span class="org">BuyGoods · Internal</span>
+    </header>
+
+    <p class="privacy">
+      <span class="lock" aria-hidden="true"></span>
+      <span><strong>Runs entirely in your browser.</strong> Nothing you paste is sent, stored, or logged — paste live links freely.</span>
+    </p>
+
+    <div class="modebar-row">
+      <div class="modebar" role="tablist" aria-label="Mode">
+        <button class="mode on" id="modeInspect"  data-mode="inspect"  role="tab" aria-selected="true">Inspect</button>
+        <button class="mode"    id="modeCompare"  data-mode="compare"  role="tab" aria-selected="false">Compare</button>
+        <button class="mode"    id="modeBatch"    data-mode="batch"    role="tab" aria-selected="false">Batch</button>
+        <button class="mode"    id="modePostback" data-mode="postback" role="tab" aria-selected="false">Postback</button>
+        <button class="mode help-tab" id="modeHelp" data-mode="help" role="tab" aria-selected="false">How to use</button>
+      </div>
+      <button class="btn share" id="shareBtn" data-label="Copy share link" title="Copy a link that reopens this exact view">Copy share link</button>
+    </div>
+
+    <section id="inspectPanel" role="tabpanel" aria-labelledby="modeInspect">
+      <div class="input-block">
+        <p class="eyebrow">Paste a URL</p>
+        <textarea id="src" spellcheck="false" autocomplete="off"
+          placeholder="https://example.com/checkout?aff_id=639&subid=facebook&utm_source=newsletter"></textarea>
+      </div>
+      <div id="out" aria-live="polite"></div>
+    </section>
+
+    <section id="comparePanel" role="tabpanel" aria-labelledby="modeCompare" hidden>
+      <div class="cmp-inputs">
+        <div class="input-block">
+          <p class="eyebrow">Link A</p>
+          <textarea id="srcA" spellcheck="false" autocomplete="off"
+            placeholder="https://example.com/checkout?aff_id=639&subid=facebook"></textarea>
+        </div>
+        <div class="input-block">
+          <p class="eyebrow">Link B</p>
+          <textarea id="srcB" spellcheck="false" autocomplete="off"
+            placeholder="https://example.com/checkout?aff_id=1234&subid=bing"></textarea>
+        </div>
+      </div>
+      <div id="cmpOut" aria-live="polite"></div>
+    </section>
+
+    <section id="batchPanel" role="tabpanel" aria-labelledby="modeBatch" hidden>
+      <div class="input-block">
+        <p class="eyebrow">Paste one link per line</p>
+        <textarea id="srcBatch" class="tall" spellcheck="false" autocomplete="off"
+          placeholder="https://example.com/checkout?aff_id=639&subid=facebook&#10;https://example.com/checkout?aff_id=&#10;https://example.com/checkout?aff_id=1234&subid=bing"></textarea>
+      </div>
+      <div id="batchOut" aria-live="polite"></div>
+    </section>
+
+    <section id="postbackPanel" role="tabpanel" aria-labelledby="modePostback" hidden>
+      <div class="input-block">
+        <p class="eyebrow">Paste a postback URL</p>
+        <textarea id="srcPostback" spellcheck="false" autocomplete="off"
+          placeholder="https://tracker.com/postback?subid={SUBID}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}"></textarea>
+      </div>
+      <div id="pbOut" aria-live="polite"></div>
+    </section>
+
+    <section id="helpPanel" role="tabpanel" aria-labelledby="modeHelp" hidden>
+      <div class="help">
+        <div class="help-hero">
+          <p class="eyebrow">How to use</p>
+          <h2>Read any BuyGoods link in one glance.</h2>
+          <p class="lead">Paste a checkout, offer, or postback URL — Param Decoder explains what every parameter does, flags what's broken, and lets you fix and rebuild it. Nothing you paste leaves your browser.</p>
+        </div>
+
+        <div class="screencast" aria-hidden="true">
+          <div class="sc-cap"><span class="sc-rec"></span> Param Decoder in action</div>
+          <div class="sc-frame">
+            <div class="sc-bar"><span class="sc-typed">https://nationlifenews.com/af/?aff_id=&amp;subid5=alphabite_ml1</span></div>
+            <div class="sc-body">
+              <div class="sc-summary">
+                <span class="sc-chip"></span>
+                <span class="sc-sum sc-bad">A link with <b>no valid affiliate ID</b> for <b>nationlifenews.com</b>.</span>
+                <span class="sc-sum sc-ok">Affiliate <b>162939</b>’s link for <b>nationlifenews.com</b>, tracking <b>alphabite_ml1</b>.</span>
+              </div>
+              <div class="sc-rows">
+                <div class="sc-row"><span class="sc-g ok"></span><span class="sc-k">subid5</span><span class="sc-v">alphabite_ml1</span></div>
+                <div class="sc-row"><span class="sc-g aff"></span><span class="sc-k">aff_id</span>
+                  <span class="sc-affv"><span class="av-empty">(empty)</span><span class="av-set">162939</span></span>
+                  <span class="sc-tick">✓ fixed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-card example">
+          <p class="eyebrow">Worked example — a live checkout link</p>
+          <div class="demo-url" id="demoUrl"></div>
+          <div class="demo-decode" aria-hidden="true">
+            <div class="dline d1"><span class="dk">account_id</span><span class="dv">11292</span><span class="dm">the BuyGoods account</span></div>
+            <div class="dline d2"><span class="dk">product_codename</span><span class="dv">vis2fnn2</span><span class="dm">the offer being sold</span></div>
+            <div class="dline d3">
+              <span class="dk">redirect</span><span class="dv b64">aHR0cDovL3Zpc2l1…</span>
+              <span class="arrow">↳</span><span class="dv decoded">http://visiumpro.com/fnn2/up1</span>
+              <span class="dm">decoded from Base64</span>
+            </div>
+            <div class="dline d4"><span class="dk">sub19 · sub20</span><span class="dv">v3_a962a533…</span><span class="dm">checkout tracking</span></div>
+          </div>
+          <button class="btn primary" id="tryExample" type="button">Try this in Inspect →</button>
+        </div>
+
+        <p class="eyebrow help-sec">The four modes</p>
+        <div class="help-modes">
+          <div class="help-card mode-card">
+            <div class="mc-demo demo-inspect" aria-hidden="true">
+              <div class="mr"><span class="mg ok"></span><span class="ml"></span></div>
+              <div class="mr"><span class="mg ok"></span><span class="ml short"></span></div>
+              <div class="mr fixrow"><span class="mg"></span><span class="ml"></span><span class="tick">✓</span></div>
+            </div>
+            <h3>Inspect</h3>
+            <p>Read and repair one link. Every param is labelled in plain English; flags are <em>red / amber / green</em>; edit values inline, toggle params off, then copy a clean rebuilt link.</p>
+            <button class="btn ghost" data-open="inspect" type="button">Open Inspect</button>
+          </div>
+
+          <div class="help-card mode-card">
+            <div class="mc-demo demo-compare" aria-hidden="true">
+              <div class="cc">
+                <div class="mr"><span class="ml"></span></div>
+                <div class="mr diff"><span class="ml short"></span></div>
+                <div class="mr"><span class="ml"></span></div>
+              </div>
+              <div class="cc">
+                <div class="mr"><span class="ml"></span></div>
+                <div class="mr diff"><span class="ml short"></span></div>
+                <div class="mr"><span class="ml mini"></span></div>
+              </div>
+            </div>
+            <h3>Compare</h3>
+            <p>Two links side by side, merged by param. Differences in <strong>aff_id</strong> and <strong>subid</strong> stand out the most — the fastest way to answer "why does one track and the other doesn't".</p>
+            <button class="btn ghost" data-open="compare" type="button">Open Compare</button>
+          </div>
+
+          <div class="help-card mode-card">
+            <div class="mc-demo demo-batch" aria-hidden="true">
+              <div class="mr"><span class="mdot ok"></span><span class="ml"></span></div>
+              <div class="mr"><span class="mdot error"></span><span class="ml short"></span></div>
+              <div class="mr"><span class="mdot ok"></span><span class="ml"></span></div>
+              <div class="mr"><span class="mdot warn"></span><span class="ml short"></span></div>
+            </div>
+            <h3>Batch</h3>
+            <p>Paste a whole spreadsheet column of links, get a green/red pass-fail table back. Check a campaign's worth of links at once; jump into any row with one click.</p>
+            <button class="btn ghost" data-open="batch" type="button">Open Batch</button>
+          </div>
+
+          <div class="help-card mode-card">
+            <div class="mc-demo demo-postback" aria-hidden="true">
+              <span class="chip ok">{SUBID} ✓</span>
+              <span class="chip ok">{ORDERID} ✓</span>
+              <span class="chip bad">{CLICKID} ✗</span>
+            </div>
+            <h3>Postback</h3>
+            <p>Check a tracker's postback URL against the five tokens BuyGoods actually fills (<span class="mono">{SUBID}…{SUBID5}, {ORDERID}, {COMMISSION_AMOUNT}…</span>). Catches tokens BuyGoods will never send.</p>
+            <button class="btn ghost" data-open="postback" type="button">Open Postback</button>
+          </div>
+        </div>
+
+        <p class="eyebrow help-sec">What the flags mean</p>
+        <div class="help-card legend">
+          <div class="leg"><span class="dot error"></span><div><strong>Error</strong> — the link is broken. Usually a missing or empty <span class="mono">aff_id</span>: no commission will attribute.</div></div>
+          <div class="leg"><span class="dot warn"></span><div><strong>Warning</strong> — worth a look, won't block. Duplicate params, a <span class="mono">utm_source</span> with spaces, an incomplete UTM set.</div></div>
+          <div class="leg"><span class="dot ok"></span><div><strong>OK</strong> — recognised and valid. Unknown offer params default here; <span class="mono">{PLACEHOLDER}</span> tokens are always fine.</div></div>
+          <div class="leg"><span class="dot info"></span><div><strong>Heads-up</strong> — <span class="mono">aff_id</span> pays the affiliate; a <span class="mono">subid</span> click-ID is what reports the conversion back to a tracker. They're different jobs.</div></div>
+        </div>
+
+        <p class="eyebrow help-sec">Saved names <span class="hs-note">— stored on this device only, never sent</span></p>
+        <div class="help-card" id="savedNames"></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   PARSING  — pure functions, no DOM
+   ============================================================ */
+
+// A scheme is present when the input starts with "word://" (or "word:")
+const SCHEME_RE = /^[a-z][a-z0-9+.\-]*:\/\//i;
+
+/**
+ * Decode a single form-encoded query value.
+ * '+' means space by form convention; tolerate malformed % sequences.
+ */
+function decodeValue(raw) {
+  try {
+    return decodeURIComponent(raw.replace(/\+/g, " "));
+  } catch {
+    return raw; // leave malformed input visible rather than throwing
+  }
+}
+
+/**
+ * Split a raw query string into ordered {key, value, rawValue} records.
+ * Preserves order and duplicate keys; does not use URLSearchParams so we
+ * can keep the raw encoded value alongside the decoded one.
+ */
+function parseQuery(search) {
+  const query = search.startsWith("?") ? search.slice(1) : search;
+  if (query === "") return [];
+  return query.split("&").map((pair) => {
+    if (pair === "") return null;
+    const eq = pair.indexOf("=");
+    const rawKey = eq === -1 ? pair : pair.slice(0, eq);
+    const rawValue = eq === -1 ? "" : pair.slice(eq + 1);
+    return {
+      key: decodeValue(rawKey),
+      value: decodeValue(rawValue),
+      rawValue,
+      hasEquals: eq !== -1,   // distinguishes "key=" from a bare "key" flag
+    };
+  }).filter(Boolean);
+}
+
+/**
+ * Parse pasted text into a structured result. Never throws.
+ * Returns { ok, error?, assumedScheme, scheme, host, path, fragment, params }.
+ */
+function parseInput(text) {
+  const trimmed = text.trim();
+  if (trimmed === "") return { ok: false, empty: true };
+
+  let url = null;
+  let assumedScheme = false;
+
+  try {
+    url = new URL(trimmed);
+  } catch {
+    // No usable scheme — retry with https:// prepended.
+    if (!SCHEME_RE.test(trimmed)) {
+      try {
+        url = new URL("https://" + trimmed);
+        assumedScheme = true;
+      } catch { /* fall through */ }
+    }
+  }
+
+  if (!url) {
+    return { ok: false, error: "That doesn't parse as a URL. Check for stray spaces or a missing host." };
+  }
+
+  return {
+    ok: true,
+    assumedScheme,
+    scheme: url.protocol.replace(":", ""),
+    host: url.host,
+    path: url.pathname,
+    fragment: url.hash ? url.hash.slice(1) : "",
+    params: parseQuery(url.search),
+  };
+}
+
+/* ============================================================
+   BUYGOODS PARAM DICTIONARY  —  the moat
+   ------------------------------------------------------------
+   Every param BuyGoods actually uses, each with a plain-English
+   description so the table EXPLAINS the link instead of just
+   echoing raw keys. To support a new offer-specific param, add
+   one line here — no logic edits.
+
+     label    human name for the param
+     desc     one-line plain-English meaning (shown on OK rows)
+     required value must be non-empty (else a quiet warning)
+     numeric  value must be all digits (else an error)
+     critical absence of the param is a top-level error banner
+     validate optional custom check -> { status, note }
+
+   Sources: BuyGoods backoffice + tracker integration docs
+   (AnyTrack, CPV Lab). BuyGoods exposes five tracking slots
+   (subid..subid5); aff_id earns commission, a subid slot
+   carries the click ID a tracker needs to credit conversions.
+   ============================================================ */
+
+const STATUS = { ok: "ok", warn: "warn", error: "error" };
+const RANK = { ok: 0, warn: 1, error: 2 };          // for max-severity merges
+
+const ok    = (note) => ({ status: STATUS.ok,    note });
+const warn  = (note) => ({ status: STATUS.warn,  note });
+const error = (note) => ({ status: STATUS.error, note });
+
+/** A value that is exactly one {TOKEN} — a postback/template placeholder. */
+const isPlaceholder = (value) => /^\{[^{}]+\}$/.test(value);
+
+/** Decode a (possibly URL-safe) Base64 string, or null if it isn't clean Base64. */
+function decodeBase64(value) {
+  try {
+    let s = value.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(s)) return null;
+    const out = decodeURIComponent(escape(atob(s)));
+    return /[\x00-\x08\x0e-\x1f]/.test(out) ? null : out; // reject binary garbage
+  } catch { return null; }
+}
+
+/** If a value Base64-decodes to a URL, return that URL (low false-positive). */
+function base64Url(value) {
+  if (value.length < 8) return null;
+  const decoded = decodeBase64(value);
+  return decoded && /^https?:\/\//i.test(decoded) ? decoded : null;
+}
+
+/**
+ * Look up a param's config: exact key, lowercase key, or a pattern.
+ * Checkout pages carry sub1..subN tracking values alongside the offer-link
+ * subid slots, so sub<N> is recognised generically.
+ */
+function lookupConfig(key) {
+  const direct = PARAM_CONFIG[key] || PARAM_CONFIG[key.toLowerCase()];
+  if (direct) return direct;
+  const m = /^sub(\d+)$/i.exec(key);
+  if (m) return { label: "Checkout sub " + m[1], desc: "Checkout-level tracking value.", required: true };
+  return null;
+}
+
+/* ------------------------------------------------------------
+   VSL PATH INTELLIGENCE
+   ------------------------------------------------------------
+   BuyGoods advertorial/VSL funnels encode the funnel in the PATH
+   (e.g. /hu/vsl7/l1/af/ = Hungarian, VSL variant 7, lander 1,
+   affiliate redirect). Heuristic, never errors — only recognised
+   segments are surfaced.
+   ------------------------------------------------------------ */
+const GEO_CODES = {
+  // languages
+  en: "English", hu: "Hungarian", de: "German", fr: "French", es: "Spanish",
+  it: "Italian", pt: "Portuguese", nl: "Dutch", pl: "Polish", sv: "Swedish",
+  da: "Danish", no: "Norwegian", fi: "Finnish", cs: "Czech", ro: "Romanian",
+  el: "Greek", tr: "Turkish", ru: "Russian", ja: "Japanese", ko: "Korean",
+  // country / locale codes (Brazil is a major BuyGoods market)
+  br: "Brazil", "pt-br": "Brazil (Portuguese)", ptbr: "Brazil (Portuguese)", "pt_br": "Brazil (Portuguese)",
+  us: "United States", uk: "United Kingdom", gb: "United Kingdom", ca: "Canada",
+  au: "Australia", mx: "Mexico", co: "Colombia", ar: "Argentina", za: "South Africa",
+};
+const PATH_RULES = [
+  { re: /^(vsl)(\d*)$/i,         label: (m) => "VSL page" + (m[2] ? " (variant " + m[2] + ")" : "") },
+  { re: /^(tsl)(\d*)$/i,         label: (m) => "Text sales letter" + (m[2] ? " (variant " + m[2] + ")" : "") },
+  { re: /^l(\d+)$/i,            label: (m) => "Lander " + m[1] },
+  { re: /^(lander|lp)(\d*)$/i,   label: (m) => "Lander" + (m[2] ? " " + m[2] : "") },
+  { re: /^af{1,2}$/i,           label: () => "Affiliate redirect" },
+  { re: /^up(\d+)$/i,           label: (m) => "Upsell " + m[1] },
+  { re: /^(ds|down|downsell)(\d*)$/i, label: (m) => "Downsell" + (m[2] ? " " + m[2] : "") },
+  { re: /^dtc$/i,              label: () => "Direct-to-consumer funnel" },
+  { re: /^(checkout|order|secure)(\.\w+)?$/i, label: () => "Checkout page" },
+  { re: /^(report|presell|advertorial|article)(\.\w+)?$/i, label: () => "Advertorial / pre-sell" },
+];
+
+/** Interpret a URL path into [{ segment, meaning }] for recognised parts. */
+function interpretPath(path) {
+  return path.split("/").filter(Boolean).map((seg) => {
+    const rule = PATH_RULES.find((r) => r.re.test(seg));
+    if (rule) return { segment: seg, meaning: rule.label(rule.re.exec(seg)) };
+    const geo = GEO_CODES[seg.toLowerCase()];
+    if (geo) return { segment: seg, meaning: "Language / geo — " + geo };
+    return null;
+  }).filter(Boolean);
+}
+
+/** utm_source / utm_medium: lowercase single-token, warn (never block). */
+function utmToken(label, desc) {
+  return (value) => {
+    if (value === "") return warn(`${label} is empty.`);
+    if (/\s/.test(value)) return warn(`${label} has spaces — tracking may split it.`);
+    if (/[A-Z]/.test(value)) return warn(`${label} has uppercase — sources are usually lowercase.`);
+    return ok(desc);
+  };
+}
+
+const PARAM_CONFIG = {
+  // — the param that decides whether the link earns commission —
+  aff_id:     { label: "Affiliate ID", desc: "Who earns commission on this sale.", numeric: true, critical: true },
+
+  // — BuyGoods' five tracking slots: non-empty only, NEVER format-checked —
+  subid:      { label: "Tracking slot 1", desc: "Pass-through tracking value — often the click ID.", required: true },
+  subid2:     { label: "Tracking slot 2", desc: "Pass-through tracking value — usually the click ID from your tracker.", required: true },
+  subid3:     { label: "Tracking slot 3", desc: "Free tracking value.", required: true },
+  subid4:     { label: "Tracking slot 4", desc: "Free tracking value — often a creative or placement code.", required: true },
+  subid5:     { label: "Tracking slot 5", desc: "Free tracking value — often the campaign or VSL name.", required: true },
+  sid2:       { label: "Tracking slot 2", desc: "Non-standard spelling of subid2.", required: true },
+
+  // — other known BuyGoods identifiers (seen on secure checkout links) —
+  account_id:       { label: "Account ID",   desc: "BuyGoods backoffice account identifier." },
+  product_codename: { label: "Product codename", desc: "Which BuyGoods offer/product this checkout sells." },
+  product_code:     { label: "Product code", desc: "Which BuyGoods offer/product this link points at." },
+  redirect:         { label: "Redirect target", desc: "Where the buyer goes after checkout (Base64-encoded).", decodeBase64: true },
+
+  // — UTM family: where ad-platform traffic came from —
+  utm_source:   { label: "UTM source",   validate: utmToken("UTM source", "Where the traffic came from (ad platform / placement).") },
+  utm_medium:   { label: "UTM medium",   validate: utmToken("UTM medium", "Traffic type — cpc, email, social, etc.") },
+  utm_campaign: { label: "UTM campaign", desc: "Campaign name for reporting." },
+  utm_term:     { label: "UTM term",     desc: "Keyword or audience for this click." },
+  utm_content:  { label: "UTM content",  desc: "Which ad/creative variant this click came from." },
+};
+
+/** BuyGoods' five tracking slots (+ the non-standard sid2 alias). */
+const SUBID_KEYS = ["subid", "subid2", "subid3", "subid4", "subid5", "sid2"];
+
+/* ------------------------------------------------------------
+   NAME RESOLUTION  (client-side, user-maintainable)
+   ------------------------------------------------------------
+   No platform access needed — fill these in as you learn them,
+   or wire to a read-access source later. When a value resolves,
+   the plain-English summary names it instead of echoing a code.
+   ------------------------------------------------------------ */
+const AFFILIATE_SEED = {
+  // "162939": "Adelina",
+};
+const OFFER_SEED = {
+  // host (lowercased, no www) -> human offer/product name. Seed list
+  // of known BuyGoods product domains; extend freely.
+  "getcellucare.com":  "CelluCare",
+  "buytrumpbucks.com": "Trump Bucks",
+};
+// live maps = seed + names you've saved on this device (localStorage)
+let AFFILIATE_NAMES = { ...AFFILIATE_SEED };
+let OFFER_NAMES = { ...OFFER_SEED };
+
+const NAMES_LS_KEY = "param-decoder-names-v1";
+const offerHost = (host) => host.replace(/^www\./, "").toLowerCase();
+const resolveAffiliate = (id) => AFFILIATE_NAMES[id] || null;
+const resolveOffer = (host) => OFFER_NAMES[offerHost(host)] || null;
+
+function loadSavedNames() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(NAMES_LS_KEY) || "{}");
+    AFFILIATE_NAMES = { ...AFFILIATE_SEED, ...(saved.aff || {}) };
+    OFFER_NAMES = { ...OFFER_SEED, ...(saved.offer || {}) };
+  } catch { /* storage blocked — fall back to seeds */ }
+}
+/** Persist only the user-added entries (the diff from the seed). */
+function persistSavedNames() {
+  const diff = (live, seed) => {
+    const out = {};
+    for (const k in live) if (live[k] !== seed[k]) out[k] = live[k];
+    return out;
+  };
+  try {
+    localStorage.setItem(NAMES_LS_KEY, JSON.stringify({
+      aff: diff(AFFILIATE_NAMES, AFFILIATE_SEED),
+      offer: diff(OFFER_NAMES, OFFER_SEED),
+    }));
+  } catch { /* storage blocked — names stay for this session only */ }
+}
+function saveAffiliateName(id, name) { AFFILIATE_NAMES[id] = name; persistSavedNames(); }
+function saveOfferName(host, name) { OFFER_NAMES[offerHost(host)] = name; persistSavedNames(); }
+function removeSavedName(kind, key) {
+  if (kind === "aff") delete AFFILIATE_NAMES[key]; else delete OFFER_NAMES[key];
+  persistSavedNames();
+}
+/** User-added entries only (for the Help-tab manager). */
+function userSavedNames() {
+  const pick = (live, seed) => Object.keys(live).filter((k) => live[k] !== seed[k]).map((k) => ({ key: k, name: live[k] }));
+  return { aff: pick(AFFILIATE_NAMES, AFFILIATE_SEED), offer: pick(OFFER_NAMES, OFFER_SEED) };
+}
+
+loadSavedNames();
+
+/* ------------------------------------------------------------
+   POSTBACK TOKENS  —  the fixed set BuyGoods will fill
+   ------------------------------------------------------------ */
+const POSTBACK_TOKENS = {
+  SUBID: "SubID slot 1", SUBID2: "SubID slot 2", SUBID3: "SubID slot 3",
+  SUBID4: "SubID slot 4", SUBID5: "SubID slot 5",
+  ORDERID: "Unique order ID", PRODUCT_CODENAME: "Product code",
+  COMMISSION_AMOUNT: "Commission amount", EMAILHASH: "Hashed buyer email",
+};
+
+/* ============================================================
+   VALIDATION PASS — annotates rows + produces banners & counts
+   ============================================================ */
+
+/** Classify a single param in isolation (duplicates handled later). */
+function classifyParam(key, value) {
+  const cfg = lookupConfig(key);
+  const label = cfg ? cfg.label : null;
+  const desc = cfg && cfg.desc ? cfg.desc : label; // OK rows explain the param
+
+  // 1. a pure {PLACEHOLDER} is always valid, for any param
+  if (isPlaceholder(value)) return { status: STATUS.ok, note: "Template placeholder — filled in at click time.", label };
+
+  // 2. Base64-carrying params (e.g. redirect) → decode and show the destination
+  if (cfg && cfg.decodeBase64 && value !== "") {
+    const decoded = decodeBase64(value);
+    return decoded
+      ? { ...ok(`${desc} → ${decoded}`), label, decoded }
+      : { ...warn(`${label} doesn't decode as Base64.`), label };
+  }
+
+  // 2b. ANY param whose value Base64-decodes to a URL → show the destination
+  if (!(cfg && cfg.validate)) {
+    const url = base64Url(value);
+    if (url) return { ...ok(`${desc ? desc + " " : "Base64-encoded "}→ ${url}`), label, decoded: url };
+  }
+
+  // 3. custom validator wins when present (UTM token rules)
+  if (cfg && cfg.validate) return { ...cfg.validate(value), label };
+
+  // 3. numeric requirement (aff_id only)
+  if (cfg && cfg.numeric) {
+    if (value === "") return { ...error(`${label} is empty — this link won't attribute commission.`), label };
+    if (!/^\d+$/.test(value)) return { ...error(`${label} should be a number — "${value}" looks malformed.`), label };
+    return { ...ok(desc), label };
+  }
+
+  // 4. required, non-empty, no format check (subid family)
+  if (cfg && cfg.required) {
+    if (value === "") return { ...warn(`${label} is empty.`), label };
+    return { ...ok(desc), label };
+  }
+
+  // 5. general empty-value → quiet warning
+  if (value === "") return { ...warn("Empty value."), label };
+
+  // 6. known-but-unchecked → describe it; unknown param → ok, no note
+  return { ...ok(desc), label };
+}
+
+/**
+ * Validate a list of params (the currently active set). Returns rows
+ * (each annotated with status/note/label), URL-level banners, and counts.
+ */
+function validate(params) {
+  const rows = params.map((p) => ({ ...p, ...classifyParam(p.key, p.value) }));
+
+  // — duplicate keys with differing values → warning on each occurrence —
+  const byKey = new Map();
+  rows.forEach((r) => {
+    if (!byKey.has(r.key)) byKey.set(r.key, []);
+    byKey.get(r.key).push(r);
+  });
+  byKey.forEach((group, key) => {
+    if (group.length < 2) return;
+    const distinct = new Set(group.map((r) => r.value));
+    if (distinct.size < 2) return; // identical duplicates are harmless
+    group.forEach((r) => {
+      if (RANK[r.status] < RANK.warn) { r.status = STATUS.warn; }
+      r.note = `Duplicate "${key}" (${group.length}×, differing values) — common cause of wrong tracking.`;
+    });
+  });
+
+  const banners = [];
+  const keys = rows.map((r) => r.key);
+
+  // — affiliate ID missing OR empty: the headline commission failure.
+  //   Either way, offer the inline "add aff_id" fix box. —
+  const affRow = rows.find((r) => r.key === "aff_id");
+  const affMissing = !affRow;
+  const affEmpty = affRow && affRow.value === "";
+  if (affMissing || affEmpty) {
+    banners.push({
+      level: STATUS.error,
+      title: affMissing ? "No affiliate ID" : "Affiliate ID is empty",
+      message: "This link won't attribute commission — set aff_id before it goes live.",
+      fix: "add-affid",
+    });
+  }
+
+  // — click-ID insight: distinct from commission. A subid slot must carry
+  //   a value or a {placeholder} for an external tracker to credit the sale. —
+  if (!hasClickId(rows)) {
+    banners.push({
+      level: "info",
+      title: "No click ID",
+      message: "This link can pay the affiliate, but no subid slot carries a click ID, so conversions won't report back to an external tracker. Fine for direct links; add e.g. subid2={clickid} if you track.",
+    });
+  }
+
+  // — UTM gap: some utm_* present but source/campaign missing —
+  const utmKeys = keys.filter((k) => k.startsWith("utm_"));
+  if (utmKeys.length > 0) {
+    const missing = ["utm_source", "utm_campaign"].filter((k) => !keys.includes(k));
+    if (missing.length) {
+      banners.push({
+        level: STATUS.warn,
+        title: "Incomplete UTM set",
+        message: `UTM params are present but ${missing.join(" and ")} ${missing.length > 1 ? "are" : "is"} missing — campaign reporting may have gaps.`,
+      });
+    }
+  }
+
+  // — counts: ok from rows; warn/error include banners (info is not counted) —
+  const summary = { ok: 0, warn: 0, error: 0 };
+  rows.forEach((r) => summary[r.status]++);
+  banners.forEach((b) => { if (b.level in summary) summary[b.level]++; });
+
+  return { rows, banners, summary };
+}
+
+/** True when some subid slot carries a click ID — a real value or a {token}. */
+function hasClickId(rows) {
+  return rows.some((r) => SUBID_KEYS.includes(r.key) && r.value !== "");
+}
+
+/* ============================================================
+   PLAIN-ENGLISH SUMMARY — turn the parsed link into a sentence
+   ------------------------------------------------------------
+   Returns ordered segments [{ t, val?, tone? }] so the renderer
+   can emphasise the concrete values (aff_id, campaign names) and
+   colour only the status-bearing words.
+   ============================================================ */
+
+function composeSummary(parsed, rows) {
+  const find = (k) => rows.find((r) => r.key === k);
+  const parts = [];
+  const text = (t) => parts.push({ t });
+  const val  = (v) => parts.push({ t: v, val: true });
+  const bad  = (t) => parts.push({ t, tone: "error" });
+  // a value we don't have a name for yet → renders with a "+ name" affordance
+  const nameable = (v, kind, key) => parts.push({ t: v, val: true, name: { kind, key } });
+
+  // subject — the affiliate (resolve to a name when we know it)
+  const aff = find("aff_id");
+  if (aff && aff.status === STATUS.ok && !isPlaceholder(aff.value)) {
+    const name = resolveAffiliate(aff.value);
+    text("Affiliate "); val(aff.value);
+    if (name) { text(" ("); val(name); text(")"); }
+    else nameable("", "aff", aff.value);
+    text("’s link");
+  } else if (aff && isPlaceholder(aff.value)) {
+    text("A link with a "); val(aff.value); text(" affiliate-ID placeholder");
+  } else {
+    text("A link with "); bad("no valid affiliate ID");
+  }
+
+  // object — the BuyGoods offer is the product domain (resolve to offer name)
+  const host = parsed.host.replace(/^www\./, "");
+  const offer = resolveOffer(host);
+  text(" for "); val(offer || host);
+  if (offer) { text(" ("); val(host); text(")"); }
+  else nameable("", "offer", host);
+  text(".");
+
+  // tracking — which of the five slots are filled
+  const slots = SUBID_KEYS.map(find).filter(Boolean).filter((s) => s.enabled !== false);
+  if (slots.length === 0) {
+    parts.push({ t: " No click tracking is attached", tone: "warn" });
+    text(" — conversions won’t report back to a tracker.");
+  } else {
+    const placeholders = slots.filter((s) => isPlaceholder(s.value));
+    const filled = slots.filter((s) => !isPlaceholder(s.value) && s.value !== "");
+    if (filled.length) {
+      text(" Carrying ");
+      filled.forEach((s, i) => {
+        if (i > 0) text(i === filled.length - 1 ? " and " : ", ");
+        val(s.value); text(" in "); val(s.key);
+      });
+      text(".");
+    }
+    if (placeholders.length) {
+      text(" A click-ID slot is ready in ");
+      placeholders.forEach((s, i) => {
+        if (i > 0) text(i === placeholders.length - 1 ? " and " : ", ");
+        val(s.key);
+      });
+      text(".");
+    }
+  }
+
+  // traffic source
+  const src = find("utm_source");
+  if (src && src.value && src.status !== STATUS.error) {
+    text(" Tagged as traffic from "); val(src.value); text(".");
+  }
+
+  return parts;
+}
+
+/* ============================================================
+   FIX-IT — compute the repair offered on a flagged row
+   ------------------------------------------------------------
+   Returns null or { type, label, value? }. type "value" rewrites
+   the row's value; type "keep" disables the other duplicates.
+   ============================================================ */
+
+function computeFix(row, activeRows) {
+  if (!row.enabled) return null;
+
+  // aff_id has digits buried in junk → offer the clean digits
+  if (row.key === "aff_id" && row.status === STATUS.error) {
+    const digits = row.value.replace(/\D/g, "");
+    if (digits && digits !== row.value) return { type: "value", label: "Use " + digits, value: digits };
+  }
+
+  // utm_source / utm_medium with spaces or caps → offer a normalised token
+  if ((row.key === "utm_source" || row.key === "utm_medium") && row.status === STATUS.warn) {
+    const cleaned = row.value.trim().toLowerCase().replace(/\s+/g, "_");
+    if (cleaned && cleaned !== row.value) return { type: "value", label: "Fix → " + cleaned, value: cleaned };
+  }
+
+  // differing duplicate → keep this one, drop the rest
+  const sameKey = activeRows.filter((r) => r.key === row.key);
+  if (sameKey.length > 1 && new Set(sameKey.map((r) => r.value)).size > 1) {
+    return { type: "keep", label: "Keep this one" };
+  }
+
+  return null;
+}
+
+/* ============================================================
+   RENDERING — builds DOM from a parse result
+   ============================================================ */
+
+const out = document.getElementById("src");
+const target = document.getElementById("out");
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+/* worked examples used by the empty-state "Try an example" buttons */
+const EXAMPLE_POSTBACK = "https://yourtracker.com/postback?subid={SUBID}&subid2={SUBID2}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}&product={PRODUCT_CODENAME}";
+const EXAMPLE_BATCH = [
+  "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=162939&subid=facebook",
+  "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=",
+  "https://getcellucare.com/dtc/?aff_id=88001&subid4=p36&subid5=alphabite_vsl_ml1",
+  "https://x.com/p?aff_id=639&subid=fb&subid=tiktok",
+].join("\n");
+
+/** A small "Try an example" button for empty states. */
+function exampleButton(onClick) {
+  const btn = el("button", "btn ghost ex-btn", "Try an example");
+  btn.type = "button";
+  btn.addEventListener("click", onClick);
+  return btn;
+}
+
+function renderEmpty() {
+  const box = el("div", "empty reveal");
+  box.append(el("div", "big", "?="));
+  box.append(el("div", null, "Paste a URL above to decode its parameters."));
+  return box;
+}
+
+function renderError(message) {
+  const box = el("div", "msg error reveal");
+  box.append(el("span", "dot"));
+  box.append(el("span", null, message));
+  return box;
+}
+
+function renderBase(result, animate) {
+  const card = el("div", "base" + (animate ? " reveal" : ""));
+  const url = el("div", "url");
+  url.append(el("span", "scheme", result.scheme + "://"));
+  url.append(el("span", "host", result.host));
+  url.append(el("span", "path", result.path));
+  card.append(url);
+
+  if (result.assumedScheme) {
+    const note = el("div", "note");
+    note.append(el("span", "tag", "assumed"));
+    note.append(el("span", null, "No scheme in the input — parsed with https:// prepended."));
+    card.append(note);
+  }
+  if (result.fragment) {
+    const note = el("div", "note");
+    note.append(el("span", "tag frag", "fragment"));
+    const span = el("span", null, "Ignored after #: ");
+    span.append(el("code", null, result.fragment));
+    note.append(span);
+    card.append(note);
+  }
+
+  // VSL path intelligence — read the funnel out of the path
+  const segs = interpretPath(result.path);
+  if (segs.length) {
+    const pathNote = el("div", "pathread");
+    pathNote.append(el("span", "pathread-label", "Path reads as"));
+    const chips = el("div", "pathchips");
+    segs.forEach((s) => {
+      const chip = el("span", "pathchip");
+      chip.append(el("span", "ps", s.segment));
+      chip.append(el("span", "pm", s.meaning));
+      chips.append(chip);
+    });
+    pathNote.append(chips);
+    card.append(pathNote);
+  }
+
+  return card;
+}
+
+const PILL_LABEL = { error: ["error", "errors"], warn: ["warning", "warnings"], ok: ["ok", "ok"] };
+
+function fillSummary(bar, summary) {
+  bar.replaceChildren();
+  ["error", "warn", "ok"].forEach((level) => {
+    const n = summary[level];
+    const pill = el("span", "pill " + level + (n > 0 ? " on" : ""));
+    pill.append(el("b", null, String(n)));
+    const [one, many] = PILL_LABEL[level];
+    pill.append(el("span", null, n === 1 ? one : many));
+    bar.append(pill);
+  });
+}
+
+function fillBanners(wrap, banners) {
+  wrap.replaceChildren();
+  banners.forEach((b) => {
+    const box = el("div", "msg " + b.level);
+    box.append(el("span", "dot"));
+    const body = el("div", "body");
+    body.append(el("span", "title", b.title));
+    body.append(el("span", null, b.message));
+    if (b.fix === "add-affid") body.append(buildAddAffidFix());
+    box.append(body);
+    wrap.append(box);
+  });
+}
+
+/** Inline repair for a missing aff_id: type a number, click to insert it. */
+function buildAddAffidFix() {
+  const form = el("form", "banner-fix");
+  const input = el("input", "fix-input");
+  input.type = "text";
+  input.inputMode = "numeric";
+  input.placeholder = "affiliate ID";
+  input.setAttribute("aria-label", "Affiliate ID to add");
+  const btn = el("button", "fixbtn error", "Add aff_id");
+  btn.type = "submit";
+  form.append(input, btn);
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const digits = input.value.replace(/\D/g, "");
+    if (digits) setAffiliateId(digits);
+  });
+  return form;
+}
+
+/** Set aff_id: fill the existing (empty) row if present, else insert at front. */
+function setAffiliateId(value) {
+  const existing = state.rows.find((r) => r.key === "aff_id");
+  if (existing) {
+    existing.enabled = true;
+    existing.value = value;
+    if (existing.el) {
+      existing.el.editable.textContent = value;
+      existing.el.toggle.checked = true;
+      existing.el.rowEl.classList.remove("off");
+    }
+    recompute();
+  } else {
+    addParam("aff_id", value, true);
+  }
+}
+
+/* ============================================================
+   REBUILD — turn the active edited state into a clean URL
+   ============================================================ */
+
+/** Re-encode a value, leaving whole {PLACEHOLDER} tokens literal. */
+const encodeForUrl = (value) => isPlaceholder(value) ? value : encodeURIComponent(value);
+
+function rebuildUrl(parsed, activeRows) {
+  const query = activeRows
+    .map((r) => (r.hasEquals || r.value !== "")
+      ? r.key + "=" + encodeForUrl(r.value)
+      : r.key)                       // preserve a bare "key" flag
+    .join("&");
+  return parsed.scheme + "://" + parsed.host + parsed.path + (query ? "?" + query : "");
+}
+
+/* ============================================================
+   STATEFUL TABLE — built once per source, patched on edit/toggle
+   ============================================================ */
+
+// state = { parsed, rows: [{ key, value, rawValue, hasEquals, enabled, status, note, el }] }
+let state = null;
+const ui = {};
+
+function buildModel(parsed) {
+  return parsed.params.map((p) => ({
+    key: p.key,
+    value: p.value,
+    rawValue: p.rawValue,
+    hasEquals: p.hasEquals,
+    enabled: true,
+    status: "ok",
+    note: null,
+    el: null,
+  }));
+}
+
+function buildTable(model, animate) {
+  const wrap = el("div", null);
+
+  const head = el("div", "table-head");
+  head.append(el("p", "eyebrow", "Parameters"));
+  const n = model.length;
+  head.append(el("span", "count", n === 1 ? "1 param" : n + " params"));
+  wrap.append(head);
+
+  if (n === 0) {
+    const empty = el("div", "empty");
+    empty.append(el("div", null, "No query parameters on this URL."));
+    wrap.append(empty);
+    return wrap;
+  }
+
+  const table = el("div", "ptable" + (animate ? " stagger" : ""));
+
+  const colhead = el("div", "prow colhead");
+  colhead.style.setProperty("--i", 0);
+  colhead.append(el("div", "gutter"));
+  colhead.append(el("div", "cell key", "Key"));
+  colhead.append(el("div", "cell", "Decoded value"));
+  colhead.append(el("div", "cell", "Raw / encoded"));
+  table.append(colhead);
+
+  model.forEach((row, i) => {
+    const rowEl = buildRow(row);
+    rowEl.style.setProperty("--i", i + 1);
+    table.append(rowEl);
+  });
+  wrap.append(table);
+  return wrap;
+}
+
+function buildRow(row) {
+  const rowEl = el("div", "prow");
+  const gutter = el("div", "gutter");
+  rowEl.append(gutter);
+
+  // key cell: [toggle] [dot] key  +  status note
+  const keyCell = el("div", "cell key");
+  const kline = el("div", "kline");
+  const toggle = el("input", "toggle");
+  toggle.type = "checkbox";
+  toggle.checked = true;
+  toggle.setAttribute("aria-label", "Include " + row.key + " in rebuilt link");
+  const dot = el("span", "dot");
+  kline.append(toggle, dot, el("span", "k", row.key));
+  keyCell.append(kline);
+  const snote = el("div", "snote");
+  keyCell.append(snote);
+  const fixbox = el("div", "fixbox");
+  keyCell.append(fixbox);
+  rowEl.append(keyCell);
+
+  // editable decoded value
+  const valCell = el("div", "cell");
+  valCell.dataset.label = "Decoded value";
+  const editable = el("span", "v edit");
+  editable.contentEditable = "plaintext-only";
+  editable.setAttribute("role", "textbox");
+  editable.setAttribute("aria-label", "Value for " + row.key);
+  editable.textContent = row.value;
+  valCell.append(editable);
+  rowEl.append(valCell);
+
+  // raw / encoded (derived, patched in recompute)
+  const rawCell = el("div", "cell");
+  rawCell.dataset.label = "Raw / encoded";
+  const rawSpan = el("span", "v raw");
+  rawCell.append(rawSpan);
+  rowEl.append(rawCell);
+
+  row.el = { rowEl, gutter, dot, snote, fixbox, toggle, editable, rawSpan };
+
+  toggle.addEventListener("change", () => {
+    row.enabled = toggle.checked;
+    rowEl.classList.toggle("off", !toggle.checked);
+    recompute();
+  });
+  editable.addEventListener("input", () => {
+    row.value = editable.textContent;
+    recompute();
+  });
+
+  return rowEl;
+}
+
+function patchRow(row) {
+  const { gutter, dot, snote, fixbox, rawSpan } = row.el;
+  const status = row.enabled ? row.status : "off";
+
+  gutter.className = "gutter " + (row.enabled ? row.status : "");
+  dot.className = "dot " + (row.enabled ? row.status : "");
+  snote.className = "snote " + status;
+  snote.textContent = row.enabled ? (row.note || "") : "Excluded from rebuilt link";
+
+  // raw column reflects the CURRENT (possibly edited) value's encoding
+  const encoded = encodeForUrl(row.value);
+  if (encoded !== row.value && row.value !== "") {
+    rawSpan.className = "v raw";
+    rawSpan.textContent = encoded;
+  } else {
+    rawSpan.className = "v raw same";
+    rawSpan.textContent = "—";
+  }
+
+  // inline fix-it button (recomputed each pass)
+  fixbox.replaceChildren();
+  const fix = row._fix;
+  if (fix) {
+    const btn = el("button", "fixbtn " + row.status, fix.label);
+    btn.type = "button";
+    btn.addEventListener("click", () => {
+      if (fix.type === "value") applyValueFix(row, fix.value);
+      else if (fix.type === "keep") applyKeepOne(row);
+    });
+    fixbox.append(btn);
+  }
+}
+
+/** Rewrite a row's value (used by the clean-up fixes) and re-validate. */
+function applyValueFix(row, value) {
+  row.value = value;
+  row.el.editable.textContent = value;
+  recompute();
+}
+
+/** Keep this duplicate, switch the other same-key rows off. */
+function applyKeepOne(row) {
+  state.rows.forEach((r) => {
+    if (r !== row && r.key === row.key && r.enabled) {
+      r.enabled = false;
+      r.el.toggle.checked = false;
+      r.el.rowEl.classList.add("off");
+    }
+  });
+  recompute();
+}
+
+/** Insert a brand-new param (used by the "add aff_id" banner fix). */
+function addParam(key, value, atFront) {
+  const row = {
+    key, value, rawValue: value, hasEquals: true,
+    enabled: true, status: "ok", note: null, _fix: null, el: null,
+  };
+  if (atFront) state.rows.unshift(row); else state.rows.push(row);
+  const fresh = buildTable(state.rows);
+  ui.tableWrap.replaceWith(fresh);
+  ui.tableWrap = fresh;
+  recompute();
+}
+
+/** Re-validate the active set and patch all status-dependent DOM. */
+function recompute() {
+  const active = state.rows.filter((r) => r.enabled);
+  const { rows: annotated, banners, summary } =
+    validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })));
+
+  active.forEach((r, i) => { r.status = annotated[i].status; r.note = annotated[i].note; });
+  state.rows.forEach((r) => { r._fix = computeFix(r, active); });
+
+  state.rows.forEach(patchRow);
+  fillSummary(ui.summary, summary);
+  fillBanners(ui.banners, banners);
+  fillPlainSummary(ui.plainsum, composeSummary(state.parsed, state.rows), summary);
+
+  const url = rebuildUrl(state.parsed, active);
+  const changed = ui.rebuiltUrl !== undefined && ui.rebuiltUrl !== url;
+  ui.rebuiltUrl = url;
+  ui.urlBox.textContent = active.length ? url : url + "  (no params)";
+  ui.urlBox.classList.toggle("bare", active.length === 0);
+  if (changed) {
+    ui.urlBox.classList.remove("flash");
+    void ui.urlBox.offsetWidth;   // restart the animation
+    ui.urlBox.classList.add("flash");
+  }
+}
+
+/** Render the plain-English sentence + a status chip into a container. */
+function fillPlainSummary(box, parts, summary) {
+  box.replaceChildren();
+  const worst = summary.error ? "error" : summary.warn ? "warn" : "ok";
+  box.append(el("span", "chip dot " + worst));
+  const sentence = el("p", "sentence");
+  parts.forEach((seg) => {
+    if (seg.name) { sentence.append(nameAffordance(seg.name)); return; }
+    const cls = seg.val ? "val" : seg.tone ? "tone-" + seg.tone : null;
+    sentence.append(el("span", cls, seg.t));
+  });
+  box.append(sentence);
+}
+
+/** A "+ name" chip that swaps to an input, saving an aff_id/offer name on this device. */
+function nameAffordance({ kind, key }) {
+  const wrap = el("span", "nameaff");
+  const btn = el("button", "namebtn", "+ name");
+  btn.type = "button";
+  btn.title = "Save a name for this " + (kind === "aff" ? "affiliate" : "offer") + " — stored on this device only";
+  btn.addEventListener("click", () => {
+    const input = el("input", "name-input");
+    input.placeholder = kind === "aff" ? "affiliate name" : "offer name";
+    input.setAttribute("aria-label", input.placeholder);
+    let done = false;
+    const save = () => {
+      if (done) return; done = true;
+      const v = input.value.trim();
+      if (v) { kind === "aff" ? saveAffiliateName(key, v) : saveOfferName(key, v); }
+      recompute();
+    };
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); save(); }
+      else if (e.key === "Escape") { done = true; recompute(); }
+    });
+    input.addEventListener("blur", save);
+    wrap.replaceChildren(input);
+    input.focus();
+  });
+  wrap.append(btn);
+  return wrap;
+}
+
+/* ============================================================
+   COPY
+   ============================================================ */
+
+async function writeClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // fallback for restricted contexts (e.g. some file:// setups)
+    try {
+      const ta = el("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.append(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function flashButton(btn, ok) {
+  const original = btn.dataset.label;
+  clearTimeout(btn._timer);
+  btn.classList.remove("copied", "failed");
+  btn.classList.add(ok ? "copied" : "failed");
+  btn.textContent = ok ? "Copied" : "Copy failed";
+  btn._timer = setTimeout(() => {
+    btn.classList.remove("copied", "failed");
+    btn.textContent = original;
+  }, 1400);
+}
+
+async function copyAndFlash(text, btn) {
+  flashButton(btn, await writeClipboard(text));
+}
+
+function buildRebuildCard() {
+  const card = el("div", "rebuild");
+  card.append(el("p", "eyebrow", "Rebuilt link"));
+
+  const urlBox = el("div", "rebuilt-url");
+  card.append(urlBox);
+
+  const actions = el("div", "actions");
+  const cleanBtn = el("button", "btn primary", "Copy clean link");
+  cleanBtn.dataset.label = "Copy clean link";
+  cleanBtn.addEventListener("click", () => copyAndFlash(ui.rebuiltUrl, cleanBtn));
+
+  const asIsBtn = el("button", "btn", "Copy as-is");
+  asIsBtn.dataset.label = "Copy as-is";
+  asIsBtn.addEventListener("click", () => copyAndFlash(out.value, asIsBtn));
+
+  actions.append(cleanBtn, asIsBtn);
+  card.append(actions);
+
+  ui.urlBox = urlBox;
+  return card;
+}
+
+/* ============================================================
+   CONTROLLER
+   ============================================================ */
+
+let inspectHasContent = false;   // animate entrances only on the first render of new content
+
+function render() {
+  const result = parseInput(out.value);
+  target.replaceChildren();
+  state = null;
+
+  if (result.empty) { target.append(renderEmpty()); inspectHasContent = false; return; }
+  if (!result.ok)   { target.append(renderError(result.error)); inspectHasContent = false; return; }
+
+  const animate = !inspectHasContent;   // fresh content → play the reveal; live typing → instant
+  inspectHasContent = true;
+
+  state = { parsed: result, rows: buildModel(result) };
+
+  const summary = el("div", "summary" + (animate ? " reveal" : ""));
+  const banners = el("div", "banners");
+  const plainsum = el("div", "plainsum" + (animate ? " reveal" : ""));
+  ui.summary = summary;
+  ui.banners = banners;
+  ui.plainsum = plainsum;
+
+  const tableWrap = buildTable(state.rows, animate);
+  ui.tableWrap = tableWrap;
+
+  target.append(summary);
+  target.append(banners);
+  target.append(plainsum);
+  target.append(renderBase(result, animate));
+  target.append(tableWrap);
+  target.append(buildRebuildCard());
+
+  recompute(); // populate statuses, banners, counts, rebuilt URL, summary sentence
+}
+
+out.addEventListener("input", () => { render(); syncHash(); });
+render();
+
+/* ============================================================
+   COMPARE MODE
+   ------------------------------------------------------------
+   Merge two parsed links keyed by param name. aff_id and the
+   subid family are the questions that matter most ("why does
+   one track and the other doesn't"), so they sort to the top
+   and flag at error/warn strength.
+   ============================================================ */
+
+const EMPHASIS = ["aff_id", "subid", "subid2", "sid2"];
+const EMPHASIS_LABEL = {
+  aff_id: "affiliate ID", subid: "subid", subid2: "subid2", sid2: "sid2",
+};
+
+const srcA = document.getElementById("srcA");
+const srcB = document.getElementById("srcB");
+const cmpTarget = document.getElementById("cmpOut");
+
+/** Collapse params to key -> [values] in first-seen order. */
+function aggregate(params) {
+  const map = new Map();
+  params.forEach((p) => {
+    if (!map.has(p.key)) map.set(p.key, []);
+    map.get(p.key).push(p.value);
+  });
+  return map;
+}
+
+/** Build the merged comparison model from two parse results. */
+function buildCompare(a, b) {
+  const aMap = aggregate(a.params);
+  const bMap = aggregate(b.params);
+
+  // ordered union of keys: A's order, then B's new keys
+  const keys = [];
+  const seen = new Set();
+  [...a.params, ...b.params].forEach((p) => {
+    if (!seen.has(p.key)) { seen.add(p.key); keys.push(p.key); }
+  });
+
+  // emphasis keys first (in EMPHASIS order), the rest keep first-seen order
+  const rankOf = (k) => { const i = EMPHASIS.indexOf(k); return i === -1 ? 100 : i; };
+  keys.sort((x, y) => rankOf(x) - rankOf(y));
+
+  const rows = keys.map((key) => {
+    const aVals = aMap.get(key) || null;
+    const bVals = bMap.get(key) || null;
+    const aStr = aVals ? aVals.join(", ") : null;
+    const bStr = bVals ? bVals.join(", ") : null;
+    const emphasis = EMPHASIS.includes(key);
+
+    let kind; // same | differs | onlyA | onlyB
+    if (aVals && bVals) kind = aStr === bStr ? "same" : "differs";
+    else if (aVals) kind = "onlyA";
+    else kind = "onlyB";
+
+    // aff_id problems are blocking (error); everything else that isn't
+    // identical is a warning. subid still stands out via sort + tag + banner.
+    const status = kind === "same" ? "same" : (key === "aff_id" ? "error" : "warn");
+    return { key, aStr, bStr, kind, emphasis, status };
+  });
+
+  const summary = { differs: 0, gap: 0, same: 0 };
+  rows.forEach((r) => {
+    if (r.kind === "same") summary.same++;
+    else if (r.kind === "differs") summary.differs++;
+    else summary.gap++;
+  });
+
+  return { rows, summary };
+}
+
+/** Headline banners for the tracking-critical params. */
+function compareBanners(rows) {
+  const banners = [];
+  rows.filter((r) => r.emphasis && r.kind !== "same").forEach((r) => {
+    const name = EMPHASIS_LABEL[r.key];
+    const level = r.key === "aff_id" ? "error" : "warn";
+    if (r.kind === "differs") {
+      banners.push({
+        level,
+        title: `${r.key} differs`,
+        message: r.key === "aff_id"
+          ? `Link A uses ${r.aStr}, Link B uses ${r.bStr} — they attribute to different accounts.`
+          : `Link A: "${r.aStr}", Link B: "${r.bStr}" — tracking buckets these separately.`,
+      });
+    } else {
+      const has = r.kind === "onlyA" ? "A" : "B";
+      const missing = r.kind === "onlyA" ? "B" : "A";
+      banners.push({
+        level,
+        title: `${r.key} only on Link ${has}`,
+        message: r.key === "aff_id"
+          ? `Link ${missing} has no affiliate ID — only Link ${has} will attribute commission.`
+          : `The ${name} is on Link ${has} but missing from Link ${missing}.`,
+      });
+    }
+  });
+  return banners;
+}
+
+const CMP_PILL = {
+  differs: ["difference", "differences"],
+  gap:     ["param in one link", "params in one link"],
+  same:    ["identical", "identical"],
+};
+
+function renderCompareSummary(summary, animate) {
+  const bar = el("div", "summary" + (animate ? " reveal" : ""));
+  const make = (level, count) => {
+    const on = count > 0;
+    const cls = level === "same" ? (on ? "ok on" : "ok") : (on ? "warn on" : "warn");
+    const pill = el("span", "pill " + cls);
+    pill.append(el("b", null, String(count)));
+    const [one, many] = CMP_PILL[level];
+    pill.append(el("span", null, count === 1 ? one : many));
+    return pill;
+  };
+  bar.append(make("differs", summary.differs));
+  bar.append(make("gap", summary.gap));
+  bar.append(make("same", summary.same));
+  return bar;
+}
+
+function baseLine(tag, parsed) {
+  const row = el("div", "row");
+  row.append(el("span", "tag", tag));
+  const url = el("span", "url");
+  url.append(document.createTextNode(parsed.scheme + "://"));
+  url.append(el("span", "host", parsed.host));
+  url.append(document.createTextNode(parsed.path));
+  row.append(url);
+  return row;
+}
+
+function renderBasePair(a, b, animate) {
+  const wrap = el("div", "basepair" + (animate ? " reveal" : ""));
+  wrap.append(baseLine("Link A", a));
+  wrap.append(baseLine("Link B", b));
+  const baseA = a.scheme + "://" + a.host + a.path;
+  const baseB = b.scheme + "://" + b.host + b.path;
+  if (baseA !== baseB) {
+    wrap.append(el("div", "diffnote", "Base URLs differ — these point at different endpoints."));
+  }
+  return wrap;
+}
+
+function cmpValueCell(label, str, kind, status, side) {
+  const cell = el("div", "cell");
+  cell.dataset.label = label;
+  const present = str !== null;
+  // highlight the cell when it carries a difference or a one-sided gap
+  const oneSided = (kind === "onlyA" && side === "A") || (kind === "onlyB" && side === "B");
+  const missingHere = (kind === "onlyA" && side === "B") || (kind === "onlyB" && side === "A");
+  if (kind === "differs" || oneSided) cell.classList.add("hl-" + status);
+  if (!present || missingHere) {
+    cell.append(el("span", "cmpv absent", "absent"));
+  } else {
+    cell.append(el("span", "cmpv", str === "" ? "(empty)" : str));
+  }
+  return cell;
+}
+
+function renderCompareTable(rows, animate) {
+  const head = el("div", "table-head");
+  head.append(el("p", "eyebrow", "Merged parameters"));
+  const n = rows.length;
+  head.append(el("span", "count", n === 1 ? "1 param" : n + " params"));
+
+  const wrap = el("div", null);
+  wrap.append(head);
+
+  if (n === 0) {
+    const empty = el("div", "empty");
+    empty.append(el("div", null, "Neither link has query parameters."));
+    wrap.append(empty);
+    return wrap;
+  }
+
+  const table = el("div", "ptable" + (animate ? " stagger" : ""));
+  const colhead = el("div", "prow cmp colhead");
+  colhead.style.setProperty("--i", 0);
+  colhead.append(el("div", "gutter"));
+  colhead.append(el("div", "cell key", "Key"));
+  colhead.append(el("div", "cell", "Link A"));
+  colhead.append(el("div", "cell", "Link B"));
+  table.append(colhead);
+
+  rows.forEach((r, i) => {
+    const rowEl = el("div", "prow cmp");
+    rowEl.style.setProperty("--i", i + 1);
+    const gutterCls = r.status === "same" ? "" : r.status; // same = neutral gutter
+    rowEl.append(el("div", "gutter " + gutterCls));
+
+    const keyCell = el("div", "cell key");
+    const kline = el("div", "kline");
+    const dotCls = r.status === "same" ? "" : r.status;
+    kline.append(el("span", "dot " + dotCls));
+    kline.append(el("span", "k", r.key));
+    if (r.emphasis) kline.append(el("span", "ktag", "tracking"));
+    keyCell.append(kline);
+    rowEl.append(keyCell);
+
+    rowEl.append(cmpValueCell("Link A", r.aStr, r.kind, r.status, "A"));
+    rowEl.append(cmpValueCell("Link B", r.bStr, r.kind, r.status, "B"));
+    table.append(rowEl);
+  });
+
+  wrap.append(table);
+  return wrap;
+}
+
+let compareHasContent = false;
+
+function renderCompare() {
+  const a = parseInput(srcA.value);
+  const b = parseInput(srcB.value);
+  cmpTarget.replaceChildren();
+
+  if (a.empty && b.empty) {
+    const box = el("div", "empty reveal");
+    box.append(el("div", "big", "A | B"));
+    box.append(el("div", null, "Paste two links to compare them side by side."));
+    cmpTarget.append(box);
+    compareHasContent = false;
+    return;
+  }
+  if (a.empty || b.empty) {
+    const box = el("div", "empty reveal");
+    box.append(el("div", null, "Paste " + (a.empty ? "Link A" : "Link B") + " too to see the comparison."));
+    cmpTarget.append(box);
+    compareHasContent = false;
+    return;
+  }
+  if (!a.ok) { cmpTarget.append(renderError("Link A — " + a.error)); compareHasContent = false; return; }
+  if (!b.ok) { cmpTarget.append(renderError("Link B — " + b.error)); compareHasContent = false; return; }
+
+  const animate = !compareHasContent;
+  compareHasContent = true;
+
+  const { rows, summary } = buildCompare(a, b);
+  const banners = compareBanners(rows);
+
+  cmpTarget.append(renderCompareSummary(summary, animate));
+  const bannerEl = el("div", "banners");
+  fillBanners(bannerEl, banners);
+  if (banners.length) cmpTarget.append(bannerEl);
+  cmpTarget.append(renderBasePair(a, b, animate));
+  cmpTarget.append(renderCompareTable(rows, animate));
+}
+
+srcA.addEventListener("input", () => { renderCompare(); syncHash(); });
+srcB.addEventListener("input", () => { renderCompare(); syncHash(); });
+
+/* ============================================================
+   BATCH MODE — paste many links, get a pass/fail audit
+   ============================================================ */
+
+const srcBatch = document.getElementById("srcBatch");
+const batchTarget = document.getElementById("batchOut");
+
+/** Validate one pasted line into a compact audit verdict. */
+function auditLink(line) {
+  const parsed = parseInput(line);
+  if (!parsed.ok) {
+    return { line, status: "error", aff: null, affMissing: true, verdict: "Doesn't parse as a URL" };
+  }
+  const { rows, banners, summary } = validate(parsed.params);
+  const worst = summary.error ? "error" : summary.warn ? "warn" : "ok";
+  const pick = (lvl) => banners.find((b) => b.level === lvl) || rows.find((r) => r.status === lvl);
+  let verdict = "Clean";
+  if (worst === "error") { const s = pick("error"); verdict = s.title || s.note || "Error"; }
+  else if (worst === "warn") { const s = pick("warn"); verdict = s.title || s.note || "Warning"; }
+  const affRow = rows.find((r) => r.key === "aff_id");
+  return { line, status: worst, aff: affRow ? affRow.value : null, affMissing: !affRow, verdict };
+}
+
+function renderBatchSummary(counts) {
+  const bar = el("div", "summary reveal");
+  const mk = (level, n, label) => {
+    const pill = el("span", "pill " + level + (n > 0 ? " on" : ""));
+    pill.append(el("b", null, String(n)));
+    pill.append(el("span", null, label));
+    return pill;
+  };
+  bar.append(mk("error", counts.error, "failing"));
+  bar.append(mk("warn", counts.warn, "to check"));
+  bar.append(mk("ok", counts.ok, "clean"));
+  return bar;
+}
+
+function renderBatchTable(results) {
+  const head = el("div", "table-head");
+  head.append(el("p", "eyebrow", "Audit"));
+  head.append(el("span", "count", results.length + (results.length === 1 ? " link" : " links")));
+
+  const table = el("div", "ptable stagger");
+  const colhead = el("div", "prow batch colhead");
+  colhead.style.setProperty("--i", 0);
+  ["", "#", "Link", "aff_id", "Verdict"].forEach((t, i) =>
+    colhead.append(el("div", i === 0 ? "gutter" : "cell", t)));
+  table.append(colhead);
+
+  results.forEach((r, i) => {
+    const row = el("div", "prow batch");
+    row.style.setProperty("--i", i + 1);
+    row.append(el("div", "gutter " + r.status));
+
+    const numCell = el("div", "cell"); numCell.append(el("span", "bnum", String(i + 1))); row.append(numCell);
+
+    const linkCell = el("div", "cell");
+    const link = el("span", "blink", r.line); link.title = r.line; linkCell.append(link); row.append(linkCell);
+
+    const affCell = el("div", "cell");
+    affCell.append(r.affMissing ? el("span", "baff miss", "missing")
+      : el("span", "baff", r.aff === "" ? "(empty)" : r.aff));
+    row.append(affCell);
+
+    const vCell = el("div", "cell");
+    vCell.append(el("span", "bverdict " + r.status, r.verdict));
+    const insp = el("button", "binspect", "Inspect");
+    insp.type = "button";
+    insp.addEventListener("click", () => openInInspect(r.line));
+    vCell.append(insp);
+    row.append(vCell);
+
+    table.append(row);
+  });
+
+  const wrap = el("div", null); wrap.append(head); wrap.append(table); return wrap;
+}
+
+function renderBatch() {
+  const lines = srcBatch.value.split("\n").map((s) => s.trim()).filter((s) => s !== "");
+  batchTarget.replaceChildren();
+  if (lines.length === 0) {
+    const box = el("div", "empty reveal");
+    box.append(el("div", "big", "≡"));
+    box.append(el("div", null, "Paste a column of links — one per line — for a pass/fail audit."));
+    box.append(exampleButton(() => { srcBatch.value = EXAMPLE_BATCH; renderBatch(); syncHash(); }));
+    batchTarget.append(box);
+    return;
+  }
+  const results = lines.map(auditLink);
+  const counts = { ok: 0, warn: 0, error: 0 };
+  results.forEach((r) => counts[r.status]++);
+  batchTarget.append(renderBatchSummary(counts));
+  batchTarget.append(renderBatchActions(results, counts));
+  batchTarget.append(renderBatchTable(results));
+}
+
+/** Bulk actions over the whole pasted column. */
+function renderBatchActions(results, counts) {
+  const bar = el("div", "batch-actions");
+
+  // bulk-fill aff_id on links missing/empty it
+  const form = el("form", "bulkfill");
+  const input = el("input", "fix-input");
+  input.type = "text"; input.inputMode = "numeric";
+  input.placeholder = "aff_id"; input.setAttribute("aria-label", "Affiliate ID to fill on links missing it");
+  const fillBtn = el("button", "btn", "Fill missing aff_id");
+  fillBtn.type = "submit";
+  form.append(input, fillBtn);
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const digits = input.value.replace(/\D/g, "");
+    if (digits) bulkFillAffId(digits);
+  });
+  bar.append(form);
+
+  const spacer = el("div", "ba-spacer"); bar.append(spacer);
+
+  const cleanBtn = el("button", "btn", "Copy clean links");
+  cleanBtn.type = "button"; cleanBtn.dataset.label = "Copy clean links";
+  cleanBtn.addEventListener("click", () => {
+    const clean = results.map((r) => {
+      const p = parseInput(r.line);
+      return p.ok ? rebuildUrl(p, p.params) : r.line;
+    }).join("\n");
+    copyAndFlash(clean, cleanBtn);
+  });
+  bar.append(cleanBtn);
+
+  const csvBtn = el("button", "btn", "Download CSV");
+  csvBtn.type = "button";
+  csvBtn.addEventListener("click", () => downloadBatchCsv(results));
+  bar.append(csvBtn);
+
+  return bar;
+}
+
+/** Set aff_id on every pasted link that is missing or empty it. */
+function bulkFillAffId(value) {
+  const lines = srcBatch.value.split("\n").map((line) => {
+    const t = line.trim();
+    if (t === "") return line;
+    const p = parseInput(t);
+    if (!p.ok) return line;
+    const existing = p.params.find((x) => x.key === "aff_id");
+    if (existing && existing.value !== "") return line;     // leave valid ones alone
+    const params = existing
+      ? p.params.map((x) => x.key === "aff_id" ? { ...x, value, hasEquals: true } : x)
+      : [{ key: "aff_id", value, hasEquals: true }, ...p.params];
+    return rebuildUrl(p, params);
+  });
+  srcBatch.value = lines.join("\n");
+  renderBatch();
+  syncHash();
+}
+
+const csvCell = (v) => { const s = String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+
+function downloadBatchCsv(results) {
+  const header = ["#", "link", "aff_id", "status", "verdict"];
+  const rows = results.map((r, i) => [i + 1, r.line, r.affMissing ? "(missing)" : r.aff, r.status, r.verdict]);
+  const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = el("a"); a.href = url; a.download = "param-audit.csv";
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function openInInspect(line) {
+  out.value = line;
+  setMode("inspect");
+}
+
+srcBatch.addEventListener("input", () => { renderBatch(); syncHash(); });
+
+/* ============================================================
+   POSTBACK MODE — validate against BuyGoods' fixed token set
+   ============================================================ */
+
+const srcPostback = document.getElementById("srcPostback");
+const pbTarget = document.getElementById("pbOut");
+
+function analyzePostback(params) {
+  const rows = params.map((p) => {
+    const v = p.value;
+    if (isPlaceholder(v)) {
+      const token = v.slice(1, -1);
+      const upper = token.toUpperCase();
+      const known = POSTBACK_TOKENS[upper];
+      if (!known) return { ...p, display: v, status: "error", meaning: `Unknown token — BuyGoods won't fill {${token}}.` };
+      if (token !== upper) return { ...p, display: v, status: "warn", meaning: `${known} — BuyGoods expects uppercase {${upper}}.` };
+      return { ...p, display: v, status: "ok", meaning: known };
+    }
+    if (v === "") return { ...p, display: "(empty)", status: "warn", meaning: "Empty — no token to send." };
+    return { ...p, display: v, status: "ok", meaning: "Static value — sent to your tracker as-is." };
+  });
+
+  const banners = [];
+  const unknown = rows.filter((r) => r.status === "error");
+  if (unknown.length) {
+    banners.push({
+      level: "error",
+      title: unknown.length > 1 ? "Unsupported tokens" : "Unsupported token",
+      message: "BuyGoods only fills these: " + Object.keys(POSTBACK_TOKENS).map((t) => "{" + t + "}").join(", ") + ".",
+    });
+  }
+  if (rows.length && !rows.some((r) => r.status !== "ok")) {
+    banners.push({ level: "info", title: "Postback looks valid", message: "Every token is one BuyGoods will fill." });
+  }
+
+  const counts = { ok: 0, warn: 0, error: 0 };
+  rows.forEach((r) => counts[r.status]++);
+  return { rows, banners, counts };
+}
+
+function renderPostbackTable(rows) {
+  const head = el("div", "table-head");
+  head.append(el("p", "eyebrow", "Tokens"));
+  head.append(el("span", "count", rows.length + (rows.length === 1 ? " param" : " params")));
+
+  const table = el("div", "ptable stagger");
+  const colhead = el("div", "prow pb colhead");
+  colhead.style.setProperty("--i", 0);
+  colhead.append(el("div", "gutter"));
+  colhead.append(el("div", "cell key", "Param → token"));
+  colhead.append(el("div", "cell", "BuyGoods will send"));
+  table.append(colhead);
+
+  rows.forEach((r, i) => {
+    const row = el("div", "prow pb");
+    row.style.setProperty("--i", i + 1);
+    row.append(el("div", "gutter " + r.status));
+    const keyCell = el("div", "cell key");
+    const kline = el("div", "kline");
+    kline.append(el("span", "dot " + r.status));
+    kline.append(el("span", "pbtok", r.key + "=" + r.display));
+    keyCell.append(kline);
+    row.append(keyCell);
+    const meanCell = el("div", "cell");
+    meanCell.dataset.label = "BuyGoods will send";
+    meanCell.append(el("span", r.status === "error" ? "pbmean bad" : "pbmean", r.meaning));
+    row.append(meanCell);
+    table.append(row);
+  });
+
+  const wrap = el("div", null); wrap.append(head); wrap.append(table); return wrap;
+}
+
+function renderPostback() {
+  const parsed = parseInput(srcPostback.value);
+  pbTarget.replaceChildren();
+  if (parsed.empty) {
+    const box = el("div", "empty reveal");
+    box.append(el("div", "big", "{ }"));
+    box.append(el("div", null, "Paste your tracker's postback URL to check it against BuyGoods' tokens."));
+    box.append(exampleButton(() => { srcPostback.value = EXAMPLE_POSTBACK; renderPostback(); syncHash(); }));
+    pbTarget.append(box);
+    return;
+  }
+  if (!parsed.ok) { pbTarget.append(renderError(parsed.error)); return; }
+
+  const { rows, banners, counts } = analyzePostback(parsed.params);
+  const bar = el("div", "summary reveal");
+  fillSummary(bar, counts);
+  pbTarget.append(bar);
+  const bEl = el("div", "banners"); fillBanners(bEl, banners);
+  if (banners.length) pbTarget.append(bEl);
+  pbTarget.append(renderBase(parsed, true));
+  if (rows.length) pbTarget.append(renderPostbackTable(rows));
+}
+
+srcPostback.addEventListener("input", () => { renderPostback(); syncHash(); });
+
+/* ============================================================
+   SHAREABLE URL HASH — fully client-side, restores the view
+   ============================================================ */
+
+function syncHash() {
+  const p = new URLSearchParams();
+  p.set("m", activeMode);
+  const add = (k, v) => { if (v) p.set(k, v); };
+  if (activeMode === "inspect")  add("i", out.value);
+  if (activeMode === "compare") { add("a", srcA.value); add("b", srcB.value); }
+  if (activeMode === "batch")    add("k", srcBatch.value);
+  if (activeMode === "postback") add("p", srcPostback.value);
+  history.replaceState(null, "", location.pathname + location.search + "#" + p.toString());
+}
+
+function restoreFromHash() {
+  if (location.hash.length < 2) return false;
+  const p = new URLSearchParams(location.hash.slice(1));
+  const mode = p.get("m") || "inspect";
+  if (p.get("i")) out.value = p.get("i");
+  if (p.get("a")) srcA.value = p.get("a");
+  if (p.get("b")) srcB.value = p.get("b");
+  if (p.get("k")) srcBatch.value = p.get("k");
+  if (p.get("p")) srcPostback.value = p.get("p");
+  setMode(mode);
+  return true;
+}
+
+/* ============================================================
+   MODE SWITCHING
+   ============================================================ */
+
+const PANELS = {
+  inspect:  { panel: document.getElementById("inspectPanel"),  render },
+  compare:  { panel: document.getElementById("comparePanel"),  render: renderCompare },
+  batch:    { panel: document.getElementById("batchPanel"),    render: renderBatch },
+  postback: { panel: document.getElementById("postbackPanel"), render: renderPostback },
+  help:     { panel: document.getElementById("helpPanel"),     render: renderSavedNames },
+};
+
+/** Help-tab manager for the device-saved aff_id / offer names. */
+function renderSavedNames() {
+  const box = document.getElementById("savedNames");
+  const { aff, offer } = userSavedNames();
+  box.replaceChildren();
+
+  if (aff.length === 0 && offer.length === 0) {
+    box.classList.add("emptynames");
+    box.append(el("p", "hs-empty", "No saved names yet. In Inspect, click “+ name” next to an affiliate ID or offer to label it — it'll show here and in every summary, on this device only."));
+    return;
+  }
+  box.classList.remove("emptynames");
+
+  const section = (title, list, kind) => {
+    if (!list.length) return;
+    box.append(el("p", "hs-group", title));
+    list.forEach(({ key, name }) => {
+      const row = el("div", "hs-row");
+      row.append(el("span", "hs-key", key));
+      row.append(el("span", "hs-arrow", "→"));
+      row.append(el("span", "hs-name", name));
+      const rm = el("button", "hs-remove", "Remove");
+      rm.type = "button";
+      rm.addEventListener("click", () => { removeSavedName(kind, key); renderSavedNames(); });
+      row.append(rm);
+      box.append(row);
+    });
+  };
+  section("Affiliates", aff, "aff");
+  section("Offers", offer, "offer");
+}
+
+/* the real BuyGoods checkout link used as the worked example */
+const EXAMPLE_URL = "https://buygoods.com/secure/checkout.html?account_id=11292&product_codename=vis2fnn2&redirect=aHR0cDovL3Zpc2l1bXByby5jb20vZm5uMi91cDE=&sub20=v3_a962a533-4eb3-46e0-8096-a9da5e4c9466_684a48ea058670622823097e_3340_t-12_s-2&sub19=v3_a962a533-4eb3-46e0-8096-a9da5e4c9466_684a48ea058670622823097e_3340_t-12_s-2";
+
+function helpInit() {
+  document.getElementById("demoUrl").textContent = EXAMPLE_URL;
+  document.getElementById("tryExample").addEventListener("click", () => openInInspect(EXAMPLE_URL));
+  document.querySelectorAll(".help-card [data-open]").forEach((btn) =>
+    btn.addEventListener("click", () => setMode(btn.dataset.open)));
+}
+helpInit();
+const modeButtons = [...document.querySelectorAll(".mode")];
+let activeMode = "inspect";
+
+function setMode(mode) {
+  if (!PANELS[mode]) mode = "inspect";
+  activeMode = mode;
+
+  Object.entries(PANELS).forEach(([m, { panel }]) => { panel.hidden = m !== mode; });
+  modeButtons.forEach((btn) => {
+    const active = btn.dataset.mode === mode;
+    btn.classList.toggle("on", active);
+    btn.setAttribute("aria-selected", String(active));
+  });
+
+  // switching into a panel should feel fresh — replay its entrance
+  inspectHasContent = false;
+  compareHasContent = false;
+  PANELS[mode].render();
+
+  const panel = PANELS[mode].panel;
+  panel.classList.remove("panelIn");
+  void panel.offsetWidth;
+  panel.classList.add("panelIn");
+
+  syncHash();
+}
+
+modeButtons.forEach((btn) => btn.addEventListener("click", () => setMode(btn.dataset.mode)));
+
+const shareBtn = document.getElementById("shareBtn");
+shareBtn.addEventListener("click", () => { syncHash(); copyAndFlash(location.href, shareBtn); });
+
+// restore a shared view if the URL carries one (on load and on later hash edits)
+restoreFromHash();
+window.addEventListener("hashchange", restoreFromHash);
+</script>
+</body>
+</html>
