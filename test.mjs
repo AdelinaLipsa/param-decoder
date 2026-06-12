@@ -1050,35 +1050,72 @@ async function decline(code) {
   await page.fill("#srcDecline", code);
   return page.evaluate(() => {
     const out = document.getElementById("declineOut");
-    const card = out.querySelector(".decline-card");
+    const cards = [...out.querySelectorAll(".decline-card")];
+    const card = cards[0];
     return {
       title: card?.querySelector(".dc-title")?.textContent ?? null,
       chips: [...out.querySelectorAll(".dc-chip")].map(c => c.textContent.trim()),
       message: card?.querySelector(".dc-msg-text")?.textContent ?? null,
+      source: card?.querySelector(".dc-seen a")?.getAttribute("href") ?? null,
+      cardCount: cards.length,
       unknown: !!out.querySelector(".msg.warn"),
       empty: out.querySelector(".empty")?.textContent ?? null,
     };
   });
 }
 {
-  const r = await decline("insufficient_funds");
-  check("DC1 title", /Insufficient funds/.test(r.title ?? ""), JSON.stringify(r));
+  const r = await decline("insufficient_funds"); // Stripe string
+  check("DC1 title", /Insufficient funds/i.test(r.title ?? ""), JSON.stringify(r));
   check("DC1 soft", r.chips.some(c => /Soft decline/.test(c)), JSON.stringify(r.chips));
   check("DC1 retry", r.chips.some(c => /Worth a retry/.test(c)), JSON.stringify(r.chips));
-  check("DC1 customer message", /insufficient funds/i.test(r.message ?? ""), r.message);
+  check("DC1 customer message", /funds/i.test(r.message ?? ""), r.message);
+  check("DC1 processor shown", r.chips.some(c => /Stripe/.test(c)), JSON.stringify(r.chips));
+  check("DC1 cites source", /stripe\.com\/declines/.test(r.source ?? ""), r.source);
 }
 {
   const r = await decline("2004"); // Braintree expired card
-  check("DC2 braintree code maps", /Expired card/.test(r.title ?? ""), JSON.stringify(r));
+  check("DC2 braintree code maps", /Expired card/i.test(r.title ?? ""), JSON.stringify(r));
   check("DC2 hard", r.chips.some(c => /Hard decline/.test(c)), JSON.stringify(r.chips));
+  check("DC2 braintree processor", r.chips.some(c => /Braintree/.test(c)), JSON.stringify(r.chips));
 }
 {
-  const r = await decline("51"); // ISO insufficient funds
-  check("DC3 numeric iso maps", /Insufficient funds/.test(r.title ?? ""), JSON.stringify(r));
+  const r = await decline("202"); // NMI insufficient funds — cross-processor consistency
+  check("DC3 nmi code maps", /Insufficient funds/i.test(r.title ?? ""), JSON.stringify(r));
+  check("DC3 nmi soft+retry like stripe", r.chips.some(c => /Soft decline/.test(c)) && r.chips.some(c => /Worth a retry/.test(c)), JSON.stringify(r.chips));
+  check("DC3 cites nmi source", /docs\.nmi\.com/.test(r.source ?? ""), r.source);
 }
 {
   const r = await decline("not_a_real_code_xyz");
   check("DC4 unknown handled", r.unknown === true, JSON.stringify(r));
+}
+{
+  const r = await decline("2109"); // Braintree range fallback → generic processor declined
+  check("DC4b braintree range fallback", /Processor Declined/i.test(r.title ?? ""), JSON.stringify(r));
+}
+{
+  // data integrity — every entry well-formed, every table sourced, every cat valid
+  const integ = await page.evaluate(() => {
+    const cats = DECLINE_CATS, tables = DECLINE_TABLES;
+    const problems = [];
+    let count = 0;
+    for (const [name, t] of Object.entries(tables)) {
+      if (!/^https?:\/\//.test(t.source || "")) problems.push(name + " missing source URL");
+      if (!t.label) problems.push(name + " missing label");
+      for (const [code, e] of Object.entries(t.codes)) {
+        count++;
+        if (!e.title) problems.push(name + ":" + code + " missing title");
+        if (!cats[e.cat]) problems.push(name + ":" + code + " unknown cat " + e.cat);
+      }
+    }
+    for (const [c, v] of Object.entries(cats)) {
+      if (v.type !== "soft" && v.type !== "hard") problems.push("cat " + c + " bad type");
+      if (typeof v.retry !== "boolean") problems.push("cat " + c + " bad retry");
+      if (!v.customer) problems.push("cat " + c + " missing customer message");
+    }
+    return { problems, count };
+  });
+  check("DC6 every decline entry well-formed", integ.problems.length === 0, JSON.stringify(integ.problems));
+  check("DC6 table is substantial (>100 codes)", integ.count > 100, "count=" + integ.count);
 }
 {
   // copy the customer message

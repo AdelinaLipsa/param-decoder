@@ -19,7 +19,7 @@ It's a single self-contained `index.html` — no build, no install. Either:
 - **Compare** — two links side by side, merged by param, so you can see *why one tracks and the other doesn't* (`aff_id` and `subid` differences stand out most).
 - **Batch** — paste a column of links and get a green/red pass-fail audit, with CSV export and a bulk "fill missing `aff_id`" action.
 - **Postback** — check a tracker's postback URL against the exact tokens BuyGoods fills (`{SUBID}`…`{SUBID5}`, `{ORDERID}`, `{COMMISSION_AMOUNT}`, …).
-- **Decline** — paste a Stripe/Braintree/NMI decline code for a plain-language read: soft vs hard, whether it's worth retrying, and the message to give the customer. (Static lookup table — verify before trusting.)
+- **Decline** — paste a Stripe/Braintree/NMI decline code for a plain-language read: soft vs hard, whether it's worth retrying, and the message to give the customer. ~190 codes transcribed verbatim from each processor's own docs (Stripe, Braintree/PayPal, NMI), with the source cited on every result; soft/hard/retry guidance is derived consistently across processors by category.
 - **How to use** — a built-in guide.
 
 You can save affiliate/offer names and per-offer QA templates (stored on your device only) and share an exact view via the page URL.

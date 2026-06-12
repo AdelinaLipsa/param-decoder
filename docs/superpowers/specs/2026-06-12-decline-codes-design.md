@@ -59,19 +59,21 @@ Field meanings (unchanged where they exist today):
 
 Each **processor table** carries a `source` URL. That URL is the trust signal for this slice — the same role the confirmed/inferred badge plays for the param dictionary. A code that came from the processor's published table is, by definition, `confirmed`.
 
-### 2. Lookup behavior
+### 1b. Interpretation layer (categories) — *as built*
 
-`lookupDecline(code, processor?)`:
+Soft-vs-hard, retry, and the customer message are NOT hand-written per code (≈191 codes). Each code carries a `cat` (category); a single `DECLINE_CATS` map resolves the category to `{ type, retry, customer }`. This keeps classification **consistent across processors** — Stripe `insufficient_funds`, Braintree `2001`, and NMI `202` all read identically — and makes "change how a whole class reads" a one-line edit. The `title` (the sourced fact) stays per-code; the guidance (interpretation) lives in the category. This split is stated in code comments so the authoritative vs. interpreted boundary is explicit.
 
-- **Processor known** (user picked one, or input is unambiguously a Stripe string like `insufficient_funds`): look up directly in that table. Return `{ processor, entry }`.
-- **Processor unknown + numeric code** (e.g. `200`): the code may exist in more than one table with *different meanings*. Return **all matches**, each tagged with its processor, rather than silently guessing one. The UI shows "This code means different things by processor — which gateway?" with each reading. Ambiguity surfaced, never hidden.
-- **No match:** return null → the existing "not found" message.
+### 2. Lookup behavior — *as built*
 
-This is the key behavioral change: the tool stops pretending one numeric code has one meaning.
+`lookupDecline(code, processor?)` returns an **array** of matches (each tagged with `processor`, `processorLabel`, `source`, plus the resolved `type`/`retry`/`customer`); `[]` when nothing matches.
 
-### 3. UI
+- **Verified during research:** among the three processors there are *no* numeric collisions (Stripe = strings, Braintree = `1xxx/2xxx/3xxx`, NMI = `1/2/3/100/2xx/3xx/4xx`), so a pasted code resolves to exactly one processor in practice.
+- The array return is kept anyway: it surfaces *every* reading if a future code (or an added ISO table) ever collides, instead of silently picking one. Multi-match renders a "appears in more than one processor" header above the cards.
+- Braintree's `2109–2999` block is one documented "Processor Declined" range, handled by a `rangeFallback` rather than 891 entries.
 
-Decline mode gains a small, optional **processor selector** (Stripe / Braintree / NMI / "I don't know"). Default "I don't know" preserves today's paste-and-go flow but routes through the ambiguity-aware lookup. The result card shows the matched processor and a cited **source link**, replacing the blanket "verify before trusting" disclaimer for confirmed codes.
+### 3. UI — *as built*
+
+No processor-selector dropdown was needed (codes auto-resolve, per above), so the paste-and-go flow is unchanged. Each result card now shows the matched **processor label** as a chip and a cited **"Per &lt;processor&gt;'s docs — source"** link, which replaces the blanket *"verify before trusting"* disclaimer. A selector can be added later if an ISO/raw-network table introduces collisions.
 
 ### 4. Scope of the data
 
@@ -79,7 +81,9 @@ Decline mode gains a small, optional **processor selector** (Stripe / Braintree 
 - Braintree/PayPal: the published processor response codes (the `1xxx` approved / `2xxx` declined / `3xxx` soft-decline ranges), at minimum every declined/soft code; approvals can be summarized.
 - NMI: the published gateway/response codes for declines.
 
-**No code is invented.** Every entry traces to a primary-source URL captured during research. If a processor's doc is ambiguous on soft-vs-hard, the entry is included with the processor's own wording and conservatively marked, never fabricated.
+**No code is invented.** Every entry traces to a primary-source URL captured during research (≈191 codes total: 50 Stripe + ~109 Braintree + 32 NMI). If a processor's doc is ambiguous on soft-vs-hard, the entry is included with the processor's own wording and conservatively marked, never fabricated.
+
+**Raw ISO-8583 codes (`05`, `51`, `54`, …) were deliberately excluded.** They have no clean *primary* source (the authoritative specs are private Visa/Mastercard documents; public lists are third-party aggregators), so including them would violate the authority rule this slice is built on. If the team wants them, they belong in a separate table explicitly marked as team-confirmed rather than processor-sourced.
 
 ## Non-goals (YAGNI)
 

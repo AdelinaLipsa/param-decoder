@@ -1573,61 +1573,306 @@ const POSTBACK_TOKENS = {
 };
 
 /* ------------------------------------------------------------
-   DECLINE CODES  —  static starter table (verify before trusting)
+   DECLINE CODES  —  authoritative, per-processor
    ------------------------------------------------------------
-   Each entry lists synonymous codes across Stripe (strings),
-   Braintree (2xxx) and NMI / ISO (numeric). type: soft|hard.
-   retry: is an automatic/customer retry worth it? customer: the
-   message to give the buyer or HG agent. Extend freely.
-   ------------------------------------------------------------ */
-const DECLINE_CODES = [
-  { codes: ["insufficient_funds", "2001", "202", "51"], title: "Insufficient funds", type: "soft", retry: true,
-    customer: "Your card was declined for insufficient funds. Try a different card, or try again later." },
-  { codes: ["do_not_honor", "2000", "200", "201", "05"], title: "Do not honor (generic bank decline)", type: "hard", retry: false,
-    customer: "Your bank declined the charge. Please contact your bank or use a different card." },
-  { codes: ["generic_decline", "card_declined", "2046", "204"], title: "Declined (no reason given)", type: "hard", retry: false,
-    customer: "The card was declined. Please try a different card." },
-  { codes: ["expired_card", "2004", "223", "54"], title: "Expired card", type: "hard", retry: false,
-    customer: "That card has expired. Please use a different card." },
-  { codes: ["incorrect_cvc", "invalid_cvc", "2010", "225", "n7", "82"], title: "Wrong security code (CVC/CVV)", type: "hard", retry: true,
-    customer: "The security code (CVC) didn't match. Please re-enter it carefully." },
-  { codes: ["incorrect_number", "invalid_number", "2005", "221", "14"], title: "Invalid card number", type: "hard", retry: true,
-    customer: "The card number looks invalid. Please check and re-enter it." },
-  { codes: ["invalid_expiry_month", "invalid_expiry_year", "invalid_expiration", "2006"], title: "Invalid expiry date", type: "hard", retry: true,
-    customer: "The expiry date is invalid. Please check it and re-enter." },
-  { codes: ["lost_card", "252", "41"], title: "Lost card", type: "hard", retry: false,
-    customer: "This card can't be used. Please use a different card." },
-  { codes: ["stolen_card", "253", "43"], title: "Stolen card", type: "hard", retry: false,
-    customer: "This card can't be used. Please use a different card." },
-  { codes: ["pickup_card", "250", "251", "04"], title: "Pick-up card", type: "hard", retry: false,
-    customer: "This card can't be used. Please use a different card." },
-  { codes: ["fraudulent", "suspected_fraud", "2127"], title: "Flagged as fraudulent", type: "hard", retry: false,
-    customer: "We couldn't process this card. Please use a different one." },
-  { codes: ["card_velocity_exceeded", "withdrawal_count_limit_exceeded", "2002", "2003", "203", "65", "61"], title: "Limit / velocity exceeded", type: "soft", retry: true,
-    customer: "This card hit a limit. Try a smaller amount, a different card, or again later." },
-  { codes: ["processing_error", "2038", "300", "96"], title: "Processor error", type: "soft", retry: true,
-    customer: "Something went wrong processing the card. Please try again." },
-  { codes: ["issuer_not_available", "try_again_later", "91", "907"], title: "Issuer unavailable", type: "soft", retry: true,
-    customer: "Your bank couldn't be reached. Please try again in a few minutes." },
-  { codes: ["authentication_required", "1a"], title: "3DS / authentication required", type: "soft", retry: true,
-    customer: "Your bank needs to verify this purchase. Please complete the verification step." },
-  { codes: ["card_not_supported", "2018"], title: "Card type not supported", type: "hard", retry: false,
-    customer: "This card type isn't supported. Please use a different card." },
-  { codes: ["currency_not_supported"], title: "Currency not supported", type: "hard", retry: false,
-    customer: "This card can't be charged in this currency. Please use a different card." },
-  { codes: ["restricted_card", "62"], title: "Restricted card", type: "hard", retry: false,
-    customer: "This card is restricted. Please use a different card." },
-  { codes: ["no_such_issuer", "invalid_account", "2009", "222", "15"], title: "No such account / issuer", type: "hard", retry: false,
-    customer: "We couldn't find that account. Please check the number or use a different card." },
-  { codes: ["reenter_transaction", "19"], title: "Re-enter transaction", type: "soft", retry: true,
-    customer: "Something interrupted the charge. Please try again." },
-];
+   Two layers, kept deliberately separate:
 
-/** Look up a decline code (case-insensitive). Returns the entry or null. */
-function lookupDecline(code) {
-  const c = code.trim().toLowerCase();
-  if (!c) return null;
-  return DECLINE_CODES.find((e) => e.codes.includes(c)) || null;
+   (1) AUTHORITATIVE (sourced). Each code's exact meaning (`title`)
+       is transcribed verbatim from the processor's OWN published
+       docs — see each table's `source` URL. Nothing here is
+       invented; if it isn't in the processor's docs, it isn't here.
+
+   (2) INTERPRETED (convention). soft-vs-hard, whether a retry is
+       worth it, and the customer-facing message are DERIVED from
+       the code's `cat` (category) via DECLINE_CATS, using standard
+       payments conventions. This keeps the classification
+       CONSISTENT across processors (insufficient funds reads the
+       same whether it arrives as Stripe `insufficient_funds`,
+       Braintree `2001`, or NMI `202`) instead of guessed per-code.
+
+   To add a code: one line under its processor — `code: { title, cat }`.
+   To change how a whole class reads: edit the category once.
+
+   Sources (fetched 2026-06-12):
+     Stripe    https://docs.stripe.com/declines/codes
+     Braintree https://developer.paypal.com/braintree/docs/reference/general/processor-responses/authorization-responses
+     NMI       https://docs.nmi.com/reference/response-codes
+   ------------------------------------------------------------ */
+
+/* Category → guidance. type: soft (temporary, may clear) | hard
+   (permanent for this card). retry: is simply re-submitting worth it?
+   The two axes are independent: a wrong CVC is a "hard" reason but a
+   re-entry retry IS worth it; a "call issuer" is temporary (soft) but a
+   blind retry is NOT. customer: message for the buyer or HG agent. */
+const DECLINE_CATS = {
+  insufficient:     { type: "soft", retry: true,  customer: "This card doesn't have enough funds. Use a different card, or try again later." },
+  limit:            { type: "soft", retry: true,  customer: "This card hit a spending or activity limit. Try a smaller amount, a different card, or again later." },
+  generic_bank:     { type: "soft", retry: false, customer: "The bank declined the charge without giving a reason. Ask the customer to contact their bank, or use a different card." },
+  call_issuer:      { type: "soft", retry: false, customer: "The bank wants to speak with the cardholder before approving. Ask the customer to call their bank, then try again." },
+  processing:       { type: "soft", retry: true,  customer: "A temporary processing or network issue stopped the charge. Wait a moment and try again." },
+  auth_required:    { type: "soft", retry: true,  customer: "The bank needs to verify this purchase (3-D Secure). Ask the customer to complete the verification step." },
+  duplicate:        { type: "soft", retry: false, customer: "This looks like a repeat of a recent charge. Check whether the customer was already charged before retrying." },
+  expired:          { type: "hard", retry: false, customer: "The card has expired. Ask the customer to use a different card." },
+  card_data:        { type: "hard", retry: true,  customer: "The card details look incorrect. Re-check the number, expiry, and security code, then try again." },
+  security_code:    { type: "hard", retry: true,  customer: "The security code (CVC/CVV) didn't match. Re-enter it carefully and try again." },
+  account_invalid:  { type: "hard", retry: false, customer: "There's a problem with this card or account. Ask the customer to use a different card." },
+  not_allowed:      { type: "hard", retry: false, customer: "This card can't be used for this purchase. Ask the customer to use a different card or payment method." },
+  lost_stolen_fraud:{ type: "hard", retry: false, customer: "This card can't be processed. Ask the customer to use a different card. (Reason is masked on purpose — don't share specifics.)" },
+  pickup:           { type: "hard", retry: false, customer: "The bank has flagged this card to be retained. It can't be used — ask the customer to use a different card." },
+  do_not_retry:     { type: "hard", retry: false, customer: "The bank declined and asked that this not be retried. Use a different card or have the customer contact their bank." },
+  stop_recurring:   { type: "hard", retry: false, customer: "The cardholder has stopped billing on this card. Contact the customer — do not retry." },
+  test_card:        { type: "hard", retry: false, customer: "A test card was used on a live charge. Enter a real card to complete the purchase." },
+  merchant_config:  { type: "hard", retry: false, customer: "Gateway / merchant configuration issue — this is not customer-fixable. Escalate to BuyGoods." },
+  paypal_buyer:     { type: "hard", retry: false, customer: "There's an issue with the buyer's PayPal account. Ask them to check their PayPal or pay with a card." },
+  paypal_merchant:  { type: "hard", retry: false, customer: "PayPal merchant-account configuration issue — escalate to BuyGoods." },
+};
+
+const DECLINE_TABLES = {
+  stripe: {
+    label: "Stripe",
+    source: "https://docs.stripe.com/declines/codes",
+    codes: {
+      authentication_required:              { title: "Authentication required",          cat: "auth_required" },
+      authentication_not_handled:           { title: "Authentication not completed",     cat: "auth_required" },
+      approve_with_id:                      { title: "Approve with identification",      cat: "call_issuer" },
+      call_issuer:                          { title: "Declined — call issuer",           cat: "call_issuer" },
+      card_not_supported:                   { title: "Card type not supported",          cat: "not_allowed" },
+      card_velocity_exceeded:               { title: "Card velocity exceeded",           cat: "limit" },
+      currency_not_supported:               { title: "Currency not supported",           cat: "not_allowed" },
+      do_not_honor:                         { title: "Do not honor",                     cat: "generic_bank" },
+      do_not_try_again:                     { title: "Declined — do not retry",          cat: "do_not_retry" },
+      duplicate_transaction:                { title: "Duplicate transaction",            cat: "duplicate" },
+      expired_card:                         { title: "Expired card",                     cat: "expired" },
+      fraudulent:                           { title: "Suspected fraud",                  cat: "lost_stolen_fraud" },
+      generic_decline:                      { title: "Generic decline",                  cat: "generic_bank" },
+      incorrect_address:                    { title: "Incorrect billing address",        cat: "card_data" },
+      incorrect_cvc:                        { title: "Incorrect security code (CVC)",    cat: "security_code" },
+      incorrect_number:                     { title: "Incorrect card number",            cat: "card_data" },
+      incorrect_pin:                        { title: "Incorrect PIN",                    cat: "card_data" },
+      incorrect_zip:                        { title: "Incorrect postal code",            cat: "card_data" },
+      insufficient_funds:                   { title: "Insufficient funds",               cat: "insufficient" },
+      invalid_account:                      { title: "Invalid account",                  cat: "account_invalid" },
+      invalid_amount:                       { title: "Invalid amount",                   cat: "not_allowed" },
+      invalid_cvc:                          { title: "Invalid security code (CVC)",      cat: "security_code" },
+      invalid_expiry_month:                 { title: "Invalid expiry month",             cat: "card_data" },
+      invalid_expiry_year:                  { title: "Invalid expiry year",              cat: "card_data" },
+      invalid_number:                       { title: "Invalid card number",              cat: "card_data" },
+      invalid_pin:                          { title: "Invalid PIN",                      cat: "card_data" },
+      issuer_not_available:                 { title: "Issuer unavailable",               cat: "processing" },
+      lost_card:                            { title: "Card reported lost",               cat: "lost_stolen_fraud" },
+      merchant_blacklist:                   { title: "Matched merchant block list",      cat: "lost_stolen_fraud" },
+      new_account_information_available:    { title: "New account information available",cat: "account_invalid" },
+      no_action_taken:                      { title: "Declined — no action taken",       cat: "generic_bank" },
+      not_permitted:                        { title: "Payment not permitted",            cat: "not_allowed" },
+      offline_pin_required:                 { title: "Offline PIN required",             cat: "auth_required" },
+      online_or_offline_pin_required:       { title: "PIN required",                     cat: "auth_required" },
+      pickup_card:                          { title: "Pick up card",                     cat: "pickup" },
+      pin_try_exceeded:                     { title: "PIN attempts exceeded",            cat: "do_not_retry" },
+      processing_error:                     { title: "Processing error",                 cat: "processing" },
+      reenter_transaction:                  { title: "Re-enter transaction",             cat: "processing" },
+      restricted_card:                      { title: "Restricted card",                  cat: "not_allowed" },
+      revocation_of_all_authorizations:     { title: "All authorizations revoked",       cat: "do_not_retry" },
+      revocation_of_authorization:          { title: "Authorization revoked",            cat: "do_not_retry" },
+      security_violation:                   { title: "Security violation",               cat: "lost_stolen_fraud" },
+      service_not_allowed:                  { title: "Service not allowed",              cat: "not_allowed" },
+      stolen_card:                          { title: "Card reported stolen",             cat: "lost_stolen_fraud" },
+      stop_payment_order:                   { title: "Stop payment order",               cat: "stop_recurring" },
+      testmode_decline:                     { title: "Test card used on live charge",    cat: "test_card" },
+      transaction_not_allowed:              { title: "Transaction not allowed",          cat: "not_allowed" },
+      try_again_later:                      { title: "Try again later",                  cat: "processing" },
+      withdrawal_count_limit_exceeded:      { title: "Withdrawal limit exceeded",        cat: "limit" },
+      mobile_device_authentication_required:{ title: "Mobile authentication required",   cat: "auth_required" },
+    },
+  },
+  braintree: {
+    label: "Braintree / PayPal",
+    source: "https://developer.paypal.com/braintree/docs/reference/general/processor-responses/authorization-responses",
+    // Declined (2000-class) and network (3000) codes. 1000-class are approvals.
+    codes: {
+      "2000": { title: "Do Not Honor",                                   cat: "generic_bank" },
+      "2001": { title: "Insufficient Funds",                             cat: "insufficient" },
+      "2002": { title: "Limit Exceeded",                                 cat: "limit" },
+      "2003": { title: "Cardholder's Activity Limit Exceeded",           cat: "limit" },
+      "2004": { title: "Expired Card",                                   cat: "expired" },
+      "2005": { title: "Invalid Credit Card Number",                     cat: "card_data" },
+      "2006": { title: "Invalid Expiration Date",                        cat: "card_data" },
+      "2007": { title: "No Account",                                     cat: "account_invalid" },
+      "2008": { title: "Card Account Length Error",                      cat: "card_data" },
+      "2009": { title: "No Such Issuer",                                 cat: "account_invalid" },
+      "2010": { title: "Card Issuer Declined CVV",                       cat: "security_code" },
+      "2011": { title: "Voice Authorization Required",                   cat: "call_issuer" },
+      "2012": { title: "Processor Declined — Possible Lost Card",        cat: "lost_stolen_fraud" },
+      "2013": { title: "Processor Declined — Possible Stolen Card",      cat: "lost_stolen_fraud" },
+      "2014": { title: "Processor Declined — Fraud Suspected",           cat: "lost_stolen_fraud" },
+      "2015": { title: "Transaction Not Allowed",                        cat: "not_allowed" },
+      "2016": { title: "Duplicate Transaction",                          cat: "duplicate" },
+      "2017": { title: "Cardholder Stopped Billing",                     cat: "stop_recurring" },
+      "2018": { title: "Cardholder Stopped All Billing",                 cat: "stop_recurring" },
+      "2019": { title: "Invalid Transaction",                            cat: "generic_bank" },
+      "2020": { title: "Violation",                                      cat: "not_allowed" },
+      "2021": { title: "Security Violation",                             cat: "lost_stolen_fraud" },
+      "2022": { title: "Declined — Updated Cardholder Available",        cat: "account_invalid" },
+      "2023": { title: "Processor Does Not Support This Feature",        cat: "merchant_config" },
+      "2024": { title: "Card Type Not Enabled",                          cat: "merchant_config" },
+      "2025": { title: "Set Up Error — Merchant",                        cat: "merchant_config" },
+      "2026": { title: "Invalid Merchant ID",                            cat: "merchant_config" },
+      "2027": { title: "Set Up Error — Amount",                          cat: "merchant_config" },
+      "2028": { title: "Set Up Error — Hierarchy",                       cat: "merchant_config" },
+      "2029": { title: "Set Up Error — Card",                            cat: "merchant_config" },
+      "2030": { title: "Set Up Error — Terminal",                        cat: "merchant_config" },
+      "2031": { title: "Encryption Error",                               cat: "merchant_config" },
+      "2032": { title: "Surcharge Not Permitted",                        cat: "not_allowed" },
+      "2033": { title: "Inconsistent Data",                              cat: "merchant_config" },
+      "2034": { title: "No Action Taken",                                cat: "generic_bank" },
+      "2035": { title: "Partial Approval For Amount (Group III)",        cat: "generic_bank" },
+      "2036": { title: "Authorization Could Not Be Found",              cat: "merchant_config" },
+      "2037": { title: "Already Reversed",                               cat: "merchant_config" },
+      "2038": { title: "Processor Declined",                             cat: "generic_bank" },
+      "2039": { title: "Invalid Authorization Code",                     cat: "merchant_config" },
+      "2040": { title: "Invalid Store",                                  cat: "merchant_config" },
+      "2041": { title: "Declined — Call For Approval",                   cat: "call_issuer" },
+      "2042": { title: "Invalid Client ID",                              cat: "merchant_config" },
+      "2043": { title: "Error — Do Not Retry, Call Issuer",             cat: "do_not_retry" },
+      "2044": { title: "Declined — Call Issuer",                         cat: "call_issuer" },
+      "2045": { title: "Invalid Merchant Number",                        cat: "merchant_config" },
+      "2046": { title: "Declined",                                       cat: "generic_bank" },
+      "2047": { title: "Call Issuer. Pick Up Card",                      cat: "pickup" },
+      "2048": { title: "Invalid Amount",                                 cat: "merchant_config" },
+      "2049": { title: "Invalid SKU Number",                             cat: "merchant_config" },
+      "2050": { title: "Invalid Credit Plan",                            cat: "merchant_config" },
+      "2051": { title: "Card Number Does Not Match Method of Payment",   cat: "card_data" },
+      "2052": { title: "Invalid Level III Purchase",                     cat: "merchant_config" },
+      "2053": { title: "Card Reported As Lost Or Stolen",               cat: "lost_stolen_fraud" },
+      "2054": { title: "Reversal Amount Does Not Match Authorization",   cat: "merchant_config" },
+      "2055": { title: "Invalid Transaction Division Number",            cat: "merchant_config" },
+      "2056": { title: "Transaction Amount Exceeds Division Limit",      cat: "merchant_config" },
+      "2057": { title: "Issuer Or Cardholder Restriction On Card",       cat: "not_allowed" },
+      "2058": { title: "Merchant Not Mastercard SecureCode Enabled",     cat: "merchant_config" },
+      "2059": { title: "Address Verification Failed",                    cat: "card_data" },
+      "2060": { title: "Address Verification And Card Security Code Failed", cat: "card_data" },
+      "2061": { title: "Invalid Transaction Data",                       cat: "merchant_config" },
+      "2062": { title: "Invalid Tax Amount",                             cat: "merchant_config" },
+      "2063": { title: "PayPal Business Account Preference Failed",      cat: "paypal_merchant" },
+      "2064": { title: "Invalid Currency Code",                          cat: "merchant_config" },
+      "2065": { title: "Refund Time Limit Exceeded",                     cat: "merchant_config" },
+      "2066": { title: "PayPal Business Account Restricted",             cat: "paypal_merchant" },
+      "2067": { title: "Authorization Expired",                          cat: "processing" },
+      "2068": { title: "PayPal Business Account Locked Or Closed",       cat: "paypal_merchant" },
+      "2069": { title: "PayPal Blocking Duplicate Order IDs",            cat: "duplicate" },
+      "2070": { title: "PayPal Buyer Revoked Pre-Approved Authorization",cat: "paypal_buyer" },
+      "2071": { title: "PayPal Payee Account Invalid / Unconfirmed Email",cat: "paypal_merchant" },
+      "2072": { title: "PayPal Payee Email Incorrectly Formatted",       cat: "paypal_merchant" },
+      "2073": { title: "PayPal Validation Error",                        cat: "paypal_merchant" },
+      "2074": { title: "PayPal Funding Instrument Declined By Bank",     cat: "paypal_buyer" },
+      "2075": { title: "Payer Account Is Locked Or Closed",             cat: "paypal_buyer" },
+      "2076": { title: "Payer Cannot Pay With PayPal",                   cat: "paypal_buyer" },
+      "2077": { title: "Transaction Refused By PayPal Risk Model",       cat: "lost_stolen_fraud" },
+      "2078": { title: "Invalid Secure Payment Data",                    cat: "merchant_config" },
+      "2079": { title: "PayPal Merchant Account Configuration Error",    cat: "paypal_merchant" },
+      "2080": { title: "Invalid User Credentials",                       cat: "merchant_config" },
+      "2081": { title: "PayPal Pending Payments Not Supported",          cat: "paypal_merchant" },
+      "2082": { title: "PayPal Domestic Transaction Required",           cat: "paypal_buyer" },
+      "2083": { title: "PayPal Phone Number Required",                   cat: "paypal_buyer" },
+      "2084": { title: "PayPal Tax Info Required",                       cat: "paypal_buyer" },
+      "2085": { title: "PayPal Payee Blocked Transaction",              cat: "paypal_merchant" },
+      "2086": { title: "PayPal Transaction Limit Exceeded",             cat: "limit" },
+      "2087": { title: "PayPal Reference Transactions Not Enabled",      cat: "paypal_merchant" },
+      "2088": { title: "Currency Not Enabled For PayPal Seller Account", cat: "paypal_merchant" },
+      "2089": { title: "PayPal Payee Email Permission Denied",           cat: "paypal_merchant" },
+      "2090": { title: "PayPal/Venmo Refund Exceeds Settled Amount",     cat: "merchant_config" },
+      "2091": { title: "Currency Must Match PayPal Account",             cat: "paypal_merchant" },
+      "2092": { title: "No Data Found — Try Another Verification Method",cat: "card_data" },
+      "2093": { title: "PayPal Payment Method Is Invalid",               cat: "paypal_buyer" },
+      "2094": { title: "PayPal Payment Already Completed",               cat: "duplicate" },
+      "2095": { title: "PayPal Refund Not Allowed After Partial Refund", cat: "merchant_config" },
+      "2096": { title: "PayPal Buyer Account Same As Seller",            cat: "paypal_buyer" },
+      "2097": { title: "PayPal Authorization Amount Limit Exceeded",     cat: "limit" },
+      "2098": { title: "PayPal Authorization Count Limit Exceeded",      cat: "limit" },
+      "2099": { title: "Cardholder Authentication Required",             cat: "auth_required" },
+      "2100": { title: "PayPal Channel-Initiated Billing Not Enabled",   cat: "paypal_merchant" },
+      "2101": { title: "Additional Authorization Required",              cat: "auth_required" },
+      "2102": { title: "Incorrect PIN",                                  cat: "card_data" },
+      "2103": { title: "PIN Try Exceeded",                               cat: "do_not_retry" },
+      "2104": { title: "Offline Issuer Declined",                        cat: "generic_bank" },
+      "2105": { title: "Cannot Authorize At This Time (Life Cycle)",     cat: "processing" },
+      "2106": { title: "Cannot Authorize At This Time (Policy)",         cat: "not_allowed" },
+      "2107": { title: "Card Not Activated",                             cat: "account_invalid" },
+      "2108": { title: "Closed Card",                                    cat: "account_invalid" },
+      "3000": { title: "Processor Network Unavailable — Try Again",      cat: "processing" },
+    },
+    // 2109–2999 are all reported as a generic "Processor Declined".
+    rangeFallback: (code) => (code >= 2109 && code <= 2999
+      ? { title: "Processor Declined", cat: "generic_bank" } : null),
+  },
+  nmi: {
+    label: "NMI",
+    source: "https://docs.nmi.com/reference/response-codes",
+    // Detailed response_code values. (Top-level 1/2/3 and 100=approved omitted —
+    // they're coarse status, not decline reasons.)
+    codes: {
+      "200": { title: "Declined by processor",                       cat: "generic_bank" },
+      "201": { title: "Do not honor",                                cat: "generic_bank" },
+      "202": { title: "Insufficient funds",                          cat: "insufficient" },
+      "203": { title: "Over limit",                                  cat: "limit" },
+      "204": { title: "Transaction not allowed",                     cat: "not_allowed" },
+      "220": { title: "Incorrect payment information",               cat: "card_data" },
+      "221": { title: "No such card issuer",                         cat: "account_invalid" },
+      "222": { title: "No card number on file with issuer",          cat: "account_invalid" },
+      "223": { title: "Expired card",                                cat: "expired" },
+      "224": { title: "Invalid expiration date",                     cat: "card_data" },
+      "225": { title: "Invalid card security code",                  cat: "security_code" },
+      "226": { title: "Invalid PIN",                                 cat: "card_data" },
+      "240": { title: "Call issuer for further information",         cat: "call_issuer" },
+      "250": { title: "Pick up card",                                cat: "pickup" },
+      "251": { title: "Lost card",                                   cat: "lost_stolen_fraud" },
+      "252": { title: "Stolen card",                                 cat: "lost_stolen_fraud" },
+      "253": { title: "Fraudulent card",                             cat: "lost_stolen_fraud" },
+      "260": { title: "Declined — further instructions available",   cat: "call_issuer" },
+      "261": { title: "Declined — stop all recurring payments",      cat: "stop_recurring" },
+      "262": { title: "Declined — stop this recurring program",      cat: "stop_recurring" },
+      "263": { title: "Declined — update cardholder data available", cat: "account_invalid" },
+      "264": { title: "Declined — retry in a few days",              cat: "processing" },
+      "300": { title: "Rejected by gateway",                         cat: "merchant_config" },
+      "400": { title: "Transaction error returned by processor",     cat: "processing" },
+      "410": { title: "Invalid merchant configuration",              cat: "merchant_config" },
+      "411": { title: "Merchant account is inactive",                cat: "merchant_config" },
+      "420": { title: "Communication error",                         cat: "processing" },
+      "421": { title: "Communication error with issuer",             cat: "processing" },
+      "430": { title: "Duplicate transaction at processor",          cat: "duplicate" },
+      "440": { title: "Processor format error",                      cat: "merchant_config" },
+      "441": { title: "Invalid transaction information",             cat: "merchant_config" },
+      "460": { title: "Processor feature not available",             cat: "merchant_config" },
+      "461": { title: "Unsupported card type",                       cat: "not_allowed" },
+    },
+  },
+};
+
+/**
+ * Look up a decline code across all processors (or one, if `processor` given).
+ * Codes don't collide between the three processors, but the lookup returns an
+ * ARRAY so the rare/future ambiguous case surfaces every reading instead of
+ * silently picking one. Each match resolves its category into type/retry/customer.
+ * Returns [] when nothing matches.
+ */
+function lookupDecline(code, processor = null) {
+  const raw = code.trim();
+  if (!raw) return [];
+  const lc = raw.toLowerCase();
+  const tables = processor ? { [processor]: DECLINE_TABLES[processor] } : DECLINE_TABLES;
+  const matches = [];
+  for (const [key, table] of Object.entries(tables)) {
+    if (!table) continue;
+    let hit = table.codes[lc] || table.codes[raw];
+    if (!hit && table.rangeFallback) hit = table.rangeFallback(Number(raw));
+    if (!hit) continue;
+    const cat = DECLINE_CATS[hit.cat] || DECLINE_CATS.generic_bank;
+    matches.push({
+      processor: key, processorLabel: table.label, source: table.source,
+      code: raw, title: hit.title, category: hit.cat,
+      type: cat.type, retry: cat.retry, customer: cat.customer,
+    });
+  }
+  return matches;
 }
 
 /* ============================================================
@@ -3039,38 +3284,15 @@ srcPostback.addEventListener("input", () => { renderPostback(); syncHash(); });
 const srcDecline = document.getElementById("srcDecline");
 const declineTarget = document.getElementById("declineOut");
 
-function renderDecline() {
-  const code = srcDecline.value.trim();
-  declineTarget.replaceChildren();
-
-  if (code === "") {
-    const box = el("div", "empty reveal");
-    box.append(el("div", "big", "✗→"));
-    box.append(el("div", null, "Paste a Stripe, Braintree, or NMI decline code for a plain-language read."));
-    box.append(exampleButton(() => { srcDecline.value = "insufficient_funds"; renderDecline(); syncHash(); }));
-    declineTarget.append(box);
-    return;
-  }
-
-  const entry = lookupDecline(code);
-  if (!entry) {
-    const box = el("div", "msg warn reveal");
-    box.append(el("span", "dot"));
-    const body = el("div", "body");
-    body.append(el("span", "title", "Not in the table yet"));
-    const span = el("span", null, "No match for ");
-    span.append(el("code", null, code));
-    span.append(document.createTextNode(" — it can be added to the lookup table."));
-    body.append(span);
-    box.append(body);
-    declineTarget.append(box);
-    return;
-  }
-
+/** Build one result card for a single processor match. */
+function declineCard(entry) {
   const card = el("div", "decline-card reveal");
 
   const head = el("div", "dc-head");
-  head.append(el("span", "dc-code", code));
+  head.append(el("span", "dc-code", entry.code));
+  const proc = el("span", "dc-chip");
+  proc.append(document.createTextNode(entry.processorLabel));
+  head.append(proc);
   const sev = el("span", "dc-chip " + (entry.type === "hard" ? "error" : "warn"));
   sev.append(el("span", "dot " + (entry.type === "hard" ? "error" : "warn")));
   sev.append(document.createTextNode(entry.type === "hard" ? "Hard decline" : "Soft decline"));
@@ -3092,15 +3314,51 @@ function renderDecline() {
   msg.append(copy);
   card.append(msg);
 
-  const seen = el("p", "dc-seen");
-  seen.append(document.createTextNode("Also seen as: "));
-  entry.codes.filter((c) => c !== code.toLowerCase()).forEach((c, i, arr) => {
-    seen.append(el("code", null, c));
-    if (i < arr.length - 1) seen.append(document.createTextNode(", "));
-  });
-  if (entry.codes.length > 1) card.append(seen);
+  // cited source — the trust signal that replaces "verify before trusting"
+  const src = el("p", "dc-seen");
+  src.append(document.createTextNode("Per " + entry.processorLabel + "’s docs — "));
+  const a = el("a", null, "source");
+  a.href = entry.source; a.target = "_blank"; a.rel = "noopener noreferrer";
+  src.append(a);
+  card.append(src);
 
-  declineTarget.append(card);
+  return card;
+}
+
+function renderDecline() {
+  const code = srcDecline.value.trim();
+  declineTarget.replaceChildren();
+
+  if (code === "") {
+    const box = el("div", "empty reveal");
+    box.append(el("div", "big", "✗→"));
+    box.append(el("div", null, "Paste a Stripe, Braintree, or NMI decline code for a plain-language read."));
+    box.append(exampleButton(() => { srcDecline.value = "insufficient_funds"; renderDecline(); syncHash(); }));
+    declineTarget.append(box);
+    return;
+  }
+
+  const matches = lookupDecline(code);
+  if (matches.length === 0) {
+    const box = el("div", "msg warn reveal");
+    box.append(el("span", "dot"));
+    const body = el("div", "body");
+    body.append(el("span", "title", "Not in the table yet"));
+    const span = el("span", null, "No match for ");
+    span.append(el("code", null, code));
+    span.append(document.createTextNode(" in the Stripe, Braintree, or NMI tables — it can be added to the lookup."));
+    body.append(span);
+    box.append(body);
+    declineTarget.append(box);
+    return;
+  }
+
+  // When a code resolves to more than one processor, show every reading.
+  if (matches.length > 1) {
+    declineTarget.append(el("p", "dc-eyebrow eyebrow",
+      "This code appears in more than one processor — readings by gateway:"));
+  }
+  matches.forEach((m) => declineTarget.append(declineCard(m)));
 }
 
 srcDecline.addEventListener("input", () => { renderDecline(); syncHash(); });
