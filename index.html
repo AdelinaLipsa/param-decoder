@@ -285,15 +285,17 @@
   .snote.warn  { color: var(--warn); font-weight: 500; }
   .snote.error { color: var(--error); font-weight: 600; }
 
-  /* decoded Base64 destination, shown under the value */
-  .decoded-line {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--ok);
-    margin-top: 6px;
-    word-break: break-all;
+  /* decoded Base64 destination + drill-in button, shown under the value */
+  .decoded-wrap { margin-top: 6px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .decoded-line { font-family: var(--mono); font-size: 12px; color: var(--ok); word-break: break-all; min-width: 0; }
+  .decoded-inspect {
+    flex: none; font-family: var(--sans); font-size: 11px; font-weight: 600;
+    color: var(--ink-soft); background: var(--field);
+    border: 1px solid var(--rule-strong); border-radius: 4px; padding: 2px 8px; cursor: pointer;
+    transition: color .12s, border-color .12s;
   }
-  .decoded-line:empty { display: none; }
+  .decoded-inspect:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .decoded-inspect:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
 
   /* raw/encoded form — only rendered when it differs from the value */
   .raw-line {
@@ -2121,13 +2123,20 @@ function buildRow(row) {
   editable.setAttribute("aria-label", "Value for " + row.key);
   editable.textContent = row.value;
   valCell.append(editable);
-  const decodedLine = el("div", "decoded-line");
-  valCell.append(decodedLine);
+  // decoded Base64 target + a one-click drill-in to inspect it as its own link
+  const decodedWrap = el("div", "decoded-wrap");
+  const decodedLine = el("span", "decoded-line");
+  const decodedBtn = el("button", "decoded-inspect", "Inspect ↗");
+  decodedBtn.type = "button";
+  decodedBtn.title = "Open this decoded link in Inspect to break out its params";
+  decodedBtn.addEventListener("click", () => { if (row.decoded) openInInspect(row.decoded); });
+  decodedWrap.append(decodedLine, decodedBtn);
+  valCell.append(decodedWrap);
   const rawLine = el("div", "raw-line");
   valCell.append(rawLine);
   rowEl.append(valCell);
 
-  row.el = { rowEl, gutter, dot, snote, fixbox, toggle, editable, rawLine, decodedLine };
+  row.el = { rowEl, gutter, dot, snote, fixbox, toggle, editable, rawLine, decodedWrap, decodedLine };
 
   toggle.addEventListener("change", () => {
     row.enabled = toggle.checked;
@@ -2143,7 +2152,7 @@ function buildRow(row) {
 }
 
 function patchRow(row) {
-  const { gutter, dot, snote, fixbox, rawLine, decodedLine } = row.el;
+  const { gutter, dot, snote, fixbox, rawLine, decodedWrap, decodedLine } = row.el;
   const status = row.enabled ? row.status : "off";
 
   gutter.className = "gutter " + (row.enabled ? row.status : "");
@@ -2151,8 +2160,10 @@ function patchRow(row) {
   snote.className = "snote " + status;
   snote.textContent = row.enabled ? (row.note || "") : "Excluded from rebuilt link";
 
-  // decoded Base64 target, on its own line in the value column
-  decodedLine.textContent = row.enabled && row.decoded ? "↳ " + row.decoded : "";
+  // decoded Base64 target + drill-in, shown only for rows that have one
+  const showDecoded = row.enabled && !!row.decoded;
+  decodedWrap.style.display = showDecoded ? "" : "none";
+  decodedLine.textContent = showDecoded ? "↳ " + row.decoded : "";
 
   // raw/encoded form — shown ONLY when it differs from the value you see
   const encoded = encodeForUrl(row.value);

@@ -1087,6 +1087,32 @@ async function decline(code) {
   check("DC5 copied message", /expired/i.test(await copied() ?? ""), await copied());
 }
 
+// ============================================================
+//  FEATURE 26 — drill into the decoded Base64 redirect
+// ============================================================
+{
+  // redirect Base64-decodes to https://pandastyle.life/purchase?...&fnid=2&aff_id=259107
+  const b64 = Buffer.from("https://pandastyle.life/purchase?fnid=2&aff_id=259107&template=6b").toString("base64");
+  await inspect("https://buygoods.com/secure/checkout.html?aff_id=259107&redirect=" + encodeURIComponent(b64));
+  // the redirect row exposes an "Inspect" drill-in button
+  const row = await page.evaluate(() => {
+    const r = [...document.querySelectorAll(".prow:not(.colhead)")].find(x => x.querySelector(".k")?.textContent === "redirect");
+    return { hasBtn: !!r?.querySelector(".decoded-inspect"), decoded: r?.querySelector(".decoded-line")?.textContent };
+  });
+  check("DR1 drill-in button present", row.hasBtn, JSON.stringify(row));
+  check("DR1 decoded shown", /pandastyle\.life\/purchase/.test(row.decoded ?? ""), row.decoded);
+  // click it → the decoded URL loads into Inspect and its nested params parse
+  await page.evaluate(() => {
+    [...document.querySelectorAll(".prow:not(.colhead)")]
+      .find(x => x.querySelector(".k")?.textContent === "redirect")
+      .querySelector(".decoded-inspect").click();
+  });
+  const r = await read();
+  check("DR2 loaded decoded link", r.base === "https://pandastyle.life/purchase", r.base);
+  check("DR2 nested fnid parsed", rowFor(r, "fnid")?.status === "ok", JSON.stringify(rowFor(r,"fnid")));
+  check("DR2 nested aff_id parsed", rowFor(r, "aff_id")?.value === "259107", JSON.stringify(rowFor(r,"aff_id")));
+}
+
 await browser.close();
 
 console.log(`\n  PASS ${pass}   FAIL ${fail}\n`);
