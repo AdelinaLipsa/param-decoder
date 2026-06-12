@@ -873,6 +873,12 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   check("CK2 bad base64 warns", rowFor(r, "redirect").status === "warn", JSON.stringify(rowFor(r,"redirect")));
 }
 {
+  // real BuyGoods links sometimes OVER-pad the Base64 redirect (…/ + spurious ==); decode it anyway
+  const r = await inspect("https://buygoods.com/secure/checkout.html?account_id=10146&product_codename=lipv6fnn4&redirect=aHR0cHM6Ly9saXBvdml2ZS5jb20vZm5uNC91cDEtNmIv%3D%3D");
+  check("CK6 over-padded base64 still decodes", /lipovive\.com\/fnn4\/up1-6b/.test(rowFor(r, "redirect").decoded ?? ""), JSON.stringify(rowFor(r,"redirect")));
+  check("CK6 over-padded redirect not flagged", rowFor(r, "redirect").status === "ok", JSON.stringify(rowFor(r,"redirect")));
+}
+{
   // checkout links usually inherit commission upstream — missing aff_id is a heads-up, not a red error
   const r = await inspect("https://buygoods.com/secure/checkout.html?account_id=11308&product_codename=her6&subid={clickid}");
   check("CK3 missing-aff banner softened to warn on checkout", banner(r, "No affiliate ID")?.level === "warn", JSON.stringify(r.banners));
