@@ -753,6 +753,24 @@
     border-radius: 4px; padding: 1px 7px; margin-right: 5px; white-space: nowrap;
   }
 
+  /* tracker postback reference (Postback mode) */
+  .pbref { margin-top: 16px; }
+  .pbref-lead { font-size: 13px; color: var(--ink-soft); margin: 8px 0 14px; line-height: 1.5; }
+  .pbref-row { padding: 13px 0; border-top: 1px solid var(--rule); }
+  .pbref-row:first-of-type { border-top: none; padding-top: 4px; }
+  .pbref-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .pbref-name { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+  .pbref-src { font-size: 11px; color: var(--ink-faint); }
+  .pbref-tmpl { display: flex; align-items: flex-start; gap: 8px; }
+  .pbref-code {
+    flex: 1 1 auto; font-family: var(--mono); font-size: 12px; color: var(--ink);
+    background: var(--field); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 9px 11px; word-break: break-all; line-height: 1.55;
+  }
+  .pbref-code .tok { color: var(--ok); font-weight: 600; }
+  .pbref-copy { flex: none; font-size: 12px; padding: 7px 12px; }
+  .pbref-note { font-size: 12px; color: var(--ink-faint); margin: 7px 0 0; line-height: 1.45; }
+
   .btn.ghost { background: var(--field); }
 
   @media (max-width: 640px) {
@@ -1272,7 +1290,7 @@
               <span class="chip bad">{CLICKID} ✗</span>
             </div>
             <h3>Postback</h3>
-            <p>Check a tracker's postback URL against the five tokens BuyGoods actually fills (<span class="mono">{SUBID}…{SUBID5}, {ORDERID}, {COMMISSION_AMOUNT}…</span>). Catches tokens BuyGoods will never send.</p>
+            <p>Check a tracker's postback URL against the tokens BuyGoods actually fills (<span class="mono">{SUBID}…{SUBID5}, {ORDERID}, {COMMISSION_AMOUNT}…</span>), and copy the exact template for <em>Voluum, CPV Lab, or AnyTrack</em> — each tracker's own param names, sourced from its docs.</p>
             <button class="btn ghost" data-open="postback" type="button">Open Postback</button>
           </div>
 
@@ -1723,6 +1741,41 @@ const POSTBACK_TOKENS = {
   ORDERID: "Unique order ID", PRODUCT_CODENAME: "Product code",
   COMMISSION_AMOUNT: "Commission amount", EMAILHASH: "Hashed buyer email",
 };
+
+/* ------------------------------------------------------------
+   TRACKER POSTBACK REFERENCE  —  per-tracker param names
+   ------------------------------------------------------------
+   The postback the affiliate registers points at THEIR tracker; its
+   query KEYS are the tracker's own param names (Voluum's click ID is
+   `cid`, CPV Lab's is `subid`…), and the VALUES are BuyGoods tokens
+   BuyGoods fills on conversion. Getting the key names right is what
+   tech support burns time on — so here's the exact template per
+   tracker, with the correct BuyGoods token mapped into each slot.
+
+   Param names transcribed from each tracker's own docs (2026-06-12).
+   Hosts are custom per account, so the template uses a placeholder
+   domain — only the PARAM NAMES are asserted as fact.
+   ------------------------------------------------------------ */
+const TRACKER_POSTBACKS = [
+  {
+    id: "voluum", label: "Voluum",
+    source: "https://doc.voluum.com/article/parameters-in-postback-urls",
+    note: "cid carries the click ID (required); payout (or p) the revenue; txid an optional transaction ID.",
+    template: "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID}&payout={COMMISSION_AMOUNT}&txid={ORDERID}",
+  },
+  {
+    id: "cpvlab", label: "CPV Lab Pro",
+    source: "https://cpvlab.pro/docs/postback-url.html",
+    note: "subid carries the click ID; revenue the payout. Called at adclick.php on your CPV Lab domain.",
+    template: "https://YOUR-CPVLAB-DOMAIN/adclick.php?subid={SUBID}&revenue={COMMISSION_AMOUNT}",
+  },
+  {
+    id: "anytrack", label: "AnyTrack",
+    source: "https://readme.anytrack.io/docs/event-attributes",
+    note: "click_id carries the click ID; value the conversion value; transactionId the order ID.",
+    template: "https://YOUR-ANYTRACK-POSTBACK?click_id={SUBID}&value={COMMISSION_AMOUNT}&transactionId={ORDERID}",
+  },
+];
 
 /* ------------------------------------------------------------
    DECLINE CODES  —  authoritative, per-processor
@@ -3430,6 +3483,35 @@ function renderPostbackTable(rows) {
   const wrap = el("div", null); wrap.append(head); wrap.append(table); return wrap;
 }
 
+/** A reference card: the correct postback template per tracker, sourced. */
+function renderTrackerReference() {
+  const card = el("div", "help-card pbref reveal");
+  card.append(el("p", "eyebrow", "Tracker postback reference — the params each tracker expects"));
+  card.append(el("p", "pbref-lead", "The keys are the tracker's own param names; the {TOKENS} are what BuyGoods fills on conversion. Copy the line for the affiliate's tracker and swap in their domain."));
+  TRACKER_POSTBACKS.forEach((t) => {
+    const row = el("div", "pbref-row");
+    const top = el("div", "pbref-top");
+    top.append(el("span", "pbref-name", t.label));
+    const a = el("a", "pbref-src", "source"); a.href = t.source; a.target = "_blank"; a.rel = "noopener noreferrer";
+    top.append(a);
+    row.append(top);
+    const tmpl = el("div", "pbref-tmpl");
+    const code = el("code", "pbref-code");
+    t.template.split(/(\{[A-Z_]+\})/).forEach((seg) => {
+      if (/^\{[A-Z_]+\}$/.test(seg)) code.append(el("span", "tok", seg));
+      else code.append(document.createTextNode(seg));
+    });
+    tmpl.append(code);
+    const copy = el("button", "btn ghost pbref-copy", "Copy"); copy.type = "button"; copy.dataset.label = "Copy";
+    copy.addEventListener("click", () => copyAndFlash(t.template, copy));
+    tmpl.append(copy);
+    row.append(tmpl);
+    row.append(el("p", "pbref-note", t.note));
+    card.append(row);
+  });
+  return card;
+}
+
 function renderPostback() {
   const parsed = parseInput(srcPostback.value);
   pbTarget.replaceChildren();
@@ -3439,6 +3521,7 @@ function renderPostback() {
     box.append(el("div", null, "Paste your tracker's postback URL to check it against BuyGoods' tokens."));
     box.append(exampleButton(() => { srcPostback.value = EXAMPLE_POSTBACK; renderPostback(); syncHash(); }));
     pbTarget.append(box);
+    pbTarget.append(renderTrackerReference());
     return;
   }
   if (!parsed.ok) { pbTarget.append(renderError(parsed.error)); return; }
@@ -3451,6 +3534,7 @@ function renderPostback() {
   if (banners.length) pbTarget.append(bEl);
   pbTarget.append(renderBase(parsed, true));
   if (rows.length) pbTarget.append(renderPostbackTable(rows));
+  pbTarget.append(renderTrackerReference());
 }
 
 srcPostback.addEventListener("input", () => { renderPostback(); syncHash(); });

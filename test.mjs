@@ -802,6 +802,32 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   check("PB4 static value ok", pbRow(r, "fixed=42")?.status === "ok", JSON.stringify(pbRow(r,"fixed=42")));
   check("PB4 static meaning", /Static value/i.test(pbRow(r, "fixed=42")?.meaning ?? ""), pbRow(r,"fixed=42")?.meaning);
 }
+{
+  // per-tracker postback reference: correct param names per tracker, each sourced
+  await postback("https://trk.com/pb?subid={SUBID}");
+  const ref = await page.evaluate(() => {
+    const card = document.querySelector("#pbOut .pbref");
+    if (!card) return null;
+    return {
+      names: [...card.querySelectorAll(".pbref-name")].map(e => e.textContent),
+      codes: [...card.querySelectorAll(".pbref-code")].map(e => e.textContent),
+      srcs: [...card.querySelectorAll(".pbref-src")].map(a => a.getAttribute("href")),
+      copyBtns: card.querySelectorAll(".pbref-copy").length,
+    };
+  });
+  check("PB5 reference shows 3 trackers", ref && /Voluum/.test(ref.names.join()) && /CPV Lab/.test(ref.names.join()) && /AnyTrack/.test(ref.names.join()), JSON.stringify(ref?.names));
+  check("PB5 voluum click ID = cid", ref && ref.codes.some(c => /cid=\{SUBID\}/.test(c)), JSON.stringify(ref?.codes));
+  check("PB5 cpvlab = subid + revenue", ref && ref.codes.some(c => /subid=\{SUBID\}.*revenue=\{COMMISSION_AMOUNT\}/.test(c)), JSON.stringify(ref?.codes));
+  check("PB5 anytrack click ID = click_id", ref && ref.codes.some(c => /click_id=\{SUBID\}/.test(c)), JSON.stringify(ref?.codes));
+  check("PB5 each tracker cites a source", ref && ref.srcs.length === 3 && ref.srcs.every(s => /^https?:/.test(s)), JSON.stringify(ref?.srcs));
+  check("PB5 copy buttons present", ref && ref.copyBtns === 3, JSON.stringify(ref));
+}
+{
+  // reference is available even before pasting (empty state)
+  await page.click("#modePostback");
+  await page.fill("#srcPostback", "");
+  check("PB6 reference shown in empty state", await page.evaluate(() => !!document.querySelector("#pbOut .pbref")), "no reference in empty state");
+}
 
 // ============================================================
 //  FEATURE 12 — shareable URL hash
