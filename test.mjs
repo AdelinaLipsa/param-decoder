@@ -861,6 +861,19 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   const r = await inspect("https://getoffer.com/af/?subid=x");
   check("CK5 non-checkout missing aff stays error", banner(r, "No affiliate ID")?.level === "error" && r.summary.error >= 1, JSON.stringify(r.banners));
 }
+{
+  // trust badge: inferred params are flagged as best-guess; confirmed ones are not
+  await inspect("https://buygoods.com/secure/checkout.html?account_id=11308&pfnid=abc&vtid=xyz&sub19=v3_x");
+  const t = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("#inspectPanel .prow")];
+    const badged = (k) => !!rows.find(r => r.querySelector(".k")?.textContent === k)?.querySelector(".trustbadge");
+    return { pfnid: badged("pfnid"), vtid: badged("vtid"), sub19: badged("sub19"), account_id: badged("account_id") };
+  });
+  check("TB1 pfnid shows inferred badge", t.pfnid, JSON.stringify(t));
+  check("TB1 vtid shows inferred badge", t.vtid, JSON.stringify(t));
+  check("TB1 sub<N> pattern inferred", t.sub19, JSON.stringify(t));
+  check("TB1 account_id confirmed (no badge)", t.account_id === false, JSON.stringify(t));
+}
 
 // ============================================================
 //  FEATURE 14 — Help tab

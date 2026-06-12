@@ -351,6 +351,14 @@
     color: var(--ink);
     word-break: break-all;
   }
+  /* trust badge — meaning inferred from real links, not team-confirmed */
+  .trustbadge {
+    font-family: var(--sans); font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--ink-faint); background: var(--field);
+    border: 1px dashed var(--rule-strong); border-radius: 4px;
+    padding: 1px 6px; flex: none; cursor: help;
+  }
   .v {
     font-family: var(--mono);
     font-size: 13px;
@@ -1285,6 +1293,7 @@
           <div class="leg"><span class="dot warn"></span><div><strong>Warning</strong> — worth a look, won't block. Duplicate params, a <span class="mono">utm_source</span> with spaces, an incomplete UTM set.</div></div>
           <div class="leg"><span class="dot ok"></span><div><strong>OK</strong> — recognised and valid. Unknown offer params default here; <span class="mono">{PLACEHOLDER}</span> tokens are always fine.</div></div>
           <div class="leg"><span class="dot info"></span><div><strong>Heads-up</strong> — <span class="mono">aff_id</span> pays the affiliate; a <span class="mono">subid</span> click-ID is what reports the conversion back to a tracker. They're different jobs.</div></div>
+          <div class="leg"><span class="trustbadge">inferred</span><div><strong>Inferred</strong> — this param's meaning is a best guess from real links, not yet confirmed by the team (e.g. <span class="mono">pfnid</span>, <span class="mono">vtid</span>). Everything without the badge is confirmed. The tool never bluffs about what it doesn't know.</div></div>
         </div>
 
         <p class="eyebrow help-sec">Reading a decline code</p>
@@ -1479,11 +1488,11 @@ function lookupConfig(key) {
   const direct = PARAM_CONFIG[key] || PARAM_CONFIG[key.toLowerCase()];
   if (direct) return direct;
   const sub = /^sub(\d+)$/i.exec(key);
-  if (sub) return { label: "Checkout sub " + sub[1], desc: "Checkout-level tracking value.", required: true };
+  if (sub) return { label: "Checkout sub " + sub[1], desc: "Checkout-level tracking value.", required: true, trust: "inferred" };
   const vid = /^vid(\d+)$/i.exec(key);
-  if (vid) return { label: "Visitor ID " + vid[1], desc: "Visitor / transaction identifier — often mirrors external_order_id." };
+  if (vid) return { label: "Visitor ID " + vid[1], desc: "Visitor / transaction identifier — often mirrors external_order_id.", trust: "inferred" };
   const sess = /^sessid(\d*)$/i.exec(key);
-  if (sess) return { label: "Session ID" + (sess[1] ? " " + sess[1] : ""), desc: "Checkout session identifier (often embeds a timestamp)." };
+  if (sess) return { label: "Session ID" + (sess[1] ? " " + sess[1] : ""), desc: "Checkout session identifier (often embeds a timestamp).", trust: "inferred" };
   return null;
 }
 
@@ -1561,12 +1570,14 @@ const PARAM_CONFIG = {
   redirect:         { label: "Redirect target", desc: "Where the buyer goes after checkout (Base64-encoded).", decodeBase64: true },
 
   // — secure-checkout session / funnel params (BuyGoods-internal, undocumented;
-  //   descriptions inferred from real links — refine as the team confirms them) —
-  external_order_id: { label: "External order ID", desc: "Order ID carried through from the merchant / external system." },
-  vtid:              { label: "Visitor tracking ID", desc: "The v3 token identifying this visitor/session (often mirrors subid5)." },
-  pfnid:             { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with fnid)." },
-  fnid:              { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with pfnid)." },
-  template:          { label: "Checkout template", desc: "Which checkout page template / variant to show." },
+  //   descriptions INFERRED from real links — trust:"inferred" surfaces that in
+  //   the UI so an AM knows it's a best-guess. Promote to confirmed (drop the
+  //   flag) as the team verifies each one. —
+  external_order_id: { label: "External order ID", desc: "Order ID carried through from the merchant / external system.", trust: "inferred" },
+  vtid:              { label: "Visitor tracking ID", desc: "The v3 token identifying this visitor/session (often mirrors subid5).", trust: "inferred" },
+  pfnid:             { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with fnid).", trust: "inferred" },
+  fnid:              { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with pfnid).", trust: "inferred" },
+  template:          { label: "Checkout template", desc: "Which checkout page template / variant to show.", trust: "inferred" },
 
   // — UTM family: where ad-platform traffic came from —
   utm_source:   { label: "UTM source",   validate: utmToken("UTM source", "Where the traffic came from (ad platform / placement).") },
@@ -2514,6 +2525,13 @@ function buildRow(row) {
   toggle.setAttribute("aria-label", "Include " + row.key + " in rebuilt link");
   const dot = el("span", "dot");
   kline.append(toggle, dot, el("span", "k", row.key));
+  // trust badge: this param's meaning is inferred from real links, not yet team-confirmed
+  const cfgForKey = lookupConfig(row.key);
+  if (cfgForKey && cfgForKey.trust === "inferred") {
+    const badge = el("span", "trustbadge", "inferred");
+    badge.title = "Meaning inferred from real links — not yet confirmed by the team. Treat the description as a best guess.";
+    kline.append(badge);
+  }
   keyCell.append(kline);
   const snote = el("div", "snote");
   keyCell.append(snote);
