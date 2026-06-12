@@ -1108,7 +1108,7 @@ async function pathChips() {
   await inspect("https://nationlifenews.com/br/vsl7/l1/af/?aff_id=&subid5=alphabite_ml1");
   await page.click('.actions button:has-text("Copy diagnosis")');
   const diag = await copied();
-  check("CD1 has header", /PARAM DECODER — DIAGNOSIS/.test(diag), diag?.slice(0,40));
+  check("CD1 has header", /PARAM DECODER: DIAGNOSIS/.test(diag), diag?.slice(0,40));
   check("CD1 has base", /Base: https:\/\/nationlifenews\.com\/br\/vsl7\/l1\/af\//.test(diag), diag);
   check("CD1 has summary", /Summary:/.test(diag) && /no valid affiliate ID/i.test(diag), diag);
   check("CD1 has flagged param", /\[ERROR\] aff_id/.test(diag), diag);

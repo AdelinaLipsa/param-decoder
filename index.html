@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
-     TOKENS — neutral everywhere, colour reserved for status only
+     TOKENS, neutral everywhere, colour reserved for status only
      ============================================================ */
   :root {
     --paper:      #f5f6f8;
@@ -21,7 +21,7 @@
     --rule-strong:#cfd5dd;
     --field:      #fbfcfd;
 
-    /* status — the ONLY colour in the instrument */
+    /* status, the ONLY colour in the instrument */
     --ok:    #16855a;
     --warn:  #b25e09;
     --error: #c02622;
@@ -259,7 +259,7 @@
   }
   .prow:last-child { border-bottom: none; }
 
-  /* status gutter — coloured strictly by validation status */
+  /* status gutter, coloured strictly by validation status */
   .gutter { background: var(--rule-strong); }
   .gutter.ok    { background: var(--ok); }
   .gutter.warn  { background: var(--warn); }
@@ -297,7 +297,7 @@
   .decoded-inspect:hover { color: var(--ink); border-color: var(--ink-faint); }
   .decoded-inspect:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
 
-  /* raw/encoded form — only rendered when it differs from the value */
+  /* raw/encoded form, only rendered when it differs from the value */
   .raw-line {
     font-family: var(--mono);
     font-size: 12px;
@@ -351,7 +351,7 @@
     color: var(--ink);
     word-break: break-all;
   }
-  /* trust badge — meaning inferred from real links, not team-confirmed */
+  /* trust badge, meaning inferred from real links, not team-confirmed */
   .trustbadge {
     font-family: var(--sans); font-size: 9.5px; font-weight: 700;
     text-transform: uppercase; letter-spacing: .08em;
@@ -359,7 +359,7 @@
     border: 1px dashed var(--rule-strong); border-radius: 4px;
     padding: 1px 6px; flex: none; cursor: help;
   }
-  /* "noted" — a meaning you captured locally: solid, not dashed */
+  /* "noted", a meaning you captured locally: solid, not dashed */
   .trustbadge.noted {
     color: var(--ok); background: var(--ok-bg);
     border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
@@ -586,7 +586,7 @@
     margin: 4px 0 10px; line-height: 1.2;
   }
   .help-hero .lead { font-size: 16px; line-height: 1.6; color: var(--ink-soft); margin: 0; max-width: 62ch; }
-  /* section headings — real scan anchors, not faint micro-labels */
+  /* section headings, real scan anchors, not faint micro-labels */
   .help-sec {
     font-size: 16.5px;
     text-transform: none;
@@ -725,7 +725,7 @@
   .concept-lead b, .concept-note b { color: var(--ink); font-weight: 600; }
   .concept-note { font-size: 13px; color: var(--ink-soft); margin: 16px 0 0; line-height: 1.55; max-width: 64ch; }
 
-  /* "two jobs of every link" — commission flow vs reporting flow */
+  /* "two jobs of every link", commission flow vs reporting flow */
   .twojobs {
     display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: stretch;
     background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 18px;
@@ -753,7 +753,7 @@
   .tj-flow.track .tj-pulse { background: var(--ink-soft); box-shadow: 0 0 0 3px var(--field); }
   .tj-flow.track .tj-end b.hl { color: var(--ink); }
 
-  /* "the path tells a story" — annotated VSL path segments */
+  /* "the path tells a story", annotated VSL path segments */
   .pathana .pa-url {
     font-family: var(--mono); font-size: 13px; color: var(--ink-faint);
     background: var(--field); border: 1px solid var(--rule); border-radius: 6px;
@@ -761,7 +761,7 @@
   }
   .pa-url .pa-seg { color: var(--ink); font-weight: 600; padding: 1px 1px; border-radius: 3px; }
 
-  /* "reading a decline code" — soft vs hard axes */
+  /* "reading a decline code", soft vs hard axes */
   .decl-axes { display: flex; flex-direction: column; gap: 11px; background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; }
   .decl-ax { display: flex; align-items: baseline; gap: 13px; font-size: 13px; color: var(--ink-soft); line-height: 1.45; }
   .decl-ax b { color: var(--ink); font-weight: 600; }
@@ -804,7 +804,7 @@
   .pbref-copy { flex: none; font-size: 12px; padding: 7px 12px; }
   .pbref-note { font-size: 12.5px; color: var(--ink-soft); margin: 7px 0 0; line-height: 1.45; }
 
-  /* "why not a generic decoder" — animated generic-vs-ours comparison */
+  /* "why not a generic decoder", animated generic-vs-ours comparison */
   .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   .vs-side { background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; }
   .vs-side.generic { opacity: .72; }
@@ -830,7 +830,7 @@
     .help-modes { grid-template-columns: 1fr; }
   }
 
-  /* help animations — gentle, gated, freeze to a meaningful state */
+  /* help animations, gentle, gated, freeze to a meaningful state */
   @media (prefers-reduced-motion: no-preference) {
     /* worked-example rows reveal each time the Help tab opens */
     .demo-decode .dline { opacity: 0; animation: rise .4s ease forwards; }
@@ -1067,7 +1067,7 @@
       to   { opacity: 1; transform: none; }
     }
 
-    /* staggered table rows — the signature reveal */
+    /* staggered table rows, the signature reveal */
     .ptable.stagger .prow { animation: rowIn .36s cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--i, 0) * 26ms); }
     @keyframes rowIn {
       from { opacity: 0; transform: translateY(7px); }
@@ -1099,7 +1099,7 @@
       100% { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 13px rgba(22,133,90,0); }
     }
 
-    /* ===== looping help screencast — one 13s timeline, all synced ===== */
+    /* ===== looping help screencast, one 13s timeline, all synced ===== */
     .sc-typed { clip-path: inset(0 100% 0 0); animation: scType 13s linear infinite; }
     @keyframes scType {
       0% { clip-path: inset(0 100% 0 0); } 14% { clip-path: inset(0 0 0 0); }
@@ -1147,7 +1147,7 @@
 
     <p class="privacy">
       <span class="lock" aria-hidden="true"></span>
-      <span><strong>Runs entirely in your browser.</strong> Nothing you paste is sent, stored, or logged — paste live links freely.</span>
+      <span><strong>Runs entirely in your browser.</strong> Nothing you paste is sent, stored, or logged, paste live links freely.</span>
     </p>
 
     <div class="modebar-row">
@@ -1209,7 +1209,7 @@
       <div class="input-block">
         <p class="eyebrow">Paste a decline code</p>
         <input id="srcDecline" class="code-input" spellcheck="false" autocomplete="off"
-          placeholder="e.g. insufficient_funds, 2001, or 51 — Stripe / Braintree / NMI">
+          placeholder="e.g. insufficient_funds, 2001, or 51, Stripe / Braintree / NMI">
       </div>
       <div id="declineOut" aria-live="polite"></div>
     </section>
@@ -1219,7 +1219,7 @@
         <div class="help-hero">
           <p class="eyebrow">How to use</p>
           <h2>Read any BuyGoods link in one glance.</h2>
-          <p class="lead">Paste a checkout, offer, or postback URL — Param Decoder explains what every parameter does, flags what's broken, and lets you fix and rebuild it. Nothing you paste leaves your browser.</p>
+          <p class="lead">Paste a checkout, offer, or postback URL, Param Decoder explains what every parameter does, flags what's broken, and lets you fix and rebuild it. Nothing you paste leaves your browser.</p>
         </div>
 
         <div class="screencast" aria-hidden="true">
@@ -1244,7 +1244,7 @@
         </div>
 
         <div class="help-card example">
-          <p class="eyebrow">Worked example — a live checkout link</p>
+          <p class="eyebrow">Worked example, a live checkout link</p>
           <div class="demo-url" id="demoUrl"></div>
           <div class="demo-decode" aria-hidden="true">
             <div class="dline d1"><span class="dk">account_id</span><span class="dv">11308</span><span class="dm">the BuyGoods account</span></div>
@@ -1254,7 +1254,7 @@
               <span class="arrow">↳</span><span class="dv decoded">https://heroupofficial.com/upsell/bg/6a/3/v3/b/</span>
               <span class="dm">decoded from Base64</span>
             </div>
-            <div class="dline d4"><span class="dk">subid</span><span class="dv">{clickid}</span><span class="dm">click-ID placeholder — filled at click time (sub17–19 carry the checkout tracking)</span></div>
+            <div class="dline d4"><span class="dk">subid</span><span class="dv">{clickid}</span><span class="dm">click-ID placeholder, filled at click time (sub17-19 carry the checkout tracking)</span></div>
           </div>
           <button class="btn primary" id="tryExample" type="button">Try this in Inspect →</button>
         </div>
@@ -1271,24 +1271,24 @@
             <div class="tj-flows">
               <div class="tj-flow comm">
                 <span class="tj-wire"><span class="tj-pulse"></span></span>
-                <span class="tj-end"><b class="hl">Commission</b> — <b>aff_id</b> tells BuyGoods which affiliate to pay.</span>
+                <span class="tj-end"><b class="hl">Commission</b>, <b>aff_id</b> tells BuyGoods which affiliate to pay.</span>
               </div>
               <div class="tj-flow track">
                 <span class="tj-wire"><span class="tj-pulse"></span></span>
-                <span class="tj-end"><b class="hl">Reporting</b> — the click&nbsp;ID in a <b>subid</b> lets the affiliate's own tracker credit the sale.</span>
+                <span class="tj-end"><b class="hl">Reporting</b>, the click&nbsp;ID in a <b>subid</b> lets the affiliate's own tracker credit the sale.</span>
               </div>
             </div>
           </div>
-          <p class="concept-note">A link can <b>pay the affiliate yet never report back</b> to their tracker — or track perfectly yet earn no commission. Different breakage, different fix. That's why a missing <span class="mono">aff_id</span> is an <b>error</b>, while an empty <span class="mono">subid</span> is only a heads-up.</p>
+          <p class="concept-note">A link can <b>pay the affiliate yet never report back</b> to their tracker, or track perfectly yet earn no commission. Different breakage, different fix. That's why a missing <span class="mono">aff_id</span> is an <b>error</b>, while an empty <span class="mono">subid</span> is only a heads-up.</p>
         </div>
 
         <p class="eyebrow help-sec">The path tells a story too</p>
         <div class="help-card concept pathana">
-          <p class="concept-lead">BuyGoods VSL funnels encode the funnel in the URL <b>path</b> — before the <span class="mono">?</span>. Param Decoder reads it so you don't have to decode it by hand:</p>
+          <p class="concept-lead">BuyGoods VSL funnels encode the funnel in the URL <b>path</b>, before the <span class="mono">?</span>. Param Decoder reads it so you don't have to decode it by hand:</p>
           <div class="pa-url" aria-hidden="true">nationlifenews.com<span class="pa-seg s1">/hu</span><span class="pa-seg s2">/vsl7</span><span class="pa-seg s3">/l1</span><span class="pa-seg s4">/af</span>/?aff_id=…</div>
           <div class="demo-decode" aria-hidden="true">
-            <div class="dline d1"><span class="dk">/hu</span><span class="dm">language / geo — Hungarian</span></div>
-            <div class="dline d2"><span class="dk">/vsl7</span><span class="dm">VSL page — variant 7</span></div>
+            <div class="dline d1"><span class="dk">/hu</span><span class="dm">language / geo, Hungarian</span></div>
+            <div class="dline d2"><span class="dk">/vsl7</span><span class="dm">VSL page, variant 7</span></div>
             <div class="dline d3"><span class="dk">/l1</span><span class="dm">lander 1</span></div>
             <div class="dline d4"><span class="dk">/af</span><span class="dm">affiliate redirect</span></div>
           </div>
@@ -1296,7 +1296,7 @@
 
         <p class="eyebrow help-sec">Why not just a generic URL decoder?</p>
         <div class="help-card concept">
-          <p class="concept-lead">A generic parser splits a query string and decodes %-encoding — useful, but blind to BuyGoods. This tool's edge is narrow and lives only here:</p>
+          <p class="concept-lead">A generic parser splits a query string and decodes %-encoding, useful, but blind to BuyGoods. This tool's edge is narrow and lives only here:</p>
           <div class="vs" aria-hidden="true">
             <div class="vs-side generic">
               <span class="vs-tag">Generic decoder</span>
@@ -1307,13 +1307,13 @@
             <div class="vs-side ours">
               <span class="vs-tag ok">Param Decoder</span>
               <div class="vs-row"><span class="vs-g"></span><span class="vs-k">aff_id</span><span class="vs-meaning">earns the affiliate's commission</span></div>
-              <div class="vs-row"><span class="vs-g"></span><span class="vs-k">subid2</span><span class="vs-meaning">click ID — reports the sale to their tracker</span></div>
-              <p class="vs-cap">explains, flags &amp; fixes — in BuyGoods terms</p>
+              <div class="vs-row"><span class="vs-g"></span><span class="vs-k">subid2</span><span class="vs-meaning">click ID, reports the sale to their tracker</span></div>
+              <p class="vs-cap">explains, flags &amp; fixes, in BuyGoods terms</p>
             </div>
           </div>
           <div class="why-points">
-            <p><b>Knows BuyGoods.</b> aff_id, the five subid slots, postback tokens, the funnel in the path — a generic tool sees none of it.</p>
-            <p><b>Validates, not just lists.</b> It flags the broken thing — empty aff_id, a typo'd param name — in plain terms.</p>
+            <p><b>Knows BuyGoods.</b> aff_id, the five subid slots, postback tokens, the funnel in the path, a generic tool sees none of it.</p>
+            <p><b>Validates, not just lists.</b> It flags the broken thing, empty aff_id, a typo'd param name, in plain terms.</p>
             <p><b>100% private.</b> Online parsers POST your URL to their server; this runs entirely in your browser, so live customer links are safe to paste.</p>
             <p><b>Hands you a ticket.</b> Inspect → diagnosis → a copy-paste, ticket-ready report, fitted to a support flow.</p>
           </div>
@@ -1348,7 +1348,7 @@
             </div>
             <h3>Compare</h3>
             <p class="mc-when">When you have <b>two links to compare</b></p>
-            <p>Two links side by side, merged by param. Differences in <strong>aff_id</strong> and <strong>subid</strong> stand out the most — the fastest way to answer "why does one track and the other doesn't".</p>
+            <p>Two links side by side, merged by param. Differences in <strong>aff_id</strong> and <strong>subid</strong> stand out the most, the fastest way to answer "why does one track and the other doesn't".</p>
             <button class="btn ghost" data-open="compare" type="button">Open Compare</button>
           </div>
 
@@ -1373,7 +1373,7 @@
             </div>
             <h3>Postback</h3>
             <p class="mc-when">When you have <b>a tracker's postback URL</b></p>
-            <p>Check a tracker's postback URL against the tokens BuyGoods actually fills (<span class="mono">{SUBID}…{SUBID5}, {ORDERID}, {COMMISSION_AMOUNT}…</span>), and copy the exact template for <em>Voluum, CPV Lab, or AnyTrack</em> — each tracker's own param names, sourced from its docs.</p>
+            <p>Check a tracker's postback URL against the tokens BuyGoods actually fills (<span class="mono">{SUBID}…{SUBID5}, {ORDERID}, {COMMISSION_AMOUNT}…</span>), and copy the exact template for <em>Voluum, CPV Lab, or AnyTrack</em>, each tracker's own param names, sourced from its docs.</p>
             <button class="btn ghost" data-open="postback" type="button">Open Postback</button>
           </div>
 
@@ -1384,39 +1384,39 @@
             </div>
             <h3>Decline</h3>
             <p class="mc-when">When you have <b>a decline code from a failed charge</b> (from the transaction, not a URL)</p>
-            <p>Paste a Stripe, Braintree, or NMI decline code for a plain-language read — soft vs hard, whether it's worth a retry, and the message for the customer. Backed by ~190 codes transcribed from each processor's own docs, with the <em>source cited</em> on every result.</p>
+            <p>Paste a Stripe, Braintree, or NMI decline code for a plain-language read, soft vs hard, whether it's worth a retry, and the message for the customer. Backed by ~190 codes transcribed from each processor's own docs, with the <em>source cited</em> on every result.</p>
             <button class="btn ghost" data-open="decline" type="button">Open Decline</button>
           </div>
         </div>
 
         <p class="eyebrow help-sec">What the flags mean</p>
         <div class="help-card legend">
-          <div class="leg"><span class="dot error"></span><div><strong>Error</strong> — the link is broken. Usually a missing or empty <span class="mono">aff_id</span>: no commission will attribute.</div></div>
-          <div class="leg"><span class="dot warn"></span><div><strong>Warning</strong> — worth a look, won't block. Duplicate params, a <span class="mono">utm_source</span> with spaces, an incomplete UTM set.</div></div>
-          <div class="leg"><span class="dot ok"></span><div><strong>OK</strong> — recognised and valid. Unknown offer params default here; <span class="mono">{PLACEHOLDER}</span> tokens are always fine.</div></div>
-          <div class="leg"><span class="dot info"></span><div><strong>Heads-up</strong> — <span class="mono">aff_id</span> pays the affiliate; a <span class="mono">subid</span> click-ID is what reports the conversion back to a tracker. They're different jobs.</div></div>
-          <div class="leg"><span class="trustbadge">inferred</span><div><strong>Inferred</strong> — this param's meaning is a best guess from real links, not yet confirmed by the team (e.g. <span class="mono">pfnid</span>, <span class="mono">vtid</span>). Everything without the badge is confirmed. The tool never bluffs about what it doesn't know.</div></div>
-          <div class="leg"><span class="trustbadge noted">noted</span><div><strong>Noted</strong> — a meaning <em>you</em> captured on this device. Click <span class="mono">+ describe</span> on an unknown param, or <span class="mono">confirm / correct</span> on an inferred one, and it explains itself on every link from then on. Stored locally, never sent.</div></div>
+          <div class="leg"><span class="dot error"></span><div><strong>Error</strong>, the link is broken. Usually a missing or empty <span class="mono">aff_id</span>: no commission will attribute.</div></div>
+          <div class="leg"><span class="dot warn"></span><div><strong>Warning</strong>, worth a look, won't block. Duplicate params, a <span class="mono">utm_source</span> with spaces, an incomplete UTM set.</div></div>
+          <div class="leg"><span class="dot ok"></span><div><strong>OK</strong>, recognised and valid. Unknown offer params default here; <span class="mono">{PLACEHOLDER}</span> tokens are always fine.</div></div>
+          <div class="leg"><span class="dot info"></span><div><strong>Heads-up</strong>, <span class="mono">aff_id</span> pays the affiliate; a <span class="mono">subid</span> click-ID is what reports the conversion back to a tracker. They're different jobs.</div></div>
+          <div class="leg"><span class="trustbadge">inferred</span><div><strong>Inferred</strong>, this param's meaning is a best guess from real links, not yet confirmed by the team (e.g. <span class="mono">pfnid</span>, <span class="mono">vtid</span>). Everything without the badge is confirmed. The tool never bluffs about what it doesn't know.</div></div>
+          <div class="leg"><span class="trustbadge noted">noted</span><div><strong>Noted</strong>, a meaning <em>you</em> captured on this device. Click <span class="mono">+ describe</span> on an unknown param, or <span class="mono">confirm / correct</span> on an inferred one, and it explains itself on every link from then on. Stored locally, never sent.</div></div>
         </div>
 
         <p class="eyebrow help-sec">Reading a decline code</p>
         <div class="help-card concept">
-          <p class="concept-lead">Decline mode answers a different question — not "why won't this link track?" but "<b>why did this charge fail?</b>" A decline code usually comes from the <b>transaction</b> — the BuyGoods backoffice, the gateway response, or the error shown to the customer — so you paste the <b>code</b> here, not a link. <b>(And if a failure URL does carry the code</b> — e.g. <span class="mono">?decline_code=do_not_honor</span> — Inspect spots it and explains it inline.)</p>
+          <p class="concept-lead">Decline mode answers a different question, not "why won't this link track?" but "<b>why did this charge fail?</b>" A decline code usually comes from the <b>transaction</b>, the BuyGoods backoffice, the gateway response, or the error shown to the customer, so you paste the <b>code</b> here, not a link. <b>(And if a failure URL does carry the code</b>, e.g. <span class="mono">?decline_code=do_not_honor</span>, Inspect spots it and explains it inline.)</p>
           <div class="decl-axes" aria-hidden="true">
-            <div class="decl-ax"><span class="decl-chip warn"><span class="dot"></span>Soft</span><span class="decl-desc"><b>Temporary.</b> A retry can still go through — insufficient funds, issuer busy, processing error.</span></div>
-            <div class="decl-ax"><span class="decl-chip error"><span class="dot"></span>Hard</span><span class="decl-desc"><b>Permanent for this card.</b> Use a different one — expired, lost / stolen, do-not-honor.</span></div>
+            <div class="decl-ax"><span class="decl-chip warn"><span class="dot"></span>Soft</span><span class="decl-desc"><b>Temporary.</b> A retry can still go through, insufficient funds, issuer busy, processing error.</span></div>
+            <div class="decl-ax"><span class="decl-chip error"><span class="dot"></span>Hard</span><span class="decl-desc"><b>Permanent for this card.</b> Use a different one, expired, lost / stolen, do-not-honor.</span></div>
           </div>
           <div class="decl-demo" aria-hidden="true"><span>202</span><span class="arrow">→</span><span class="chip">soft · worth a retry</span></div>
-          <p class="concept-note"><span class="srcstamp">✓ sourced</span> Every code is transcribed verbatim from <b>Stripe</b>, <b>Braintree</b>, or <b>NMI</b>'s own docs — about 190 in all — and each result links its source, so the read isn't a guess.</p>
+          <p class="concept-note"><span class="srcstamp">✓ sourced</span> Every code is transcribed verbatim from <b>Stripe</b>, <b>Braintree</b>, or <b>NMI</b>'s own docs, about 190 in all, and each result links its source, so the read isn't a guess.</p>
         </div>
 
-        <p class="eyebrow help-sec">Saved names <span class="hs-note">— stored on this device only, never sent</span></p>
+        <p class="eyebrow help-sec">Saved names <span class="hs-note">, stored on this device only, never sent</span></p>
         <div class="help-card" id="savedNames"></div>
 
-        <p class="eyebrow help-sec">QA templates <span class="hs-note">— expected param sets per offer, this device only</span></p>
+        <p class="eyebrow help-sec">QA templates <span class="hs-note">, expected param sets per offer, this device only</span></p>
         <div class="help-card" id="savedTemplates"></div>
 
-        <p class="eyebrow help-sec">Param notes <span class="hs-note">— meanings you've captured, this device only</span></p>
+        <p class="eyebrow help-sec">Param notes <span class="hs-note">, meanings you've captured, this device only</span></p>
         <div class="help-card" id="savedParams"></div>
       </div>
     </section>
@@ -1426,7 +1426,7 @@
 "use strict";
 
 /* ============================================================
-   PARSING  — pure functions, no DOM
+   PARSING, pure functions, no DOM
    ============================================================ */
 
 // A scheme is present when the input starts with "word://" (or "word:")
@@ -1484,11 +1484,11 @@ function extractUrl(text) {
   let t = decodeEntities(original).replace(/^[<("'\[\s]+/, ""); // shed leading wrappers
 
   if (/^https?:\/\//i.test(t)) {
-    // standalone URL — keep it whole (URL() encodes any raw spaces in values),
+    // standalone URL, keep it whole (URL() encodes any raw spaces in values),
     // only trim trailing wrappers/punctuation glued on the end.
     t = t.replace(/[>)"'\].,;\s]+$/, "");
   } else {
-    // URL embedded in prose/a log line — lift the http… run out, bounded by space.
+    // URL embedded in prose/a log line, lift the http… run out, bounded by space.
     const m = t.match(/\bhttps?:\/\/[^\s"'<>`]+/i);
     if (m) t = m[0].replace(/[>)"'\].,;]+$/, "");
     else t = t.replace(/[>)"'\].,;\s]+$/, ""); // schemeless best-effort
@@ -1511,7 +1511,7 @@ function parseInput(text) {
   try {
     url = new URL(trimmed);
   } catch {
-    // No usable scheme — retry with https:// prepended.
+    // No usable scheme, retry with https:// prepended.
     if (!SCHEME_RE.test(trimmed)) {
       try {
         url = new URL("https://" + trimmed);
@@ -1537,12 +1537,12 @@ function parseInput(text) {
 }
 
 /* ============================================================
-   BUYGOODS PARAM DICTIONARY  —  the moat
+   BUYGOODS PARAM DICTIONARY, the moat
    ------------------------------------------------------------
    Every param BuyGoods actually uses, each with a plain-English
    description so the table EXPLAINS the link instead of just
    echoing raw keys. To support a new offer-specific param, add
-   one line here — no logic edits.
+   one line here, no logic edits.
 
      label    human name for the param
      desc     one-line plain-English meaning (shown on OK rows)
@@ -1564,7 +1564,7 @@ const ok    = (note) => ({ status: STATUS.ok,    note });
 const warn  = (note) => ({ status: STATUS.warn,  note });
 const error = (note) => ({ status: STATUS.error, note });
 
-/** A value that is exactly one {TOKEN} — a postback/template placeholder. */
+/** A value that is exactly one {TOKEN}, a postback/template placeholder. */
 const isPlaceholder = (value) => /^\{[^{}]+\}$/.test(value);
 
 /** Decode a (possibly URL-safe) Base64 string, or null if it isn't clean Base64. */
@@ -1599,7 +1599,7 @@ function lookupConfigBuiltin(key) {
   const sub = /^sub(\d+)$/i.exec(key);
   if (sub) return { label: "Checkout sub " + sub[1], desc: "Checkout-level tracking value.", required: true, trust: "inferred" };
   const vid = /^vid(\d+)$/i.exec(key);
-  if (vid) return { label: "Visitor ID " + vid[1], desc: "Visitor / transaction identifier — often mirrors external_order_id.", trust: "inferred" };
+  if (vid) return { label: "Visitor ID " + vid[1], desc: "Visitor / transaction identifier, often mirrors external_order_id.", trust: "inferred" };
   const sess = /^sessid(\d*)$/i.exec(key);
   if (sess) return { label: "Session ID" + (sess[1] ? " " + sess[1] : ""), desc: "Checkout session identifier (often embeds a timestamp).", trust: "inferred" };
   return null;
@@ -1617,7 +1617,7 @@ function lookupConfig(key) {
   return builtin;
 }
 
-/** Which capture state a param is in — drives the inline "describe/confirm" control. */
+/** Which capture state a param is in, drives the inline "describe/confirm" control. */
 function paramNoteState(key) {
   if (getParamNote(key)) return "noted";
   const b = lookupConfigBuiltin(key);
@@ -1630,7 +1630,7 @@ function paramNoteState(key) {
    ------------------------------------------------------------
    BuyGoods advertorial/VSL funnels encode the funnel in the PATH
    (e.g. /hu/vsl7/l1/af/ = Hungarian, VSL variant 7, lander 1,
-   affiliate redirect). Heuristic, never errors — only recognised
+   affiliate redirect). Heuristic, never errors, only recognised
    segments are surfaced.
    ------------------------------------------------------------ */
 const GEO_CODES = {
@@ -1664,7 +1664,7 @@ function interpretPath(path) {
   path.split("/").filter(Boolean).forEach((seg) => {
     const rule = PATH_RULES.find((r) => r.re.test(seg));
     const geo = GEO_CODES[seg.toLowerCase()];
-    const meaning = rule ? rule.label(rule.re.exec(seg)) : (geo ? "Language / geo — " + geo : null);
+    const meaning = rule ? rule.label(rule.re.exec(seg)) : (geo ? "Language / geo, " + geo : null);
     if (meaning && !seen.has(meaning)) { seen.add(meaning); out.push({ segment: seg, meaning }); }
   });
   return out;
@@ -1674,43 +1674,43 @@ function interpretPath(path) {
 function utmToken(label, desc) {
   return (value) => {
     if (value === "") return warn(`${label} is empty.`);
-    if (/\s/.test(value)) return warn(`${label} has spaces — tracking may split it.`);
-    if (/[A-Z]/.test(value)) return warn(`${label} has uppercase — sources are usually lowercase.`);
+    if (/\s/.test(value)) return warn(`${label} has spaces, tracking may split it.`);
+    if (/[A-Z]/.test(value)) return warn(`${label} has uppercase, sources are usually lowercase.`);
     return ok(desc);
   };
 }
 
 const PARAM_CONFIG = {
-  // — the param that decides whether the link earns commission —
+  //, the param that decides whether the link earns commission, 
   aff_id:     { label: "Affiliate ID", desc: "Who earns commission on this sale.", numeric: true, critical: true },
 
-  // — BuyGoods' five tracking slots: non-empty only, NEVER format-checked —
-  subid:      { label: "Tracking slot 1", desc: "Pass-through tracking value — often the click ID.", required: true },
-  subid2:     { label: "Tracking slot 2", desc: "Pass-through tracking value — usually the click ID from your tracker.", required: true },
+  //, BuyGoods' five tracking slots: non-empty only, NEVER format-checked, 
+  subid:      { label: "Tracking slot 1", desc: "Pass-through tracking value, often the click ID.", required: true },
+  subid2:     { label: "Tracking slot 2", desc: "Pass-through tracking value, usually the click ID from your tracker.", required: true },
   subid3:     { label: "Tracking slot 3", desc: "Free tracking value.", required: true },
-  subid4:     { label: "Tracking slot 4", desc: "Free tracking value — often a creative or placement code.", required: true },
-  subid5:     { label: "Tracking slot 5", desc: "Free tracking value — often the campaign or VSL name.", required: true },
+  subid4:     { label: "Tracking slot 4", desc: "Free tracking value, often a creative or placement code.", required: true },
+  subid5:     { label: "Tracking slot 5", desc: "Free tracking value, often the campaign or VSL name.", required: true },
   sid2:       { label: "Tracking slot 2", desc: "Non-standard spelling of subid2.", required: true },
 
-  // — other known BuyGoods identifiers (seen on secure checkout links) —
+  //, other known BuyGoods identifiers (seen on secure checkout links), 
   account_id:       { label: "Account ID",   desc: "BuyGoods backoffice account identifier." },
   product_codename: { label: "Product codename", desc: "Which BuyGoods offer/product this checkout sells." },
   product_code:     { label: "Product code", desc: "Which BuyGoods offer/product this link points at." },
   redirect:         { label: "Redirect target", desc: "Where the buyer goes after checkout (Base64-encoded).", decodeBase64: true },
 
-  // — secure-checkout session / funnel params (BuyGoods-internal, undocumented;
-  //   descriptions INFERRED from real links — trust:"inferred" surfaces that in
+  //, secure-checkout session / funnel params (BuyGoods-internal, undocumented;
+  //   descriptions INFERRED from real links, trust:"inferred" surfaces that in
   //   the UI so an AM knows it's a best-guess. Promote to confirmed (drop the
-  //   flag) as the team verifies each one. —
+  //   flag) as the team verifies each one., 
   external_order_id: { label: "External order ID", desc: "Order ID carried through from the merchant / external system.", trust: "inferred" },
   vtid:              { label: "Visitor tracking ID", desc: "The v3 token identifying this visitor/session (often mirrors subid5).", trust: "inferred" },
   pfnid:             { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with fnid).", trust: "inferred" },
   fnid:              { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with pfnid).", trust: "inferred" },
   template:          { label: "Checkout template", desc: "Which checkout page template / variant to show.", trust: "inferred" },
 
-  // — UTM family: where ad-platform traffic came from —
+  //, UTM family: where ad-platform traffic came from, 
   utm_source:   { label: "UTM source",   validate: utmToken("UTM source", "Where the traffic came from (ad platform / placement).") },
-  utm_medium:   { label: "UTM medium",   validate: utmToken("UTM medium", "Traffic type — cpc, email, social, etc.") },
+  utm_medium:   { label: "UTM medium",   validate: utmToken("UTM medium", "Traffic type, cpc, email, social, etc.") },
   utm_campaign: { label: "UTM campaign", desc: "Campaign name for reporting." },
   utm_term:     { label: "UTM term",     desc: "Keyword or audience for this click." },
   utm_content:  { label: "UTM content",  desc: "Which ad/creative variant this click came from." },
@@ -1764,7 +1764,7 @@ const SUBID_KEYS = ["subid", "subid2", "subid3", "subid4", "subid5", "sid2"];
 /* ------------------------------------------------------------
    NAME RESOLUTION  (client-side, user-maintainable)
    ------------------------------------------------------------
-   No platform access needed — fill these in as you learn them,
+   No platform access needed, fill these in as you learn them,
    or wire to a read-access source later. When a value resolves,
    the plain-English summary names it instead of echoing a code.
    ------------------------------------------------------------ */
@@ -1791,7 +1791,7 @@ function loadSavedNames() {
     const saved = JSON.parse(localStorage.getItem(NAMES_LS_KEY) || "{}");
     AFFILIATE_NAMES = { ...AFFILIATE_SEED, ...(saved.aff || {}) };
     OFFER_NAMES = { ...OFFER_SEED, ...(saved.offer || {}) };
-  } catch { /* storage blocked — fall back to seeds */ }
+  } catch { /* storage blocked, fall back to seeds */ }
 }
 /** Persist only the user-added entries (the diff from the seed). */
 function persistSavedNames() {
@@ -1805,7 +1805,7 @@ function persistSavedNames() {
       aff: diff(AFFILIATE_NAMES, AFFILIATE_SEED),
       offer: diff(OFFER_NAMES, OFFER_SEED),
     }));
-  } catch { /* storage blocked — names stay for this session only */ }
+  } catch { /* storage blocked, names stay for this session only */ }
 }
 function saveAffiliateName(id, name) { AFFILIATE_NAMES[id] = name; persistSavedNames(); }
 function saveOfferName(host, name) { OFFER_NAMES[offerHost(host)] = name; persistSavedNames(); }
@@ -1822,7 +1822,7 @@ function userSavedNames() {
 loadSavedNames();
 
 /* ------------------------------------------------------------
-   PARAM NOTES  —  device-local meanings the team captures
+   PARAM NOTES, device-local meanings the team captures
    ------------------------------------------------------------
    The capture loop that makes the dictionary a LIVING one:
    describe an unknown param, or confirm/correct an inferred one,
@@ -1838,7 +1838,7 @@ function loadParamNotes() {
   catch { PARAM_NOTES = {}; }
 }
 function persistParamNotes() {
-  try { localStorage.setItem(PARAM_NOTES_LS_KEY, JSON.stringify(PARAM_NOTES)); } catch { /* blocked — session only */ }
+  try { localStorage.setItem(PARAM_NOTES_LS_KEY, JSON.stringify(PARAM_NOTES)); } catch { /* blocked, session only */ }
 }
 const getParamNote = (key) => PARAM_NOTES[noteKey(key)] || null;
 function saveParamNote(key, desc) { PARAM_NOTES[noteKey(key)] = { desc: desc.trim() }; persistParamNotes(); }
@@ -1870,7 +1870,7 @@ function removeTemplate(host) { delete TEMPLATES[offerHost(host)]; persistTempla
 loadTemplates();
 
 /* ------------------------------------------------------------
-   POSTBACK TOKENS  —  the fixed set BuyGoods will fill
+   POSTBACK TOKENS, the fixed set BuyGoods will fill
    ------------------------------------------------------------ */
 const POSTBACK_TOKENS = {
   SUBID: "SubID slot 1", SUBID2: "SubID slot 2", SUBID3: "SubID slot 3",
@@ -1880,18 +1880,18 @@ const POSTBACK_TOKENS = {
 };
 
 /* ------------------------------------------------------------
-   TRACKER POSTBACK REFERENCE  —  per-tracker param names
+   TRACKER POSTBACK REFERENCE, per-tracker param names
    ------------------------------------------------------------
    The postback the affiliate registers points at THEIR tracker; its
    query KEYS are the tracker's own param names (Voluum's click ID is
    `cid`, CPV Lab's is `subid`…), and the VALUES are BuyGoods tokens
    BuyGoods fills on conversion. Getting the key names right is what
-   tech support burns time on — so here's the exact template per
+   tech support burns time on, so here's the exact template per
    tracker, with the correct BuyGoods token mapped into each slot.
 
    Param names transcribed from each tracker's own docs (2026-06-12).
    Hosts are custom per account, so the template uses a placeholder
-   domain — only the PARAM NAMES are asserted as fact.
+   domain, only the PARAM NAMES are asserted as fact.
    ------------------------------------------------------------ */
 const TRACKER_POSTBACKS = [
   {
@@ -1915,13 +1915,13 @@ const TRACKER_POSTBACKS = [
 ];
 
 /* ------------------------------------------------------------
-   DECLINE CODES  —  authoritative, per-processor
+   DECLINE CODES, authoritative, per-processor
    ------------------------------------------------------------
    Two layers, kept deliberately separate:
 
    (1) AUTHORITATIVE (sourced). Each code's exact meaning (`title`)
        is transcribed verbatim from the processor's OWN published
-       docs — see each table's `source` URL. Nothing here is
+       docs, see each table's `source` URL. Nothing here is
        invented; if it isn't in the processor's docs, it isn't here.
 
    (2) INTERPRETED (convention). soft-vs-hard, whether a retry is
@@ -1932,7 +1932,7 @@ const TRACKER_POSTBACKS = [
        same whether it arrives as Stripe `insufficient_funds`,
        Braintree `2001`, or NMI `202`) instead of guessed per-code.
 
-   To add a code: one line under its processor — `code: { title, cat }`.
+   To add a code: one line under its processor, `code: { title, cat }`.
    To change how a whole class reads: edit the category once.
 
    Sources (fetched 2026-06-12):
@@ -1959,14 +1959,14 @@ const DECLINE_CATS = {
   security_code:    { type: "hard", retry: true,  customer: "The security code (CVC/CVV) didn't match. Re-enter it carefully and try again." },
   account_invalid:  { type: "hard", retry: false, customer: "There's a problem with this card or account. Ask the customer to use a different card." },
   not_allowed:      { type: "hard", retry: false, customer: "This card can't be used for this purchase. Ask the customer to use a different card or payment method." },
-  lost_stolen_fraud:{ type: "hard", retry: false, customer: "This card can't be processed. Ask the customer to use a different card. (Reason is masked on purpose — don't share specifics.)" },
-  pickup:           { type: "hard", retry: false, customer: "The bank has flagged this card to be retained. It can't be used — ask the customer to use a different card." },
+  lost_stolen_fraud:{ type: "hard", retry: false, customer: "This card can't be processed. Ask the customer to use a different card. (Reason is masked on purpose, don't share specifics.)" },
+  pickup:           { type: "hard", retry: false, customer: "The bank has flagged this card to be retained. It can't be used, ask the customer to use a different card." },
   do_not_retry:     { type: "hard", retry: false, customer: "The bank declined and asked that this not be retried. Use a different card or have the customer contact their bank." },
-  stop_recurring:   { type: "hard", retry: false, customer: "The cardholder has stopped billing on this card. Contact the customer — do not retry." },
+  stop_recurring:   { type: "hard", retry: false, customer: "The cardholder has stopped billing on this card. Contact the customer, do not retry." },
   test_card:        { type: "hard", retry: false, customer: "A test card was used on a live charge. Enter a real card to complete the purchase." },
-  merchant_config:  { type: "hard", retry: false, customer: "Gateway / merchant configuration issue — this is not customer-fixable. Escalate to BuyGoods." },
+  merchant_config:  { type: "hard", retry: false, customer: "Gateway / merchant configuration issue, this is not customer-fixable. Escalate to BuyGoods." },
   paypal_buyer:     { type: "hard", retry: false, customer: "There's an issue with the buyer's PayPal account. Ask them to check their PayPal or pay with a card." },
-  paypal_merchant:  { type: "hard", retry: false, customer: "PayPal merchant-account configuration issue — escalate to BuyGoods." },
+  paypal_merchant:  { type: "hard", retry: false, customer: "PayPal merchant-account configuration issue, escalate to BuyGoods." },
 };
 
 const DECLINE_TABLES = {
@@ -1977,12 +1977,12 @@ const DECLINE_TABLES = {
       authentication_required:              { title: "Authentication required",          cat: "auth_required" },
       authentication_not_handled:           { title: "Authentication not completed",     cat: "auth_required" },
       approve_with_id:                      { title: "Approve with identification",      cat: "call_issuer" },
-      call_issuer:                          { title: "Declined — call issuer",           cat: "call_issuer" },
+      call_issuer:                          { title: "Declined, call issuer",           cat: "call_issuer" },
       card_not_supported:                   { title: "Card type not supported",          cat: "not_allowed" },
       card_velocity_exceeded:               { title: "Card velocity exceeded",           cat: "limit" },
       currency_not_supported:               { title: "Currency not supported",           cat: "not_allowed" },
       do_not_honor:                         { title: "Do not honor",                     cat: "generic_bank" },
-      do_not_try_again:                     { title: "Declined — do not retry",          cat: "do_not_retry" },
+      do_not_try_again:                     { title: "Declined, do not retry",          cat: "do_not_retry" },
       duplicate_transaction:                { title: "Duplicate transaction",            cat: "duplicate" },
       expired_card:                         { title: "Expired card",                     cat: "expired" },
       fraudulent:                           { title: "Suspected fraud",                  cat: "lost_stolen_fraud" },
@@ -2004,7 +2004,7 @@ const DECLINE_TABLES = {
       lost_card:                            { title: "Card reported lost",               cat: "lost_stolen_fraud" },
       merchant_blacklist:                   { title: "Matched merchant block list",      cat: "lost_stolen_fraud" },
       new_account_information_available:    { title: "New account information available",cat: "account_invalid" },
-      no_action_taken:                      { title: "Declined — no action taken",       cat: "generic_bank" },
+      no_action_taken:                      { title: "Declined, no action taken",       cat: "generic_bank" },
       not_permitted:                        { title: "Payment not permitted",            cat: "not_allowed" },
       offline_pin_required:                 { title: "Offline PIN required",             cat: "auth_required" },
       online_or_offline_pin_required:       { title: "PIN required",                     cat: "auth_required" },
@@ -2043,9 +2043,9 @@ const DECLINE_TABLES = {
       "2009": { title: "No Such Issuer",                                 cat: "account_invalid" },
       "2010": { title: "Card Issuer Declined CVV",                       cat: "security_code" },
       "2011": { title: "Voice Authorization Required",                   cat: "call_issuer" },
-      "2012": { title: "Processor Declined — Possible Lost Card",        cat: "lost_stolen_fraud" },
-      "2013": { title: "Processor Declined — Possible Stolen Card",      cat: "lost_stolen_fraud" },
-      "2014": { title: "Processor Declined — Fraud Suspected",           cat: "lost_stolen_fraud" },
+      "2012": { title: "Processor Declined, Possible Lost Card",        cat: "lost_stolen_fraud" },
+      "2013": { title: "Processor Declined, Possible Stolen Card",      cat: "lost_stolen_fraud" },
+      "2014": { title: "Processor Declined, Fraud Suspected",           cat: "lost_stolen_fraud" },
       "2015": { title: "Transaction Not Allowed",                        cat: "not_allowed" },
       "2016": { title: "Duplicate Transaction",                          cat: "duplicate" },
       "2017": { title: "Cardholder Stopped Billing",                     cat: "stop_recurring" },
@@ -2053,15 +2053,15 @@ const DECLINE_TABLES = {
       "2019": { title: "Invalid Transaction",                            cat: "generic_bank" },
       "2020": { title: "Violation",                                      cat: "not_allowed" },
       "2021": { title: "Security Violation",                             cat: "lost_stolen_fraud" },
-      "2022": { title: "Declined — Updated Cardholder Available",        cat: "account_invalid" },
+      "2022": { title: "Declined, Updated Cardholder Available",        cat: "account_invalid" },
       "2023": { title: "Processor Does Not Support This Feature",        cat: "merchant_config" },
       "2024": { title: "Card Type Not Enabled",                          cat: "merchant_config" },
-      "2025": { title: "Set Up Error — Merchant",                        cat: "merchant_config" },
+      "2025": { title: "Set Up Error, Merchant",                        cat: "merchant_config" },
       "2026": { title: "Invalid Merchant ID",                            cat: "merchant_config" },
-      "2027": { title: "Set Up Error — Amount",                          cat: "merchant_config" },
-      "2028": { title: "Set Up Error — Hierarchy",                       cat: "merchant_config" },
-      "2029": { title: "Set Up Error — Card",                            cat: "merchant_config" },
-      "2030": { title: "Set Up Error — Terminal",                        cat: "merchant_config" },
+      "2027": { title: "Set Up Error, Amount",                          cat: "merchant_config" },
+      "2028": { title: "Set Up Error, Hierarchy",                       cat: "merchant_config" },
+      "2029": { title: "Set Up Error, Card",                            cat: "merchant_config" },
+      "2030": { title: "Set Up Error, Terminal",                        cat: "merchant_config" },
       "2031": { title: "Encryption Error",                               cat: "merchant_config" },
       "2032": { title: "Surcharge Not Permitted",                        cat: "not_allowed" },
       "2033": { title: "Inconsistent Data",                              cat: "merchant_config" },
@@ -2072,10 +2072,10 @@ const DECLINE_TABLES = {
       "2038": { title: "Processor Declined",                             cat: "generic_bank" },
       "2039": { title: "Invalid Authorization Code",                     cat: "merchant_config" },
       "2040": { title: "Invalid Store",                                  cat: "merchant_config" },
-      "2041": { title: "Declined — Call For Approval",                   cat: "call_issuer" },
+      "2041": { title: "Declined, Call For Approval",                   cat: "call_issuer" },
       "2042": { title: "Invalid Client ID",                              cat: "merchant_config" },
-      "2043": { title: "Error — Do Not Retry, Call Issuer",             cat: "do_not_retry" },
-      "2044": { title: "Declined — Call Issuer",                         cat: "call_issuer" },
+      "2043": { title: "Error, Do Not Retry, Call Issuer",             cat: "do_not_retry" },
+      "2044": { title: "Declined, Call Issuer",                         cat: "call_issuer" },
       "2045": { title: "Invalid Merchant Number",                        cat: "merchant_config" },
       "2046": { title: "Declined",                                       cat: "generic_bank" },
       "2047": { title: "Call Issuer. Pick Up Card",                      cat: "pickup" },
@@ -2123,7 +2123,7 @@ const DECLINE_TABLES = {
       "2089": { title: "PayPal Payee Email Permission Denied",           cat: "paypal_merchant" },
       "2090": { title: "PayPal/Venmo Refund Exceeds Settled Amount",     cat: "merchant_config" },
       "2091": { title: "Currency Must Match PayPal Account",             cat: "paypal_merchant" },
-      "2092": { title: "No Data Found — Try Another Verification Method",cat: "card_data" },
+      "2092": { title: "No Data Found, Try Another Verification Method",cat: "card_data" },
       "2093": { title: "PayPal Payment Method Is Invalid",               cat: "paypal_buyer" },
       "2094": { title: "PayPal Payment Already Completed",               cat: "duplicate" },
       "2095": { title: "PayPal Refund Not Allowed After Partial Refund", cat: "merchant_config" },
@@ -2140,16 +2140,16 @@ const DECLINE_TABLES = {
       "2106": { title: "Cannot Authorize At This Time (Policy)",         cat: "not_allowed" },
       "2107": { title: "Card Not Activated",                             cat: "account_invalid" },
       "2108": { title: "Closed Card",                                    cat: "account_invalid" },
-      "3000": { title: "Processor Network Unavailable — Try Again",      cat: "processing" },
+      "3000": { title: "Processor Network Unavailable, Try Again",      cat: "processing" },
     },
-    // 2109–2999 are all reported as a generic "Processor Declined".
+    // 2109-2999 are all reported as a generic "Processor Declined".
     rangeFallback: (code) => (code >= 2109 && code <= 2999
       ? { title: "Processor Declined", cat: "generic_bank" } : null),
   },
   nmi: {
     label: "NMI",
     source: "https://docs.nmi.com/reference/response-codes",
-    // Detailed response_code values. (Top-level 1/2/3 and 100=approved omitted —
+    // Detailed response_code values. (Top-level 1/2/3 and 100=approved omitted, 
     // they're coarse status, not decline reasons.)
     codes: {
       "200": { title: "Declined by processor",                       cat: "generic_bank" },
@@ -2169,11 +2169,11 @@ const DECLINE_TABLES = {
       "251": { title: "Lost card",                                   cat: "lost_stolen_fraud" },
       "252": { title: "Stolen card",                                 cat: "lost_stolen_fraud" },
       "253": { title: "Fraudulent card",                             cat: "lost_stolen_fraud" },
-      "260": { title: "Declined — further instructions available",   cat: "call_issuer" },
-      "261": { title: "Declined — stop all recurring payments",      cat: "stop_recurring" },
-      "262": { title: "Declined — stop this recurring program",      cat: "stop_recurring" },
-      "263": { title: "Declined — update cardholder data available", cat: "account_invalid" },
-      "264": { title: "Declined — retry in a few days",              cat: "processing" },
+      "260": { title: "Declined, further instructions available",   cat: "call_issuer" },
+      "261": { title: "Declined, stop all recurring payments",      cat: "stop_recurring" },
+      "262": { title: "Declined, stop this recurring program",      cat: "stop_recurring" },
+      "263": { title: "Declined, update cardholder data available", cat: "account_invalid" },
+      "264": { title: "Declined, retry in a few days",              cat: "processing" },
       "300": { title: "Rejected by gateway",                         cat: "merchant_config" },
       "400": { title: "Transaction error returned by processor",     cat: "processing" },
       "410": { title: "Invalid merchant configuration",              cat: "merchant_config" },
@@ -2218,17 +2218,17 @@ function lookupDecline(code, processor = null) {
 }
 
 /* ============================================================
-   VALIDATION PASS — annotates rows + produces banners & counts
+   VALIDATION PASS, annotates rows + produces banners & counts
    ============================================================ */
 
 /** Classify a single param in isolation (duplicates handled later). */
 /* ------------------------------------------------------------
-   DECLINE BRIDGE — surface a gateway decline code seen in a link
+   DECLINE BRIDGE, surface a gateway decline code seen in a link
    ------------------------------------------------------------
    A failed-payment redirect/thank-you URL sometimes carries the
    decline code in a param (…/failed?decline_code=do_not_honor or
    ?response_code=202). When it does, explain it inline using the
-   decline tables — no need to switch to Decline mode and re-type it.
+   decline tables, no need to switch to Decline mode and re-type it.
 
    To stay false-positive-free: a NUMERIC code (202, 2001) is only
    read when the KEY is an explicit decline/response key. A string
@@ -2253,7 +2253,7 @@ function classifyParam(key, value) {
   const desc = cfg && cfg.desc ? cfg.desc : label; // OK rows explain the param
 
   // 1. a pure {PLACEHOLDER} is always valid, for any param
-  if (isPlaceholder(value)) return { status: STATUS.ok, note: "Template placeholder — filled in at click time.", label };
+  if (isPlaceholder(value)) return { status: STATUS.ok, note: "Template placeholder, filled in at click time.", label };
 
   // 1b. a gateway decline code carried in the link → explain it inline
   const dh = declineHint(key, value);
@@ -2262,7 +2262,7 @@ function classifyParam(key, value) {
       const m = dh.match;
       const sev = m.type === "hard" ? "hard decline" : "soft decline";
       const act = m.retry ? "a retry may work" : "don't retry";
-      return { ...warn(`Declined payment — “${m.title}” (${m.processorLabel}): ${sev}, ${act}. Open Decline mode for the full read.`), label: label || "Decline code", declineHint: dh };
+      return { ...warn(`Declined payment, “${m.title}” (${m.processorLabel}): ${sev}, ${act}. Open Decline mode for the full read.`), label: label || "Decline code", declineHint: dh };
     }
     return { ...warn(`Looks like a decline/response code, but “${value}” isn't in the Stripe / Braintree / NMI tables.`), label: label || "Decline code" };
   }
@@ -2287,8 +2287,8 @@ function classifyParam(key, value) {
 
   // 3. numeric requirement (aff_id only)
   if (cfg && cfg.numeric) {
-    if (value === "") return { ...error(`${label} is empty — this link won't attribute commission.`), label };
-    if (!/^\d+$/.test(value)) return { ...error(`${label} should be a number — "${value}" looks malformed.`), label };
+    if (value === "") return { ...error(`${label} is empty. This link won't attribute commission.`), label };
+    if (!/^\d+$/.test(value)) return { ...error(`${label} should be a number; "${value}" looks malformed.`), label };
     return { ...ok(desc), label };
   }
 
@@ -2306,14 +2306,14 @@ function classifyParam(key, value) {
 
   // 7. unknown param → maybe a typo of a known one; else default OK
   const suggestion = suggestParam(key);
-  if (suggestion) return { ...warn(`Unrecognised — did you mean "${suggestion}"?`), label };
+  if (suggestion) return { ...warn(`Unrecognised, did you mean "${suggestion}"?`), label };
   return { ...ok(null), label };
 }
 
 /**
  * A BuyGoods secure-checkout link (…/secure/checkout…). On these, commission
  * is usually attributed upstream at the offer/redirect link, so a missing
- * aff_id is a heads-up to confirm — NOT the hard "no commission" error that a
+ * aff_id is a heads-up to confirm, NOT the hard "no commission" error that a
  * bare offer/param link earns. (Team to confirm the attribution model.)
  */
 const isCheckoutLink = (parsed) => !!parsed && /\/secure\/checkout/i.test(parsed.path || "");
@@ -2327,7 +2327,7 @@ function validate(params, opts = {}) {
   const isCheckout = !!opts.isCheckout;
   const rows = params.map((p) => ({ ...p, ...classifyParam(p.key, p.value) }));
 
-  // — duplicate keys with differing values → warning on each occurrence —
+  //, duplicate keys with differing values → warning on each occurrence, 
   const byKey = new Map();
   rows.forEach((r) => {
     if (!byKey.has(r.key)) byKey.set(r.key, []);
@@ -2339,15 +2339,15 @@ function validate(params, opts = {}) {
     if (distinct.size < 2) return; // identical duplicates are harmless
     group.forEach((r) => {
       if (RANK[r.status] < RANK.warn) { r.status = STATUS.warn; }
-      r.note = `Duplicate "${key}" (${group.length}×, differing values) — common cause of wrong tracking.`;
+      r.note = `Duplicate "${key}" (${group.length}×, differing values), common cause of wrong tracking.`;
     });
   });
 
   const banners = [];
   const keys = rows.map((r) => r.key);
 
-  // — affiliate ID missing OR empty: the headline commission failure.
-  //   Either way, offer the inline "add aff_id" fix box. —
+  //, affiliate ID missing OR empty: the headline commission failure.
+  //   Either way, offer the inline "add aff_id" fix box., 
   const affRow = rows.find((r) => r.key === "aff_id");
   const affMissing = !affRow;
   const affEmpty = affRow && affRow.value === "";
@@ -2356,19 +2356,19 @@ function validate(params, opts = {}) {
       level: isCheckout ? STATUS.warn : STATUS.error,
       title: affMissing ? "No affiliate ID" : "Affiliate ID is empty",
       message: isCheckout
-        ? "No aff_id on this checkout link. Checkout pages usually inherit commission from the offer/redirect link upstream, so this is often fine — confirm attribution happened there before treating it as broken."
-        : "This link won't attribute commission — set aff_id before it goes live.",
+        ? "No aff_id on this checkout link. Checkout pages usually inherit commission from the offer/redirect link upstream, so this is often fine. Confirm attribution happened there before treating it as broken."
+        : "This link won't attribute commission. Set aff_id before it goes live.",
       fix: "add-affid",
     });
     // on checkout links, a present-but-empty aff_id is a heads-up, not a red error
     if (isCheckout && affEmpty && affRow.status === STATUS.error) {
       affRow.status = STATUS.warn;
-      affRow.note = "Empty — but checkout links usually attribute commission upstream. Confirm before treating as broken.";
+      affRow.note = "Empty, but checkout links usually attribute commission upstream. Confirm before treating as broken.";
     }
   }
 
-  // — click-ID insight: distinct from commission. A subid slot must carry
-  //   a value or a {placeholder} for an external tracker to credit the sale. —
+  //, click-ID insight: distinct from commission. A subid slot must carry
+  //   a value or a {placeholder} for an external tracker to credit the sale., 
   if (!hasClickId(rows)) {
     banners.push({
       level: "info",
@@ -2377,7 +2377,7 @@ function validate(params, opts = {}) {
     });
   }
 
-  // — UTM gap: some utm_* present but source/campaign missing —
+  //, UTM gap: some utm_* present but source/campaign missing, 
   const utmKeys = keys.filter((k) => k.startsWith("utm_"));
   if (utmKeys.length > 0) {
     const missing = ["utm_source", "utm_campaign"].filter((k) => !keys.includes(k));
@@ -2385,12 +2385,12 @@ function validate(params, opts = {}) {
       banners.push({
         level: STATUS.warn,
         title: "Incomplete UTM set",
-        message: `UTM params are present but ${missing.join(" and ")} ${missing.length > 1 ? "are" : "is"} missing — campaign reporting may have gaps.`,
+        message: `UTM params are present but ${missing.join(" and ")} ${missing.length > 1 ? "are" : "is"} missing, campaign reporting may have gaps.`,
       });
     }
   }
 
-  // — counts: ok from rows; warn/error include banners (info is not counted) —
+  //, counts: ok from rows; warn/error include banners (info is not counted), 
   const summary = { ok: 0, warn: 0, error: 0 };
   rows.forEach((r) => summary[r.status]++);
   banners.forEach((b) => { if (b.level in summary) summary[b.level]++; });
@@ -2398,13 +2398,13 @@ function validate(params, opts = {}) {
   return { rows, banners, summary };
 }
 
-/** True when some subid slot carries a click ID — a real value or a {token}. */
+/** True when some subid slot carries a click ID, a real value or a {token}. */
 function hasClickId(rows) {
   return rows.some((r) => SUBID_KEYS.includes(r.key) && r.value !== "");
 }
 
 /* ============================================================
-   PLAIN-ENGLISH SUMMARY — turn the parsed link into a sentence
+   PLAIN-ENGLISH SUMMARY, turn the parsed link into a sentence
    ------------------------------------------------------------
    Returns ordered segments [{ t, val?, tone? }] so the renderer
    can emphasise the concrete values (aff_id, campaign names) and
@@ -2420,7 +2420,7 @@ function composeSummary(parsed, rows) {
   // a value we don't have a name for yet → renders with a "+ name" affordance
   const nameable = (v, kind, key) => parts.push({ t: v, val: true, name: { kind, key } });
 
-  // subject — the affiliate (resolve to a name when we know it)
+  // subject, the affiliate (resolve to a name when we know it)
   const aff = find("aff_id");
   if (aff && aff.status === STATUS.ok && !isPlaceholder(aff.value)) {
     const name = resolveAffiliate(aff.value);
@@ -2436,7 +2436,7 @@ function composeSummary(parsed, rows) {
     text("A link with "); bad("no valid affiliate ID");
   }
 
-  // object — the BuyGoods offer is the product domain (resolve to offer name)
+  // object, the BuyGoods offer is the product domain (resolve to offer name)
   const host = parsed.host.replace(/^www\./, "");
   const offer = resolveOffer(host);
   text(" for "); val(offer || host);
@@ -2444,11 +2444,11 @@ function composeSummary(parsed, rows) {
   else nameable("", "offer", host);
   text(".");
 
-  // tracking — which of the five slots are filled
+  // tracking, which of the five slots are filled
   const slots = SUBID_KEYS.map(find).filter(Boolean).filter((s) => s.enabled !== false);
   if (slots.length === 0) {
     parts.push({ t: " No click tracking is attached", tone: "warn" });
-    text(" — conversions won’t report back to a tracker.");
+    text(", conversions won’t report back to a tracker.");
   } else {
     const placeholders = slots.filter((s) => isPlaceholder(s.value));
     const filled = slots.filter((s) => !isPlaceholder(s.value) && s.value !== "");
@@ -2480,7 +2480,7 @@ function composeSummary(parsed, rows) {
 }
 
 /* ============================================================
-   FIX-IT — compute the repair offered on a flagged row
+   FIX-IT, compute the repair offered on a flagged row
    ------------------------------------------------------------
    Returns null or { type, label, value? }. type "value" rewrites
    the row's value; type "keep" disables the other duplicates.
@@ -2511,7 +2511,7 @@ function computeFix(row, activeRows) {
 }
 
 /* ============================================================
-   RENDERING — builds DOM from a parse result
+   RENDERING, builds DOM from a parse result
    ============================================================ */
 
 const out = document.getElementById("src");
@@ -2572,7 +2572,7 @@ function renderBase(result, animate) {
   if (result.assumedScheme) {
     const note = el("div", "note");
     note.append(el("span", "tag", "assumed"));
-    note.append(el("span", null, "No scheme in the input — parsed with https:// prepended."));
+    note.append(el("span", null, "No scheme in the input, parsed with https:// prepended."));
     card.append(note);
   }
   if (result.fragment) {
@@ -2584,7 +2584,7 @@ function renderBase(result, animate) {
     card.append(note);
   }
 
-  // VSL path intelligence — only when it reveals more than a plain "Checkout page"
+  // VSL path intelligence, only when it reveals more than a plain "Checkout page"
   const segs = interpretPath(result.path);
   if (segs.some((s) => s.meaning !== "Checkout page")) {
     const pathNote = el("div", "pathread");
@@ -2668,7 +2668,7 @@ function setAffiliateId(value) {
 }
 
 /* ============================================================
-   REBUILD — turn the active edited state into a clean URL
+   REBUILD, turn the active edited state into a clean URL
    ============================================================ */
 
 /** Re-encode a value, leaving whole {PLACEHOLDER} tokens literal. */
@@ -2684,7 +2684,7 @@ function rebuildUrl(parsed, activeRows) {
 }
 
 /* ============================================================
-   STATEFUL TABLE — built once per source, patched on edit/toggle
+   STATEFUL TABLE, built once per source, patched on edit/toggle
    ============================================================ */
 
 // state = { parsed, rows: [{ key, value, rawValue, hasEquals, enabled, status, note, el }] }
@@ -2756,11 +2756,11 @@ function buildRow(row) {
   const cfgForKey = lookupConfig(row.key);
   if (cfgForKey && cfgForKey.trust === "inferred") {
     const badge = el("span", "trustbadge", "inferred");
-    badge.title = "Meaning inferred from real links — not yet confirmed by the team. Treat the description as a best guess.";
+    badge.title = "Meaning inferred from real links, not yet confirmed by the team. Treat the description as a best guess.";
     kline.append(badge);
   } else if (cfgForKey && cfgForKey.trust === "noted") {
     const badge = el("span", "trustbadge noted", "noted");
-    badge.title = "You described this param on this device. Local note — never sent.";
+    badge.title = "You described this param on this device. Local note, never sent.";
     kline.append(badge);
   }
   keyCell.append(kline);
@@ -2824,7 +2824,7 @@ function patchRow(row) {
   decodedWrap.style.display = showDecoded ? "" : "none";
   decodedLine.textContent = showDecoded ? "↳ " + row.decoded : "";
 
-  // raw/encoded form — shown ONLY when it differs from the value you see
+  // raw/encoded form, shown ONLY when it differs from the value you see
   const encoded = encodeForUrl(row.value);
   rawLine.textContent = (encoded !== row.value && row.value !== "") ? "raw: " + encoded : "";
 
@@ -2893,9 +2893,9 @@ function buildCaptureControl(row) {
   const btn = el("button", "captbtn" + (st === "noted" ? " noted" : ""), labels[st]);
   btn.type = "button";
   btn.title = st === "unknown"
-    ? "Add what this param means — saved on this device only, never sent"
+    ? "Add what this param means, saved on this device only, never sent"
     : st === "inferred"
-      ? "Confirm or correct this best-guess meaning — saved on this device only"
+      ? "Confirm or correct this best-guess meaning, saved on this device only"
       : "Edit your saved note for this param";
   btn.addEventListener("click", () => {
     const input = el("input", "name-input captinput");
@@ -2980,7 +2980,7 @@ function fillTemplateCard(box, parsed, active) {
     const row = el("div", "tmpl-empty");
     row.append(document.createTextNode("Remember what a correct link for "));
     row.append(el("span", "tmpl-host", host));
-    row.append(document.createTextNode(" should contain, then every future link for this offer gets checked against it — flagging anything missing or extra."));
+    row.append(document.createTextNode(" should contain, then every future link for this offer gets checked against it, flagging anything missing or extra."));
     card.append(row);
     const save = el("button", "btn ghost", "Save this link's params as the template");
     save.type = "button";
@@ -3039,7 +3039,7 @@ function nameAffordance({ kind, key }) {
   const wrap = el("span", "nameaff");
   const btn = el("button", "namebtn", "+ name");
   btn.type = "button";
-  btn.title = "Save a name for this " + (kind === "aff" ? "affiliate" : "offer") + " — stored on this device only";
+  btn.title = "Save a name for this " + (kind === "aff" ? "affiliate" : "offer") + ", stored on this device only";
   btn.addEventListener("click", () => {
     const input = el("input", "name-input");
     input.placeholder = kind === "aff" ? "affiliate name" : "offer name";
@@ -3115,7 +3115,7 @@ function buildRebuildCard() {
   const actions = el("div", "actions");
   const cleanBtn = el("button", "btn primary", "Copy clean link");
   cleanBtn.dataset.label = "Copy clean link";
-  cleanBtn.title = "Copy the rebuilt link above — re-encoded, with any toggled-off params removed";
+  cleanBtn.title = "Copy the rebuilt link above, re-encoded, with any toggled-off params removed";
   cleanBtn.addEventListener("click", () => copyAndFlash(ui.rebuiltUrl, cleanBtn));
 
   const asIsBtn = el("button", "btn", "Copy original");
@@ -3139,14 +3139,14 @@ function buildRebuildCard() {
   return card;
 }
 
-/** Plain-text report of the current view — for pasting into a support ticket. */
+/** Plain-text report of the current view, for pasting into a support ticket. */
 function buildDiagnosis() {
   if (!state) return "";
   const parsed = state.parsed;
   const active = state.rows.filter((r) => r.enabled);
   const { rows: ann, banners } = validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })), { isCheckout: isCheckoutLink(parsed) });
 
-  const lines = ["PARAM DECODER — DIAGNOSIS"];
+  const lines = ["PARAM DECODER: DIAGNOSIS"];
   lines.push("Base: " + parsed.scheme + "://" + parsed.host + parsed.path);
 
   const parts = composeSummary(parsed, state.rows);
@@ -3154,13 +3154,13 @@ function buildDiagnosis() {
 
   if (banners.length) {
     lines.push("");
-    banners.forEach((b) => lines.push(`[${b.level.toUpperCase()}] ${b.title} — ${b.message}`));
+    banners.forEach((b) => lines.push(`[${b.level.toUpperCase()}] ${b.title}, ${b.message}`));
   }
 
   lines.push("", "Parameters:");
   active.forEach((r, i) => {
     const v = r.value === "" ? "(empty)" : r.value;
-    lines.push(`  [${ann[i].status.toUpperCase()}] ${r.key} = ${v}` + (ann[i].note ? "  — " + ann[i].note : ""));
+    lines.push(`  [${ann[i].status.toUpperCase()}] ${r.key} = ${v}` + (ann[i].note ? ", " + ann[i].note : ""));
     if (ann[i].decoded) lines.push(`      ↳ ${ann[i].decoded}`);
   });
 
@@ -3300,8 +3300,8 @@ function compareBanners(rows) {
         level,
         title: `${r.key} differs`,
         message: r.key === "aff_id"
-          ? `Link A uses ${r.aStr}, Link B uses ${r.bStr} — they attribute to different accounts.`
-          : `Link A: "${r.aStr}", Link B: "${r.bStr}" — tracking buckets these separately.`,
+          ? `Link A uses ${r.aStr}, Link B uses ${r.bStr}, they attribute to different accounts.`
+          : `Link A: "${r.aStr}", Link B: "${r.bStr}", tracking buckets these separately.`,
       });
     } else {
       const has = r.kind === "onlyA" ? "A" : "B";
@@ -3310,7 +3310,7 @@ function compareBanners(rows) {
         level,
         title: `${r.key} only on Link ${has}`,
         message: r.key === "aff_id"
-          ? `Link ${missing} has no affiliate ID — only Link ${has} will attribute commission.`
+          ? `Link ${missing} has no affiliate ID, only Link ${has} will attribute commission.`
           : `The ${name} is on Link ${has} but missing from Link ${missing}.`,
       });
     }
@@ -3359,7 +3359,7 @@ function renderBasePair(a, b, animate) {
   const baseA = a.scheme + "://" + a.host + a.path;
   const baseB = b.scheme + "://" + b.host + b.path;
   if (baseA !== baseB) {
-    wrap.append(el("div", "diffnote", "Base URLs differ — these point at different endpoints."));
+    wrap.append(el("div", "diffnote", "Base URLs differ, these point at different endpoints."));
   }
   return wrap;
 }
@@ -3451,8 +3451,8 @@ function renderCompare() {
     compareHasContent = false;
     return;
   }
-  if (!a.ok) { cmpTarget.append(renderError("Link A — " + a.error)); compareHasContent = false; return; }
-  if (!b.ok) { cmpTarget.append(renderError("Link B — " + b.error)); compareHasContent = false; return; }
+  if (!a.ok) { cmpTarget.append(renderError("Link A, " + a.error)); compareHasContent = false; return; }
+  if (!b.ok) { cmpTarget.append(renderError("Link B, " + b.error)); compareHasContent = false; return; }
 
   const animate = !compareHasContent;
   compareHasContent = true;
@@ -3472,7 +3472,7 @@ srcA.addEventListener("input", () => { renderCompare(); syncHash(); });
 srcB.addEventListener("input", () => { renderCompare(); syncHash(); });
 
 /* ============================================================
-   BATCH MODE — paste many links, get a pass/fail audit
+   BATCH MODE, paste many links, get a pass/fail audit
    ============================================================ */
 
 const srcBatch = document.getElementById("srcBatch");
@@ -3555,7 +3555,7 @@ function renderBatch() {
   if (lines.length === 0) {
     const box = el("div", "empty reveal");
     box.append(el("div", "big", "≡"));
-    box.append(el("div", null, "Paste a column of links — one per line — for a pass/fail audit."));
+    box.append(el("div", null, "Paste a column of links, one per line, for a pass/fail audit."));
     box.append(exampleButton(() => { srcBatch.value = EXAMPLE_BATCH; renderBatch(); syncHash(); }));
     batchTarget.append(box);
     return;
@@ -3648,7 +3648,7 @@ function openInInspect(line) {
 srcBatch.addEventListener("input", () => { renderBatch(); syncHash(); });
 
 /* ============================================================
-   POSTBACK MODE — validate against BuyGoods' fixed token set
+   POSTBACK MODE, validate against BuyGoods' fixed token set
    ============================================================ */
 
 const srcPostback = document.getElementById("srcPostback");
@@ -3661,12 +3661,12 @@ function analyzePostback(params) {
       const token = v.slice(1, -1);
       const upper = token.toUpperCase();
       const known = POSTBACK_TOKENS[upper];
-      if (!known) return { ...p, display: v, status: "error", meaning: `Unknown token — BuyGoods won't fill {${token}}.` };
-      if (token !== upper) return { ...p, display: v, status: "warn", meaning: `${known} — BuyGoods expects uppercase {${upper}}.` };
+      if (!known) return { ...p, display: v, status: "error", meaning: `Unknown token, BuyGoods won't fill {${token}}.` };
+      if (token !== upper) return { ...p, display: v, status: "warn", meaning: `${known}, BuyGoods expects uppercase {${upper}}.` };
       return { ...p, display: v, status: "ok", meaning: known };
     }
-    if (v === "") return { ...p, display: "(empty)", status: "warn", meaning: "Empty — no token to send." };
-    return { ...p, display: v, status: "ok", meaning: "Static value — sent to your tracker as-is." };
+    if (v === "") return { ...p, display: "(empty)", status: "warn", meaning: "Empty, no token to send." };
+    return { ...p, display: v, status: "ok", meaning: "Static value, sent to your tracker as-is." };
   });
 
   const banners = [];
@@ -3723,7 +3723,7 @@ function renderPostbackTable(rows) {
 /** A reference card: the correct postback template per tracker, sourced. */
 function renderTrackerReference() {
   const card = el("div", "help-card pbref reveal");
-  card.append(el("p", "eyebrow", "Tracker postback reference — the params each tracker expects"));
+  card.append(el("p", "eyebrow", "Tracker postback reference, the params each tracker expects"));
   card.append(el("p", "pbref-lead", "The keys are the tracker's own param names; the {TOKENS} are what BuyGoods fills on conversion. Copy the line for the affiliate's tracker and swap in their domain."));
   TRACKER_POSTBACKS.forEach((t) => {
     const row = el("div", "pbref-row");
@@ -3777,7 +3777,7 @@ function renderPostback() {
 srcPostback.addEventListener("input", () => { renderPostback(); syncHash(); });
 
 /* ============================================================
-   DECLINE MODE — plain-language lookup for a gateway decline code
+   DECLINE MODE, plain-language lookup for a gateway decline code
    ============================================================ */
 
 const srcDecline = document.getElementById("srcDecline");
@@ -3813,9 +3813,9 @@ function declineCard(entry) {
   msg.append(copy);
   card.append(msg);
 
-  // cited source — the trust signal that replaces "verify before trusting"
+  // cited source, the trust signal that replaces "verify before trusting"
   const src = el("p", "dc-seen");
-  src.append(document.createTextNode("Per " + entry.processorLabel + "’s docs — "));
+  src.append(document.createTextNode("Per " + entry.processorLabel + "’s docs, "));
   const a = el("a", null, "source");
   a.href = entry.source; a.target = "_blank"; a.rel = "noopener noreferrer";
   src.append(a);
@@ -3845,7 +3845,7 @@ function renderDecline() {
     body.append(el("span", "title", "Not in the table yet"));
     const span = el("span", null, "No match for ");
     span.append(el("code", null, code));
-    span.append(document.createTextNode(" in the Stripe, Braintree, or NMI tables — it can be added to the lookup."));
+    span.append(document.createTextNode(" in the Stripe, Braintree, or NMI tables, it can be added to the lookup."));
     body.append(span);
     box.append(body);
     declineTarget.append(box);
@@ -3855,7 +3855,7 @@ function renderDecline() {
   // When a code resolves to more than one processor, show every reading.
   if (matches.length > 1) {
     declineTarget.append(el("p", "dc-eyebrow eyebrow",
-      "This code appears in more than one processor — readings by gateway:"));
+      "This code appears in more than one processor, readings by gateway:"));
   }
   matches.forEach((m) => declineTarget.append(declineCard(m)));
 }
@@ -3863,7 +3863,7 @@ function renderDecline() {
 srcDecline.addEventListener("input", () => { renderDecline(); syncHash(); });
 
 /* ============================================================
-   SHAREABLE URL HASH — fully client-side, restores the view
+   SHAREABLE URL HASH, fully client-side, restores the view
    ============================================================ */
 
 function syncHash() {
@@ -3913,7 +3913,7 @@ function renderSavedNames() {
 
   if (aff.length === 0 && offer.length === 0) {
     box.classList.add("emptynames");
-    box.append(el("p", "hs-empty", "No saved names yet. In Inspect, click “+ name” next to an affiliate ID or offer to label it — it'll show here and in every summary, on this device only."));
+    box.append(el("p", "hs-empty", "No saved names yet. In Inspect, click “+ name” next to an affiliate ID or offer to label it, it'll show here and in every summary, on this device only."));
     return;
   }
   box.classList.remove("emptynames");
@@ -3944,7 +3944,7 @@ function renderSavedTemplates() {
   const hosts = Object.keys(TEMPLATES);
   if (hosts.length === 0) {
     box.classList.add("emptynames");
-    box.append(el("p", "hs-empty", "No QA templates yet. In Inspect, open a known-good link for an offer and click “Save this link as the template” — then any link for that host gets checked against it."));
+    box.append(el("p", "hs-empty", "No QA templates yet. In Inspect, open a known-good link for an offer and click “Save this link as the template”, then any link for that host gets checked against it."));
     return;
   }
   box.classList.remove("emptynames");
@@ -3968,7 +3968,7 @@ function renderSavedParams() {
   const notes = userParamNotes();
   if (notes.length === 0) {
     box.classList.add("emptynames");
-    box.append(el("p", "hs-empty", "No param notes yet. In Inspect, click “+ describe” on an unrecognised param, or “confirm / correct” on an inferred one, to capture what it means — it'll show here and explain itself on every link, on this device only."));
+    box.append(el("p", "hs-empty", "No param notes yet. In Inspect, click “+ describe” on an unrecognised param, or “confirm / correct” on an inferred one, to capture what it means, it'll show here and explain itself on every link, on this device only."));
     return;
   }
   box.classList.remove("emptynames");
@@ -4011,7 +4011,7 @@ function setMode(mode) {
     btn.setAttribute("aria-selected", String(active));
   });
 
-  // switching into a panel should feel fresh — replay its entrance
+  // switching into a panel should feel fresh, replay its entrance
   inspectHasContent = false;
   compareHasContent = false;
   PANELS[mode].render();
