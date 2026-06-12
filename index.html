@@ -678,6 +678,73 @@
   .leg .dot.ok    { background: var(--ok); }
   .leg .dot.info  { background: var(--ink-faint); }
 
+  /* ---------- concept explainers (animated diagrams) ---------- */
+  .help-card.concept { margin-bottom: 6px; }
+  .concept-lead { font-size: 14px; color: var(--ink-soft); margin: 0 0 16px; line-height: 1.55; max-width: 64ch; }
+  .concept-lead b, .concept-note b { color: var(--ink); font-weight: 600; }
+  .concept-note { font-size: 13px; color: var(--ink-faint); margin: 16px 0 0; line-height: 1.55; max-width: 64ch; }
+
+  /* "two jobs of every link" — commission flow vs reporting flow */
+  .twojobs {
+    display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: stretch;
+    background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 18px;
+  }
+  .tj-link {
+    display: flex; flex-direction: column; justify-content: center; gap: 7px;
+    padding-right: 16px; border-right: 1px dashed var(--rule-strong);
+  }
+  .tj-node {
+    font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--ink);
+    background: var(--panel); border: 1px solid var(--rule-strong); border-radius: 5px;
+    padding: 4px 10px; text-align: center;
+  }
+  .tj-cap { font-size: 9.5px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-faint); text-align: center; margin-top: 2px; }
+  .tj-flows { display: flex; flex-direction: column; justify-content: center; gap: 18px; min-width: 0; }
+  .tj-flow { display: flex; align-items: center; gap: 13px; }
+  .tj-wire { position: relative; flex: 0 0 56px; height: 2px; border-radius: 2px; }
+  .tj-pulse { position: absolute; top: -2px; left: 0; width: 6px; height: 6px; border-radius: 50%; opacity: 0; }
+  .tj-end { font-size: 13px; color: var(--ink-soft); line-height: 1.45; min-width: 0; }
+  .tj-end b { color: var(--ink); font-weight: 600; }
+  .tj-flow.comm  .tj-wire  { background: color-mix(in srgb, var(--ok) 35%, var(--rule-strong)); }
+  .tj-flow.comm  .tj-pulse { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-bg); }
+  .tj-flow.comm  .tj-end b.hl  { color: var(--ok); }
+  .tj-flow.track .tj-wire  { background: color-mix(in srgb, var(--ink-soft) 28%, var(--rule-strong)); }
+  .tj-flow.track .tj-pulse { background: var(--ink-soft); box-shadow: 0 0 0 3px var(--field); }
+  .tj-flow.track .tj-end b.hl { color: var(--ink); }
+
+  /* "the path tells a story" — annotated VSL path segments */
+  .pathana .pa-url {
+    font-family: var(--mono); font-size: 13px; color: var(--ink-faint);
+    background: var(--field); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 10px 13px; margin-bottom: 14px; word-break: break-all;
+  }
+  .pa-url .pa-seg { color: var(--ink); font-weight: 600; padding: 1px 1px; border-radius: 3px; }
+
+  /* "reading a decline code" — soft vs hard axes */
+  .decl-axes { display: flex; flex-direction: column; gap: 11px; background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; }
+  .decl-ax { display: flex; align-items: baseline; gap: 13px; font-size: 13px; color: var(--ink-soft); line-height: 1.45; }
+  .decl-ax b { color: var(--ink); font-weight: 600; }
+  .decl-chip {
+    font-family: var(--sans); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    padding: 3px 9px; border-radius: 5px; display: inline-flex; align-items: center; gap: 6px; flex: none; min-width: 52px;
+  }
+  .decl-chip .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .decl-chip.warn  { color: var(--warn);  background: var(--warn-bg);  border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+  .decl-chip.warn .dot  { background: var(--warn); }
+  .decl-chip.error { color: var(--error); background: var(--error-bg); border: 1px solid color-mix(in srgb, var(--error) 35%, transparent); }
+  .decl-chip.error .dot { background: var(--error); }
+  .decl-demo { display: flex; align-items: center; gap: 9px; margin-top: 13px; font-family: var(--mono); font-size: 13px; color: var(--ink); }
+  .decl-demo .arrow { color: var(--ink-faint); }
+  .decl-demo .chip {
+    font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 5px;
+    color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent); background: var(--ok-bg);
+  }
+  .srcstamp {
+    font-family: var(--sans); font-size: 11px; font-weight: 700; color: var(--ok);
+    border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); background: var(--ok-bg);
+    border-radius: 4px; padding: 1px 7px; margin-right: 5px; white-space: nowrap;
+  }
+
   .btn.ghost { background: var(--field); }
 
   @media (max-width: 640px) {
@@ -718,6 +785,34 @@
     .demo-batch .mr:nth-child(2) { animation-delay: .25s; }
     .demo-batch .mr:nth-child(3) { animation-delay: .4s; }
     .demo-batch .mr:nth-child(4) { animation-delay: .55s; }
+
+    /* two-jobs: a pulse travels each wire, the two flows staggered */
+    .twojobs .tj-flow.comm  .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite; }
+    .twojobs .tj-flow.track .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite .55s; }
+    @keyframes tjPulse {
+      0%   { left: -3px; opacity: 0; }
+      12%  { opacity: 1; }
+      88%  { opacity: 1; }
+      100% { left: calc(100% - 3px); opacity: 0; }
+    }
+
+    /* path anatomy: a reader lights each segment in sequence */
+    .pathana .pa-seg { animation: paScan 6s ease-in-out infinite; }
+    .pathana .s2 { animation-delay: 1.5s; }
+    .pathana .s3 { animation-delay: 3s; }
+    .pathana .s4 { animation-delay: 4.5s; }
+    @keyframes paScan {
+      0%, 10%   { background: var(--ok-bg); color: var(--ok); }
+      22%, 100% { background: transparent;  color: var(--ink); }
+    }
+    .pathana .demo-decode .d1 { animation-delay: .15s; }
+    .pathana .demo-decode .d2 { animation-delay: .4s; }
+    .pathana .demo-decode .d3 { animation-delay: .65s; }
+    .pathana .demo-decode .d4 { animation-delay: .9s; }
+
+    /* decline demo: the verdict chip breathes */
+    .decl-demo .chip { animation: declPulse 2.8s ease-in-out infinite; }
+    @keyframes declPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
   }
 
   /* ---------- messages / empty ---------- */
@@ -1084,6 +1179,41 @@
           <button class="btn primary" id="tryExample" type="button">Try this in Inspect →</button>
         </div>
 
+        <p class="eyebrow help-sec">The two jobs of every link</p>
+        <div class="help-card concept">
+          <p class="concept-lead">One BuyGoods link does <b>two separate jobs</b> from a single click. Telling them apart is the whole point of this tool.</p>
+          <div class="twojobs" aria-hidden="true">
+            <div class="tj-link">
+              <span class="tj-node">aff_id</span>
+              <span class="tj-node">subid</span>
+              <span class="tj-cap">one&nbsp;click</span>
+            </div>
+            <div class="tj-flows">
+              <div class="tj-flow comm">
+                <span class="tj-wire"><span class="tj-pulse"></span></span>
+                <span class="tj-end"><b class="hl">Commission</b> — <b>aff_id</b> tells BuyGoods which affiliate to pay.</span>
+              </div>
+              <div class="tj-flow track">
+                <span class="tj-wire"><span class="tj-pulse"></span></span>
+                <span class="tj-end"><b class="hl">Reporting</b> — the click&nbsp;ID in a <b>subid</b> lets the affiliate's own tracker credit the sale.</span>
+              </div>
+            </div>
+          </div>
+          <p class="concept-note">A link can <b>pay the affiliate yet never report back</b> to their tracker — or track perfectly yet earn no commission. Different breakage, different fix. That's why a missing <span class="mono">aff_id</span> is an <b>error</b>, while an empty <span class="mono">subid</span> is only a heads-up.</p>
+        </div>
+
+        <p class="eyebrow help-sec">The path tells a story too</p>
+        <div class="help-card concept pathana">
+          <p class="concept-lead">BuyGoods VSL funnels encode the funnel in the URL <b>path</b> — before the <span class="mono">?</span>. Param Decoder reads it so you don't have to decode it by hand:</p>
+          <div class="pa-url" aria-hidden="true">nationlifenews.com<span class="pa-seg s1">/hu</span><span class="pa-seg s2">/vsl7</span><span class="pa-seg s3">/l1</span><span class="pa-seg s4">/af</span>/?aff_id=…</div>
+          <div class="demo-decode" aria-hidden="true">
+            <div class="dline d1"><span class="dk">/hu</span><span class="dm">language / geo — Hungarian</span></div>
+            <div class="dline d2"><span class="dk">/vsl7</span><span class="dm">VSL page — variant 7</span></div>
+            <div class="dline d3"><span class="dk">/l1</span><span class="dm">lander 1</span></div>
+            <div class="dline d4"><span class="dk">/af</span><span class="dm">affiliate redirect</span></div>
+          </div>
+        </div>
+
         <p class="eyebrow help-sec">The modes</p>
         <div class="help-modes">
           <div class="help-card mode-card">
@@ -1140,11 +1270,11 @@
 
           <div class="help-card mode-card">
             <div class="mc-demo demo-postback" aria-hidden="true">
-              <span class="chip bad">2001 ✗</span>
+              <span class="chip ok">insufficient_funds</span>
               <span class="chip ok">soft · retry</span>
             </div>
             <h3>Decline</h3>
-            <p>Paste a Stripe, Braintree, or NMI decline code and get it in plain language — soft vs hard, whether it's worth a retry, and the message to give the customer or HG agent.</p>
+            <p>Paste a Stripe, Braintree, or NMI decline code for a plain-language read — soft vs hard, whether it's worth a retry, and the message for the customer. Backed by ~190 codes transcribed from each processor's own docs, with the <em>source cited</em> on every result.</p>
             <button class="btn ghost" data-open="decline" type="button">Open Decline</button>
           </div>
         </div>
@@ -1155,6 +1285,17 @@
           <div class="leg"><span class="dot warn"></span><div><strong>Warning</strong> — worth a look, won't block. Duplicate params, a <span class="mono">utm_source</span> with spaces, an incomplete UTM set.</div></div>
           <div class="leg"><span class="dot ok"></span><div><strong>OK</strong> — recognised and valid. Unknown offer params default here; <span class="mono">{PLACEHOLDER}</span> tokens are always fine.</div></div>
           <div class="leg"><span class="dot info"></span><div><strong>Heads-up</strong> — <span class="mono">aff_id</span> pays the affiliate; a <span class="mono">subid</span> click-ID is what reports the conversion back to a tracker. They're different jobs.</div></div>
+        </div>
+
+        <p class="eyebrow help-sec">Reading a decline code</p>
+        <div class="help-card concept">
+          <p class="concept-lead">Decline mode answers a different question — not "why won't this link track?" but "<b>why did this charge fail?</b>" A decline code comes from the <b>transaction</b> — the BuyGoods backoffice, the gateway response, or the error shown to the customer — not from a URL. So you paste the <b>code</b>, not a link.</p>
+          <div class="decl-axes" aria-hidden="true">
+            <div class="decl-ax"><span class="decl-chip warn"><span class="dot"></span>Soft</span><span class="decl-desc"><b>Temporary.</b> A retry can still go through — insufficient funds, issuer busy, processing error.</span></div>
+            <div class="decl-ax"><span class="decl-chip error"><span class="dot"></span>Hard</span><span class="decl-desc"><b>Permanent for this card.</b> Use a different one — expired, lost / stolen, do-not-honor.</span></div>
+          </div>
+          <div class="decl-demo" aria-hidden="true"><span>202</span><span class="arrow">→</span><span class="chip">soft · worth a retry</span></div>
+          <p class="concept-note"><span class="srcstamp">✓ sourced</span> Every code is transcribed verbatim from <b>Stripe</b>, <b>Braintree</b>, or <b>NMI</b>'s own docs — about 190 in all — and each result links its source, so the read isn't a guess.</p>
         </div>
 
         <p class="eyebrow help-sec">Saved names <span class="hs-note">— stored on this device only, never sent</span></p>

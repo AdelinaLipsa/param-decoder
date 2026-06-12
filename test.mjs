@@ -855,6 +855,17 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   check("HP1 help visible", await page.isVisible("#helpPanel"), "help panel hidden");
   check("HP1 worked example shown", (await page.textContent("#demoUrl")).includes("checkout.html"), "");
   check("HP1 base64 decoded in demo", (await page.textContent(".demo-decode")).includes("visiumpro.com/fnn2/up1"), "");
+  // concept explainer diagrams render
+  const diagrams = await page.evaluate(() => ({
+    twoJobs: !!document.querySelector(".twojobs .tj-flow.comm") && !!document.querySelector(".twojobs .tj-flow.track"),
+    pathSegs: document.querySelectorAll(".pathana .pa-seg").length,
+    pathText: document.querySelector(".pathana")?.textContent ?? "",
+    softHard: !!document.querySelector(".decl-chip.warn") && !!document.querySelector(".decl-chip.error"),
+    sourced: !!document.querySelector(".srcstamp"),
+  }));
+  check("HP4 two-jobs diagram (commission + reporting flows)", diagrams.twoJobs, JSON.stringify(diagrams));
+  check("HP4 path anatomy segments labelled", diagrams.pathSegs === 4 && /Hungarian/.test(diagrams.pathText) && /affiliate redirect/.test(diagrams.pathText), JSON.stringify(diagrams));
+  check("HP4 decline explainer (soft/hard + sourced)", diagrams.softHard && diagrams.sourced, JSON.stringify(diagrams));
   // Try-this-example deep-links into Inspect
   await page.click("#tryExample");
   check("HP2 switched to inspect", await page.isVisible("#inspectPanel"), "");
