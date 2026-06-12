@@ -20,13 +20,13 @@
 <section class="slide">
   <p class="kicker">Start here</p>
   <h2>Which mode do I use?</h2>
-  <p class="body">Match what you’re holding to a mode:</p>
-  <div class="guide" style="margin-top:6px">
-    <div class="g"><div>One offer or <b>checkout link</b></div><div class="arr">→</div><div class="m">Inspect</div></div>
-    <div class="g"><div><b>Two links</b> to compare</div><div class="arr">→</div><div class="m">Compare</div></div>
-    <div class="g"><div>A whole <b>column of links</b></div><div class="arr">→</div><div class="m">Batch</div></div>
-    <div class="g"><div>A tracker’s <b>postback URL</b></div><div class="arr">→</div><div class="m">Postback</div></div>
-    <div class="g"><div>A <b>decline code</b> from a failed charge</div><div class="arr">→</div><div class="m">Decline</div></div>
+  <p class="body">You’re holding a link, a code, or a postback URL and something isn’t working. Match what you have to a mode:</p>
+  <div class="guide" style="margin-top:4px">
+    <div class="g"><div>One offer or <b>checkout link</b><div style="font-size:14px;color:var(--ink-faint);margin-top:2px">“Why isn’t this tracking?” · QA before launch</div></div><div class="arr">→</div><div class="m">Inspect</div></div>
+    <div class="g"><div><b>Two links</b> to compare<div style="font-size:14px;color:var(--ink-faint);margin-top:2px">“It worked last week, now it doesn’t”</div></div><div class="arr">→</div><div class="m">Compare</div></div>
+    <div class="g"><div>A whole <b>column of links</b><div style="font-size:14px;color:var(--ink-faint);margin-top:2px">Pre-launch campaign audit</div></div><div class="arr">→</div><div class="m">Batch</div></div>
+    <div class="g"><div>A tracker’s <b>postback URL</b><div style="font-size:14px;color:var(--ink-faint);margin-top:2px">“Conversions aren’t showing in Voluum”</div></div><div class="arr">→</div><div class="m">Postback</div></div>
+    <div class="g"><div>A <b>decline code</b> from a failed charge<div style="font-size:14px;color:var(--ink-faint);margin-top:2px">A customer’s payment failed — why?</div></div><div class="arr">→</div><div class="m">Decline</div></div>
   </div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>2</span></div>
 </section>
@@ -35,14 +35,13 @@
 <section class="slide">
   <p class="kicker">Mode · Inspect</p>
   <h2>Read &amp; repair one link.</h2>
-  <div class="grow" style="display:flex;align-items:center">
-    <div class="steps" style="width:100%">
-      <div class="step"><span class="n">1</span><div class="t"><b>Paste</b> any offer or checkout URL — even messy, encoded, or with a Base64 <span class="mono">redirect</span>.</div></div>
-      <div class="step"><span class="n">2</span><div class="t"><b>Read</b> the plain-English table — every param labelled, flagged <span style="color:var(--error)">red</span> / <span style="color:var(--warn)">amber</span> / <span style="color:var(--ok)">green</span>.</div></div>
-      <div class="step"><span class="n">3</span><div class="t"><b>Fix</b> inline — one-click repairs for an empty <span class="mono">aff_id</span>, a typo’d param, a bad UTM.</div></div>
-      <div class="step"><span class="n">4</span><div class="t"><b>Copy</b> the clean rebuilt link, or the <b>ticket-ready diagnosis</b>.</div></div>
-    </div>
+  <p class="body" style="margin-bottom:14px">Paste any offer or checkout URL — even messy, encoded, or with a Base64 redirect — and you get a labelled table back, one row per param:</p>
+  <div class="code" style="font-size:14px;line-height:2.05;margin-bottom:16px">
+    <span class="dot error" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:10px;vertical-align:middle"></span><b>aff_id</b> &nbsp;<span style="color:var(--error)">(empty)</span> &nbsp;<span class="mut">— affiliate earns no commission · one-click fix offered</span><br>
+    <span class="dot ok" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:10px;vertical-align:middle"></span><b>subid2</b> &nbsp;<span class="tok">clk_abc123</span> &nbsp;<span class="mut">— click ID · tracker will credit the sale</span><br>
+    <span class="dot warn" style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:10px;vertical-align:middle"></span><b>utm_source</b> &nbsp;<span class="mut">— unrecognised param · did you mean utm_source?</span>
   </div>
+  <p class="body">Fix the red flag inline, then <b>copy the clean rebuilt link</b> — or the <b>ticket-ready diagnosis</b> — straight into the ticket.</p>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>3</span></div>
 </section>
 
@@ -50,9 +49,12 @@
 <section class="slide">
   <p class="kicker">Modes · Compare &amp; Batch</p>
   <h2>One vs one, or all at once.</h2>
-  <div class="two-col" style="margin-top:14px">
-    <div class="card"><span class="tag">Compare</span><h3>Why does one track and the other doesn’t?</h3><p>Two links side by side, merged by param. Differences in <span class="mono">aff_id</span> and <span class="mono">subid</span> jump out — the fastest answer to a tracking mystery.</p></div>
-    <div class="card"><span class="tag">Batch</span><h3>Audit a campaign in one paste</h3><p>Drop a whole spreadsheet column of links → a green/red pass-fail table. Export CSV, bulk-fill a missing <span class="mono">aff_id</span>, jump into any row.</p></div>
+  <div class="two-col" style="margin-top:12px">
+    <div class="card"><span class="tag">Compare</span><h3>Why does one track and the other doesn’t?</h3>
+      <div class="code" style="font-size:12.5px;line-height:1.8;margin:10px 0"><span class="mut">A:</span> aff_id=162939 subid2=<span class="tok">abc123</span><br><span class="mut">B:</span> aff_id=162939 subid2=<span style="color:var(--error)">(empty)</span></div>
+      <p>Same affiliate — but B’s click ID is missing, so its tracker goes dark. That’s the whole answer.</p></div>
+    <div class="card"><span class="tag">Batch</span><h3>Audit a campaign in one paste</h3>
+      <p>Drop a spreadsheet column of links → a <b>green/red</b> table. <span style="color:var(--ok)">Pass</span> = valid <span class="mono">aff_id</span>, no broken params. <span style="color:var(--error)">Fail</span> = at least one error. Every failed row links into Inspect. CSV export + bulk <span class="mono">aff_id</span> fill.</p></div>
   </div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>4</span></div>
 </section>
@@ -61,13 +63,13 @@
 <section class="slide">
   <p class="kicker">Mode · Postback</p>
   <h2>Set up a tracker postback right.</h2>
-  <p class="body">Paste the tracker’s postback URL to check it against the tokens BuyGoods actually fills — then copy the exact template for the affiliate’s tracker:</p>
-  <div class="rows" style="gap:13px;margin-top:6px">
-    <div class="row"><span class="dot ok"></span><div><b>Voluum</b> — <span class="mono">cid</span> carries the click ID, <span class="mono">payout</span> the revenue, <span class="mono">txid</span> the order ID.</div></div>
-    <div class="row"><span class="dot ok"></span><div><b>CPV Lab</b> — <span class="mono">subid</span> + <span class="mono">revenue</span>, called at <span class="mono">adclick.php</span>.</div></div>
-    <div class="row"><span class="dot ok"></span><div><b>AnyTrack</b> — <span class="mono">click_id</span> + <span class="mono">value</span> + <span class="mono">transactionId</span>.</div></div>
+  <p class="body">A postback is a URL BuyGoods fires when a sale completes — it’s how the affiliate’s tracker learns a conversion happened. If the tokens are wrong, the tracker records nothing, <b>even though the sale went through</b>. Paste their postback URL; the tool flags which tokens are present, missing, or wrong — then copy the corrected template:</p>
+  <div class="rows" style="gap:12px;margin-top:6px">
+    <div class="row"><span class="dot ok"></span><div><b>Voluum</b> — <span class="mono">cid</span> = click ID, <span class="mono">payout</span> = revenue, <span class="mono">txid</span> = order ID.</div></div>
+    <div class="row"><span class="dot ok"></span><div><b>CPV Lab</b> — <span class="mono">subid</span> = click ID, <span class="mono">revenue</span> = payout.</div></div>
+    <div class="row"><span class="dot ok"></span><div><b>AnyTrack</b> — <span class="mono">click_id</span>, <span class="mono">value</span>, <span class="mono">transactionId</span>.</div></div>
   </div>
-  <p class="body" style="margin-top:20px;font-size:16px;color:var(--ink-faint)">Each one sourced from the tracker’s own docs, with a copy button.</p>
+  <p class="body" style="margin-top:16px;font-size:16px;color:var(--ink-faint)">Each template is sourced from the tracker’s own docs, with a copy button.</p>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>5</span></div>
 </section>
 
@@ -75,13 +77,16 @@
 <section class="slide">
   <p class="kicker">Mode · Decline</p>
   <h2>Explain a failed payment.</h2>
-  <p class="body">A decline code comes from the <b>transaction</b> — the backoffice, the gateway response, the customer’s error — <b>not</b> from a URL. Paste the <i>code</i>:</p>
-  <div class="chips" style="margin:6px 0 22px"><span class="chip mono">insufficient_funds</span><span class="chip ok">soft · worth a retry</span></div>
-  <div class="two-col">
-    <div class="card"><span class="tag" style="color:var(--warn)">Soft</span><h3>Temporary</h3><p>A retry can still go through — insufficient funds, issuer busy.</p></div>
-    <div class="card"><span class="tag" style="color:var(--error)">Hard</span><h3>Permanent for this card</h3><p>Expired, lost / stolen, do-not-honor — ask for a different card.</p></div>
+  <p class="body">A decline code comes from the <b>transaction</b>, not a URL — in BuyGoods, the transaction record shows the raw code. Paste exactly what appears there:</p>
+  <div class="code" style="font-size:14px;line-height:1.95;margin:6px 0 16px">
+    <span class="mut">→ </span><b>do_not_honor</b> &nbsp;<span class="mut">(Braintree 2000)</span><br>
+    <span class="mut">type:&nbsp;&nbsp;&nbsp;</span><span style="color:var(--error)">hard — permanent for this card</span><br>
+    <span class="mut">action: </span>Ask the customer to contact their bank or use a different card. Don’t retry.
   </div>
-  <p class="body" style="margin-top:18px;font-size:16px;color:var(--ink-faint)">Tip: if a failure URL <i>does</i> carry the code, Inspect spots it inline.</p>
+  <div class="two-col">
+    <div class="card"><span class="tag" style="color:var(--warn)">Soft</span><h3>Temporary</h3><p>A retry can still work — insufficient funds, issuer busy.</p></div>
+    <div class="card"><span class="tag" style="color:var(--error)">Hard</span><h3>Permanent for this card</h3><p>Expired, lost / stolen, do-not-honor — ask for another card.</p></div>
+  </div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>6</span></div>
 </section>
 
@@ -89,22 +94,22 @@
 <section class="slide">
   <p class="kicker">Reading the screen</p>
   <h2>What the colours &amp; badges mean.</h2>
-  <div class="two-col" style="margin-top:10px">
+  <div class="two-col" style="margin-top:8px">
     <div>
-      <p class="body" style="font-size:16px;margin-bottom:14px"><b>Flags</b></p>
-      <div class="rows" style="gap:13px">
-        <div class="row" style="font-size:17px"><span class="dot error"></span><div><b>Error</b> — broken; usually a missing <span class="mono">aff_id</span>.</div></div>
-        <div class="row" style="font-size:17px"><span class="dot warn"></span><div><b>Warning</b> — worth a look, won’t block.</div></div>
-        <div class="row" style="font-size:17px"><span class="dot ok"></span><div><b>OK</b> — recognised and valid.</div></div>
-        <div class="row" style="font-size:17px"><span class="dot info"></span><div><b>Heads-up</b> — commission vs click-ID note.</div></div>
+      <p class="body" style="font-size:16px;margin-bottom:12px"><b>Status flags</b></p>
+      <div class="rows" style="gap:12px">
+        <div class="row" style="font-size:16px"><span class="dot error"></span><div><b>Error</b> — broken; usually a missing <span class="mono">aff_id</span> or unfilled token. Fix before it goes live.</div></div>
+        <div class="row" style="font-size:16px"><span class="dot warn"></span><div><b>Warning</b> — present but suspicious: a UTM with spaces, a leftover template variable.</div></div>
+        <div class="row" style="font-size:16px"><span class="dot ok"></span><div><b>OK</b> — recognised and valid; nothing to do.</div></div>
+        <div class="row" style="font-size:16px"><span class="dot info"></span><div><b>Heads-up</b> — info: this param carries the click ID, not commission.</div></div>
       </div>
     </div>
     <div>
-      <p class="body" style="font-size:16px;margin-bottom:14px"><b>Trust badges</b></p>
+      <p class="body" style="font-size:16px;margin-bottom:12px"><b>Trust badges — who vouches for the meaning</b></p>
       <div class="rows" style="gap:14px">
-        <div class="row" style="font-size:17px"><span class="tb confirmed">confirmed</span><div>Team-trusted meaning.</div></div>
-        <div class="row" style="font-size:17px"><span class="tb inferred">inferred</span><div>A best guess — not yet verified.</div></div>
-        <div class="row" style="font-size:17px"><span class="tb noted">noted</span><div>A meaning you saved on this device.</div></div>
+        <div class="row" style="font-size:16px"><span class="tb confirmed">confirmed</span><div>Set by the team — rely on it.</div></div>
+        <div class="row" style="font-size:16px"><span class="tb inferred">inferred</span><div>The tool’s best guess — treat as provisional.</div></div>
+        <div class="row" style="font-size:16px"><span class="tb noted">noted</span><div>You saved this meaning on this device.</div></div>
       </div>
     </div>
   </div>
@@ -113,10 +118,11 @@
 
 <!-- 8 · CLOSE -->
 <section class="slide section">
-  <p class="kicker">Remember</p>
-  <h2>Paste live links safely.</h2>
-  <p class="lead">Everything runs in your browser — nothing you paste is sent, stored, or logged. Customer and order links are safe.</p>
-  <div class="cover-tag" style="margin-top:32px"><span class="pill">adelinalipsa.github.io/param-decoder</span> <span>open it and start pasting</span></div>
+  <p class="kicker">Your first task</p>
+  <h2>Open it and paste a link.</h2>
+  <p class="lead">Drop one of your affiliate’s links into Inspect. Look for the <span style="color:#ff8b86">red flag</span> first — if <span class="mono" style="color:#fff">aff_id</span> is missing or empty, that’s your answer. Everything else is context.</p>
+  <p class="lead" style="margin-top:18px;color:#8b939d">And paste freely — nothing you enter is ever sent, stored, or logged.</p>
+  <div class="cover-tag" style="margin-top:30px"><span class="pill">adelinalipsa.github.io/param-decoder</span></div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>8</span></div>
 </section>
 
