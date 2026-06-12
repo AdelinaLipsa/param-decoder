@@ -1006,6 +1006,20 @@ async function pathChips() {
   check("VP2 brazil", chips.some((c) => c.seg === "br" && /Brazil/.test(c.mean)), JSON.stringify(chips));
   check("VP2 checkout", chips.some((c) => /checkout/.test(c.seg) && /Checkout/.test(c.mean)), JSON.stringify(chips));
 }
+{
+  // real offers use hyphenated slugs in one segment (e.g. /vsl-11-lead-02)
+  await inspect("https://pandastyle.life/vsl-11-lead-02?f=x&aff_id=259107");
+  const chips = await pathChips();
+  const means = chips.map((c) => c.mean).join(" | ");
+  check("VP3 hyphenated vsl variant", /VSL page \(variant 11\)/.test(means), means);
+  check("VP3 hyphenated lead page", /Lead \/ opt-in page 02/.test(means), means);
+}
+{
+  // guard: a slug that merely contains 'up' (e.g. sign-up) is NOT read as an upsell
+  await inspect("https://offer.com/sign-up-now/?aff_id=639");
+  const chips = await pathChips();
+  check("VP4 no false upsell on 'sign-up'", !chips.some((c) => /Upsell/.test(c.mean)), JSON.stringify(chips));
+}
 
 // ============================================================
 //  FEATURE 17 — Base64 detected on any param

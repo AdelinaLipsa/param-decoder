@@ -1644,28 +1644,35 @@ const GEO_CODES = {
   us: "United States", uk: "United Kingdom", gb: "United Kingdom", ca: "Canada",
   au: "Australia", mx: "Mexico", co: "Colombia", ar: "Argentina", za: "South Africa",
 };
+/* Each rule matches a keyword (optionally followed by a number) bounded by the
+   start of a path segment or a -/_ separator, so it reads BOTH clean segments
+   (/vsl7/l1/af/) and the hyphenated slugs real offers use (/vsl-11-lead-02/).
+   One slug can carry several meanings, so all matching rules are collected.
+   Heuristic, never errors; only recognised pieces surface. */
 const PATH_RULES = [
-  { re: /^(vsl)(\d*)$/i,         label: (m) => "VSL page" + (m[2] ? " (variant " + m[2] + ")" : "") },
-  { re: /^(tsl)(\d*)$/i,         label: (m) => "Text sales letter" + (m[2] ? " (variant " + m[2] + ")" : "") },
-  { re: /^l(\d+)$/i,            label: (m) => "Lander " + m[1] },
-  { re: /^(lander|lp)(\d*)$/i,   label: (m) => "Lander" + (m[2] ? " " + m[2] : "") },
-  { re: /^af{1,2}$/i,           label: () => "Affiliate redirect" },
-  { re: /^up(\d+)$/i,           label: (m) => "Upsell " + m[1] },
-  { re: /^(ds|down|downsell)(\d*)$/i, label: (m) => "Downsell" + (m[2] ? " " + m[2] : "") },
-  { re: /^dtc$/i,              label: () => "Direct-to-consumer funnel" },
-  { re: /^(checkout|order)(\.\w+)?$/i, label: () => "Checkout page" },
-  { re: /^(report|presell|advertorial|article)(\.\w+)?$/i, label: () => "Advertorial / pre-sell" },
+  { re: /(?:^|[-_])vsl[-_]?(\d+)?/i,                 label: (m) => "VSL page" + (m[1] ? " (variant " + m[1] + ")" : "") },
+  { re: /(?:^|[-_])tsl[-_]?(\d+)?/i,                 label: (m) => "Text sales letter" + (m[1] ? " (variant " + m[1] + ")" : "") },
+  { re: /(?:^|[-_])lead[-_]?(\d+)?/i,                label: (m) => "Lead / opt-in page" + (m[1] ? " " + m[1] : "") },
+  { re: /(?:^|[-_])(?:lander|lp)[-_]?(\d+)?/i,       label: (m) => "Lander" + (m[1] ? " " + m[1] : "") },
+  { re: /(?:^|[-_])l(\d+)(?=[-_]|$)/i,               label: (m) => "Lander " + m[1] },
+  { re: /(?:^|[-_])af{1,2}(?=[-_]|$)/i,              label: () => "Affiliate redirect" },
+  { re: /(?:^|[-_])upsell[-_]?(\d+)?/i,              label: (m) => "Upsell" + (m[1] ? " " + m[1] : "") },
+  { re: /(?:^|[-_])up(\d+)(?=[-_]|$)/i,              label: (m) => "Upsell " + m[1] },
+  { re: /(?:^|[-_])(?:downsell|ds)[-_]?(\d+)?/i,     label: (m) => "Downsell" + (m[1] ? " " + m[1] : "") },
+  { re: /(?:^|[-_])dtc(?=[-_]|$)/i,                  label: () => "Direct-to-consumer funnel" },
+  { re: /(?:^|[-_])(?:checkout|order)(?=[-_.]|$)/i,  label: () => "Checkout page" },
+  { re: /(?:^|[-_])(?:report|presell|advertorial|article)(?=[-_.]|$)/i, label: () => "Advertorial / pre-sell" },
 ];
 
 /** Interpret a URL path into [{ segment, meaning }], deduped by meaning. */
 function interpretPath(path) {
   const out = [];
   const seen = new Set();
+  const add = (segment, meaning) => { if (meaning && !seen.has(meaning)) { seen.add(meaning); out.push({ segment, meaning }); } };
   path.split("/").filter(Boolean).forEach((seg) => {
-    const rule = PATH_RULES.find((r) => r.re.test(seg));
+    PATH_RULES.forEach((r) => { const m = r.re.exec(seg); if (m) add(seg, r.label(m)); });
     const geo = GEO_CODES[seg.toLowerCase()];
-    const meaning = rule ? rule.label(rule.re.exec(seg)) : (geo ? "Language / geo, " + geo : null);
-    if (meaning && !seen.has(meaning)) { seen.add(meaning); out.push({ segment: seg, meaning }); }
+    if (geo) add(seg, "Language / geo, " + geo);
   });
   return out;
 }
