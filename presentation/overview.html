@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Param Decoder — Overview</title>
+<title>Param Decoder, Overview</title>
 <link rel="stylesheet" href="deck.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
 <section class="slide cover">
   <p class="kicker">Internal tool · affiliate managers &amp; tech support</p>
   <h1>Param&nbsp;Decoder</h1>
-  <p class="lead">Read, validate, and fix any BuyGoods link, postback, or decline code — in one glance, in the browser.</p>
+  <p class="lead">Read, validate, and fix any BuyGoods link, postback, or decline code, in one glance, in the browser.</p>
   <div class="cover-tag"><span class="pill">100% client-side</span> <span>nothing you paste ever leaves your browser</span></div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>Overview</span></div>
 </section>
@@ -21,12 +21,12 @@
 <section class="slide">
   <p class="kicker">The problem</p>
   <h2>Reading a BuyGoods link takes a veteran.</h2>
-  <p class="body">A support agent stares at a wall of <span class="mono">aff_id</span>, <span class="mono">subid</span>, <span class="mono">pfnid</span>, Base64 redirects and decline codes — and has to pull in an affiliate manager just to answer “why isn’t this tracking?” or “why did this charge fail?”</p>
+  <p class="body">A support agent stares at a wall of <span class="mono">aff_id</span>, <span class="mono">subid</span>, <span class="mono">pfnid</span>, Base64 redirects and decline codes, and has to pull in an affiliate manager just to answer “why isn’t this tracking?” or “why did this charge fail?”</p>
   <div class="grow"></div>
   <div class="cards c3">
     <div class="card"><h3>Tribal knowledge</h3><p>Who knows that <span class="mono">subid2</span> carries the click ID, not <span class="mono">subid</span>? Or that an empty <span class="mono">aff_id</span> means the affiliate earns nothing? Whoever you can find at the time.</p></div>
     <div class="card"><h3>Slow tickets</h3><p>Support can’t tell if <span class="mono">aff_id=162939</span> is valid, or whether <span class="mono">subid2={clickid}</span> means the tracker was never set up. So every link is a back-and-forth with an AM.</p></div>
-    <div class="card"><h3>Risky tools</h3><p>Generic online parsers POST your URL to their server — pasting a live customer or order link leaks it.</p></div>
+    <div class="card"><h3>Risky tools</h3><p>Generic online parsers POST your URL to their server, pasting a live customer or order link leaks it.</p></div>
   </div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>2</span></div>
 </section>
@@ -34,12 +34,12 @@
 <!-- 3 · WHAT IT IS -->
 <section class="slide">
   <p class="kicker">What it is</p>
-  <h2>A parameter utility — nothing more, on purpose.</h2>
-  <p class="body">It reads, validates, fixes, and compares BuyGoods URLs, checks tracker postbacks, and explains decline codes. Analytics and reporting stay in the company’s own <b>clickcrm.com</b> platform — this tool doesn’t duplicate them.</p>
+  <h2>A parameter utility, nothing more, on purpose.</h2>
+  <p class="body">It reads, validates, fixes, and compares BuyGoods URLs, checks tracker postbacks, and explains decline codes. Analytics and reporting stay in the company’s own <b>clickcrm.com</b> platform, this tool doesn’t duplicate them.</p>
   <div class="grow"></div>
   <div class="rows">
-    <div class="row"><span class="dot ok"></span><div>A junior pastes the link; the tool <b>flags the missing <span class="mono">aff_id</span>, offers the correct value, and hands back a clean link</b> to drop in the ticket — no AM needed.</div></div>
-    <div class="row"><span class="dot ok"></span><div>And it runs entirely in the browser, so <b>live customer / order links are safe to paste</b> — it never phones home.</div></div>
+    <div class="row"><span class="dot ok"></span><div>A junior pastes the link; the tool <b>flags the missing <span class="mono">aff_id</span>, offers the correct value, and hands back a clean link</b> to drop in the ticket, no AM needed.</div></div>
+    <div class="row"><span class="dot ok"></span><div>And it runs entirely in the browser, so <b>live customer / order links are safe to paste</b>, it never phones home.</div></div>
   </div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>3</span></div>
 </section>
@@ -51,15 +51,15 @@
   <div class="twojobs">
     <div class="tj-link"><span class="tj-node">aff_id</span><span class="tj-node">subid2</span></div>
     <div class="tj-flows">
-      <div class="tj-flow comm"><span class="tj-wire"></span><div><span class="hl-ok">Commission</span> — <b>aff_id</b> tells BuyGoods which affiliate to pay.</div></div>
-      <div class="tj-flow track"><span class="tj-wire"></span><div><b>Reporting</b> — the click ID in <b>subid2</b> lets the affiliate’s tracker credit the sale.</div></div>
+      <div class="tj-flow comm"><span class="tj-wire"></span><div><span class="hl-ok">Commission</span> : <b>aff_id</b> tells BuyGoods which affiliate to pay.</div></div>
+      <div class="tj-flow track"><span class="tj-wire"></span><div><b>Reporting</b> : the click ID in <b>subid2</b> lets the affiliate’s tracker credit the sale.</div></div>
     </div>
   </div>
   <div class="code" style="margin-top:18px;font-size:14.5px;line-height:2.1">
     <span class="mut">no commission&nbsp;→ </span>…/af/?<span style="color:var(--error)">aff_id=</span>&amp;subid2=clk_abc123 &nbsp;<span class="mut">(affiliate earns $0)</span><br>
     <span class="mut">no tracking&nbsp;&nbsp;&nbsp;→ </span>…/af/?aff_id=162939&amp;<span style="color:var(--error)">subid2=</span> &nbsp;<span class="mut">(tracker records nothing)</span>
   </div>
-  <p class="body" style="margin-top:16px"><b>Different breakage, different fix.</b> Knowing which job broke is the whole game — and what this tool tells you at a glance.</p>
+  <p class="body" style="margin-top:16px"><b>Different breakage, different fix.</b> Knowing which job broke is the whole game, and what this tool tells you at a glance.</p>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>4</span></div>
 </section>
 
@@ -70,9 +70,9 @@
   <p class="body">The funnel is encoded in the <b>path</b>; commission and tracking live in the <b>params</b>. Param Decoder reads all of it:</p>
   <div class="code" style="font-size:15px;line-height:1.9">nationlifenews.com<span class="tok">/hu</span><span class="tok">/vsl7</span><span class="tok">/l1</span><span class="tok">/af</span>/?<span class="tok">aff_id</span>=162939&amp;<span class="tok">subid2</span>=clk_abc123</div>
   <div class="rows" style="gap:11px;margin-top:18px">
-    <div class="row" style="font-size:17px"><span class="dot info"></span><div><b class="mono">/hu · /vsl7 · /l1 · /af</b> — Hungarian · VSL variant 7 · lander 1 · the affiliate redirect</div></div>
-    <div class="row" style="font-size:17px"><span class="dot ok"></span><div><b class="mono">aff_id</b> — who earns commission (numeric; empty = no payout)</div></div>
-    <div class="row" style="font-size:17px"><span class="dot ok"></span><div><b class="mono">subid2</b> — the click ID the affiliate’s tracker needs to credit the sale</div></div>
+    <div class="row" style="font-size:17px"><span class="dot info"></span><div><b class="mono">/hu · /vsl7 · /l1 · /af</b> : Hungarian · VSL variant 7 · lander 1 · the affiliate redirect</div></div>
+    <div class="row" style="font-size:17px"><span class="dot ok"></span><div><b class="mono">aff_id</b> : who earns commission (numeric; empty = no payout)</div></div>
+    <div class="row" style="font-size:17px"><span class="dot ok"></span><div><b class="mono">subid2</b> : the click ID the affiliate’s tracker needs to credit the sale</div></div>
   </div>
   <p class="body" style="margin-top:16px;font-size:16px;color:var(--ink-faint)">On secure-checkout links it also reads <span class="mono">account_id</span>, <span class="mono">product_codename</span>, and a Base64 <span class="mono">redirect</span> it decodes for you.</p>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>5</span></div>
@@ -85,9 +85,9 @@
   <div class="grow" style="display:flex;align-items:center">
     <div class="cards c3" style="width:100%">
       <div class="card"><span class="tag">Inspect</span><h3>Read &amp; fix one link</h3><p>Plain-English param table, red/amber/green flags, one-click fixes, a clean rebuilt link. Decodes Base64 redirects, catches typo’d params, exports a copy-paste ticket.</p></div>
-      <div class="card"><span class="tag">Compare</span><h3>Two links, merged</h3><p>Differences in <span class="mono">aff_id</span> and <span class="mono">subid</span> slots are highlighted instantly — the usual answer to “it worked last week.”</p></div>
+      <div class="card"><span class="tag">Compare</span><h3>Two links, merged</h3><p>Differences in <span class="mono">aff_id</span> and <span class="mono">subid</span> slots are highlighted instantly, the usual answer to “it worked last week.”</p></div>
       <div class="card"><span class="tag">Batch</span><h3>A column of links</h3><p>Paste a spreadsheet column → green/red pass-fail table. CSV export and bulk <span class="mono">aff_id</span> fill included.</p></div>
-      <div class="card"><span class="tag">Postback</span><h3>Tracker postbacks</h3><p>Validate the tokens against what BuyGoods sends, and copy the right per-tracker template — before the tracker goes dark.</p></div>
+      <div class="card"><span class="tag">Postback</span><h3>Tracker postbacks</h3><p>Validate the tokens against what BuyGoods sends, and copy the right per-tracker template, before the tracker goes dark.</p></div>
       <div class="card"><span class="tag">Decline</span><h3>Failed payments</h3><p>~190 codes explained: soft vs hard, whether to retry, and the message to give the customer.</p></div>
       <div class="card" style="background:var(--ink);border-color:var(--ink)"><h3 style="color:#fff">+ Help</h3><p style="color:#aeb6c0">A built-in, animated guide so the whole team can self-serve.</p></div>
     </div>
@@ -99,11 +99,11 @@
 <section class="slide">
   <p class="kicker">Authoritative, not a guess</p>
   <h2>Decline codes, sourced from the processors.</h2>
-  <p class="body">~190 codes transcribed verbatim from each processor’s own docs — every result cites its source. Paste a code, get a plain answer:</p>
+  <p class="body">~190 codes transcribed verbatim from each processor’s own docs, every result cites its source. Paste a code, get a plain answer:</p>
   <div class="code" style="font-size:14.5px;line-height:1.95;margin-bottom:18px">
     <span class="mut">code:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="tok">insufficient_funds</span> &nbsp;<span class="mut">(Stripe)</span><br>
-    <span class="mut">verdict:&nbsp;&nbsp;</span><span style="color:var(--warn)">soft — a retry can still go through</span><br>
-    <span class="mut">tell&nbsp;them: </span>Not enough funds — use a different card, or try again later.
+    <span class="mut">verdict:&nbsp;&nbsp;</span><span style="color:var(--warn)">soft, a retry can still go through</span><br>
+    <span class="mut">tell&nbsp;them: </span>Not enough funds, use a different card, or try again later.
   </div>
   <div class="chips"><span class="chip">Stripe · 50</span><span class="chip">Braintree / PayPal · full 2xxx</span><span class="chip">NMI · response codes</span></div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>7</span></div>
@@ -113,7 +113,7 @@
 <section class="slide">
   <p class="kicker">Stop guessing tracker setup</p>
   <h2>The right postback, per tracker.</h2>
-  <p class="body">When a sale completes, BuyGoods fires a <b>postback</b> — a callback URL that tells the affiliate’s tracker to credit the conversion. If the tokens don’t match what BuyGoods sends, the tracker records <b>nothing</b>. Each tracker expects its own param names:</p>
+  <p class="body">When a sale completes, BuyGoods fires a <b>postback</b>, a callback URL that tells the affiliate’s tracker to credit the conversion. If the tokens don’t match what BuyGoods sends, the tracker records <b>nothing</b>. Each tracker expects its own param names:</p>
   <div class="rows" style="gap:13px;margin-top:6px">
     <div class="row"><span class="dot ok"></span><div><b>Voluum</b> &nbsp; <span class="code" style="display:inline-block;padding:5px 10px;font-size:13px">cid=<span class="tok">{SUBID}</span>&amp;payout=<span class="tok">{COMMISSION_AMOUNT}</span>&amp;txid=<span class="tok">{ORDERID}</span></span></div></div>
     <div class="row"><span class="dot ok"></span><div><b>CPV Lab</b> &nbsp; <span class="code" style="display:inline-block;padding:5px 10px;font-size:13px">subid=<span class="tok">{SUBID}</span>&amp;revenue=<span class="tok">{COMMISSION_AMOUNT}</span></span></div></div>
@@ -126,10 +126,10 @@
 <section class="slide">
   <p class="kicker">Never bluffs · gets smarter over time</p>
   <h2>A living dictionary the team grows.</h2>
-  <p class="body">You paste a link and see <span class="mono">pfnid</span> labelled <span class="tb inferred">inferred</span> — the tool has a best guess but flags it as unverified. You ask an AM, confirm it means “product funnel node ID,” and click <b>Confirm</b>. From then on <span class="mono">pfnid</span> reads <span class="tb noted">noted</span> on every link you inspect — <b>no code deploy</b>.</p>
+  <p class="body">You paste a link and see <span class="mono">pfnid</span> labelled <span class="tb inferred">inferred</span>, the tool has a best guess but flags it as unverified. You ask an AM, confirm it means “product funnel node ID,” and click <b>Confirm</b>. From then on <span class="mono">pfnid</span> reads <span class="tb noted">noted</span> on every link you inspect, <b>no code deploy</b>.</p>
   <div class="rows" style="gap:14px;margin-top:22px">
-    <div class="row"><span class="tb confirmed">confirmed</span><div>Shipped &amp; team-trusted — no badge in the table.</div></div>
-    <div class="row"><span class="tb inferred">inferred</span><div>A best guess from real links — flagged as not-yet-verified.</div></div>
+    <div class="row"><span class="tb confirmed">confirmed</span><div>Shipped &amp; team-trusted, no badge in the table.</div></div>
+    <div class="row"><span class="tb inferred">inferred</span><div>A best guess from real links, flagged as not-yet-verified.</div></div>
     <div class="row"><span class="tb noted">noted</span><div>A meaning <b>you</b> captured on this device.</div></div>
   </div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>9</span></div>
@@ -143,15 +143,15 @@
     <div class="card">
       <span class="tag" style="color:var(--ink-faint)">Generic decoder</span>
       <div class="code" style="margin-top:12px;background:var(--panel)"><span class="mut">aff_id =</span> 162939<br><span class="mut">subid2 =</span> {clickid}</div>
-      <p style="margin-top:12px"><b class="mono">{clickid}</b> is an unfilled tracker token — but a generic parser just echoes it back, none the wiser.</p>
+      <p style="margin-top:12px"><b class="mono">{clickid}</b> is an unfilled tracker token, but a generic parser just echoes it back, none the wiser.</p>
     </div>
     <div class="card" style="border-color:color-mix(in srgb,var(--ok) 30%,var(--rule))">
       <span class="tag">Param Decoder</span>
       <div class="rows" style="gap:10px;margin-top:12px">
-        <div class="row" style="font-size:15px"><span class="dot ok" style="margin-top:5px"></span><div><b class="mono">aff_id</b> — earns the affiliate’s commission</div></div>
-        <div class="row" style="font-size:15px"><span class="dot warn" style="margin-top:5px"></span><div><b class="mono">subid2</b> — token never filled; tracker will see nothing</div></div>
+        <div class="row" style="font-size:15px"><span class="dot ok" style="margin-top:5px"></span><div><b class="mono">aff_id</b>, earns the affiliate’s commission</div></div>
+        <div class="row" style="font-size:15px"><span class="dot warn" style="margin-top:5px"></span><div><b class="mono">subid2</b>, token never filled; tracker will see nothing</div></div>
       </div>
-      <p style="margin-top:12px;color:var(--ok)">explains, flags &amp; fixes — in BuyGoods terms</p>
+      <p style="margin-top:12px;color:var(--ok)">explains, flags &amp; fixes, in BuyGoods terms</p>
     </div>
   </div>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>10</span></div>
@@ -161,7 +161,7 @@
 <section class="slide section">
   <p class="kicker">Where it lives</p>
   <h2>One file. No install. Always current.</h2>
-  <p class="lead">A single self-contained page on GitHub Pages — no login, no account. Open it and paste.</p>
+  <p class="lead">A single self-contained page on GitHub Pages, no login, no account. Open it and paste.</p>
   <div class="stats" style="margin-top:34px">
     <div class="stat" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="n ok" style="color:#5fd2a0">~190</div><div class="l" style="color:#aeb6c0">decline codes, each sourced</div></div>
     <div class="stat" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="n" style="color:#fff">0</div><div class="l" style="color:#aeb6c0">bytes sent to any server</div></div>
