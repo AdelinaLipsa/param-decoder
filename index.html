@@ -2235,6 +2235,13 @@ function recompute() {
   ui.rebuiltUrl = url;
   ui.urlBox.textContent = active.length ? url : url + "  (no params)";
   ui.urlBox.classList.toggle("bare", active.length === 0);
+
+  // "Copy original" only earns a button when it actually differs from the clean link
+  const differs = out.value.trim() !== url;
+  ui.asIsBtn.style.display = differs ? "" : "none";
+  ui.rebuildHint.textContent = differs
+    ? "Clean = rebuilt & fixed  ·  Original = exactly what you pasted  ·  Diagnosis = report for a ticket"
+    : "Clean = the rebuilt link  ·  Diagnosis = plain-text report for a ticket";
   if (changed) {
     ui.urlBox.classList.remove("flash");
     void ui.urlBox.offsetWidth;   // restart the animation
@@ -2408,10 +2415,12 @@ function buildRebuildCard() {
 
   actions.append(cleanBtn, asIsBtn, diagBtn);
   card.append(actions);
-  card.append(el("p", "rebuild-hint",
-    "Clean = rebuilt & fixed  ·  Original = exactly as pasted  ·  Diagnosis = full report for a ticket"));
+  const hint = el("p", "rebuild-hint", "");
+  card.append(hint);
 
   ui.urlBox = urlBox;
+  ui.asIsBtn = asIsBtn;
+  ui.rebuildHint = hint;
   return card;
 }
 
