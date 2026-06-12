@@ -661,6 +661,8 @@
   .mode-card h3 { font-size: 15px; margin: 0 0 6px; }
   .mode-card p { font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
   .mode-card p em { font-style: normal; font-weight: 600; color: var(--ink); }
+  .mc-when { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); margin: 0 0 9px !important; }
+  .mc-when b { color: var(--ink-soft); font-weight: 700; text-transform: none; letter-spacing: 0; }
   .mono { font-family: var(--mono); font-size: .92em; }
 
   /* mini demos inside mode cards */
@@ -806,14 +808,6 @@
   .why-points p { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.5; }
   .why-points b { color: var(--ink); font-weight: 600; }
 
-  /* "which mode do I use?" — input → mode guide with a walking highlight */
-  .modeguide { display: flex; flex-direction: column; gap: 2px; }
-  .mguide-row { display: grid; grid-template-columns: 1fr 18px 130px; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; }
-  .mguide-in { font-size: 13.5px; color: var(--ink-soft); }
-  .mguide-in b { color: var(--ink); font-weight: 600; }
-  .mguide-arrow { color: var(--ink-faint); text-align: center; }
-  .mguide-mode { font-family: var(--sans); font-size: 12.5px; font-weight: 700; color: var(--ink); background: var(--panel); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 4px 11px; text-align: center; }
-
   .btn.ghost { background: var(--field); }
 
   @media (max-width: 640px) {
@@ -887,17 +881,6 @@
     .vs-side.ours .vs-g { animation: gShimmer 2.6s ease-in-out infinite; }
     .vs-side.ours .vs-row:nth-child(3) .vs-g { animation-delay: .5s; }
     @keyframes gShimmer { 0%,100% { background: color-mix(in srgb, var(--ok) 55%, var(--rule-strong)); } 50% { background: var(--ok); } }
-
-    /* mode guide: a highlight walks down the input→mode rows */
-    .modeguide .mguide-row { animation: mgWalk 6s ease-in-out infinite; }
-    .modeguide .mguide-row:nth-child(2) { animation-delay: 1.2s; }
-    .modeguide .mguide-row:nth-child(3) { animation-delay: 2.4s; }
-    .modeguide .mguide-row:nth-child(4) { animation-delay: 3.6s; }
-    .modeguide .mguide-row:nth-child(5) { animation-delay: 4.8s; }
-    @keyframes mgWalk {
-      0%, 12%  { background: var(--ok-bg); }
-      18%, 100% { background: transparent; }
-    }
   }
 
   /* ---------- messages / empty ---------- */
@@ -1324,19 +1307,6 @@
           </div>
         </div>
 
-        <p class="eyebrow help-sec">Which mode do I use?</p>
-        <div class="help-card concept">
-          <p class="concept-lead">Match what you're holding to a mode:</p>
-          <div class="modeguide" aria-hidden="true">
-            <div class="mguide-row"><span class="mguide-in">One offer or <b>checkout link</b></span><span class="mguide-arrow">→</span><span class="mguide-mode">Inspect</span></div>
-            <div class="mguide-row"><span class="mguide-in"><b>Two links</b> to compare</span><span class="mguide-arrow">→</span><span class="mguide-mode">Compare</span></div>
-            <div class="mguide-row"><span class="mguide-in">A whole <b>column of links</b></span><span class="mguide-arrow">→</span><span class="mguide-mode">Batch</span></div>
-            <div class="mguide-row"><span class="mguide-in">A tracker's <b>postback URL</b></span><span class="mguide-arrow">→</span><span class="mguide-mode">Postback</span></div>
-            <div class="mguide-row"><span class="mguide-in">A <b>decline code</b> from a failed charge</span><span class="mguide-arrow">→</span><span class="mguide-mode">Decline</span></div>
-          </div>
-          <p class="concept-note">A decline code comes from the <b>transaction</b>, not a URL — so paste the code, not a link. (Though if a failure URL carries it, Inspect spots it too.)</p>
-        </div>
-
         <p class="eyebrow help-sec">The modes</p>
         <div class="help-modes">
           <div class="help-card mode-card">
@@ -1346,6 +1316,7 @@
               <div class="mr fixrow"><span class="mg"></span><span class="ml"></span><span class="tick">✓</span></div>
             </div>
             <h3>Inspect</h3>
+            <p class="mc-when">When you have <b>one offer or checkout link</b></p>
             <p>Read and repair one link. Every param is labelled in plain English; flags are <em>red / amber / green</em>; edit values inline, toggle params off, then copy a clean rebuilt link. Decodes Base64 redirects, reads the funnel from the path, catches typo'd param names, tolerates messy pasted input, checks against a saved QA template, and exports a ticket-ready <em>diagnosis</em>.</p>
             <button class="btn ghost" data-open="inspect" type="button">Open Inspect</button>
           </div>
@@ -1364,6 +1335,7 @@
               </div>
             </div>
             <h3>Compare</h3>
+            <p class="mc-when">When you have <b>two links to compare</b></p>
             <p>Two links side by side, merged by param. Differences in <strong>aff_id</strong> and <strong>subid</strong> stand out the most — the fastest way to answer "why does one track and the other doesn't".</p>
             <button class="btn ghost" data-open="compare" type="button">Open Compare</button>
           </div>
@@ -1376,6 +1348,7 @@
               <div class="mr"><span class="mdot warn"></span><span class="ml short"></span></div>
             </div>
             <h3>Batch</h3>
+            <p class="mc-when">When you have <b>a whole column of links</b></p>
             <p>Paste a whole spreadsheet column of links, get a green/red pass-fail table back. Check a campaign's worth of links at once; jump into any row with one click.</p>
             <button class="btn ghost" data-open="batch" type="button">Open Batch</button>
           </div>
@@ -1387,6 +1360,7 @@
               <span class="chip bad">{CLICKID} ✗</span>
             </div>
             <h3>Postback</h3>
+            <p class="mc-when">When you have <b>a tracker's postback URL</b></p>
             <p>Check a tracker's postback URL against the tokens BuyGoods actually fills (<span class="mono">{SUBID}…{SUBID5}, {ORDERID}, {COMMISSION_AMOUNT}…</span>), and copy the exact template for <em>Voluum, CPV Lab, or AnyTrack</em> — each tracker's own param names, sourced from its docs.</p>
             <button class="btn ghost" data-open="postback" type="button">Open Postback</button>
           </div>
@@ -1397,6 +1371,7 @@
               <span class="chip ok">soft · retry</span>
             </div>
             <h3>Decline</h3>
+            <p class="mc-when">When you have <b>a decline code from a failed charge</b> (from the transaction, not a URL)</p>
             <p>Paste a Stripe, Braintree, or NMI decline code for a plain-language read — soft vs hard, whether it's worth a retry, and the message for the customer. Backed by ~190 codes transcribed from each processor's own docs, with the <em>source cited</em> on every result.</p>
             <button class="btn ghost" data-open="decline" type="button">Open Decline</button>
           </div>

@@ -939,12 +939,12 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   const parity = await page.evaluate(() => ({
     vs: !!document.querySelector(".vs .vs-side.ours") && !!document.querySelector(".vs .vs-side.generic"),
     whyPoints: document.querySelectorAll(".why-points p").length,
-    modeGuideRows: document.querySelectorAll(".modeguide .mguide-row").length,
-    modeGuideText: document.querySelector(".modeguide")?.textContent ?? "",
+    mcWhen: document.querySelectorAll(".mode-card .mc-when").length,
+    mcWhenText: [...document.querySelectorAll(".mode-card .mc-when")].map(e => e.textContent).join(" | "),
     notedLegend: !!document.querySelector(".leg .trustbadge.noted"),
   }));
   check("HP5 why-not-generic comparison renders", parity.vs && parity.whyPoints === 4, JSON.stringify(parity));
-  check("HP5 which-mode guide has all 5 modes", parity.modeGuideRows === 5 && /Inspect/.test(parity.modeGuideText) && /Postback/.test(parity.modeGuideText) && /Decline/.test(parity.modeGuideText), JSON.stringify(parity));
+  check("HP5 each mode card has a 'when you have' trigger", parity.mcWhen === 5 && /checkout link/.test(parity.mcWhenText) && /postback URL/.test(parity.mcWhenText) && /decline code/.test(parity.mcWhenText), parity.mcWhenText);
   check("HP5 noted trust level in legend", parity.notedLegend, JSON.stringify(parity));
   // Try-this-example deep-links into Inspect
   await page.click("#tryExample");
