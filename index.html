@@ -1623,9 +1623,9 @@ function lookupConfigBuiltin(key) {
   const sub = /^sub(\d+)$/i.exec(key);
   if (sub) return { label: "Checkout sub " + sub[1], desc: "Checkout-level tracking value.", required: true, trust: "inferred" };
   const vid = /^vid(\d+)$/i.exec(key);
-  if (vid) return { label: "Visitor ID " + vid[1], desc: "Visitor / transaction identifier, often mirrors external_order_id.", trust: "inferred" };
+  if (vid) return { label: "Visitor ID " + vid[1], desc: "Visitor / transaction identifier the team uses on checkout links." };
   const sess = /^sessid(\d*)$/i.exec(key);
-  if (sess) return { label: "Session ID" + (sess[1] ? " " + sess[1] : ""), desc: "Checkout session identifier (often embeds a timestamp).", trust: "inferred" };
+  if (sess) return { label: "Session ID" + (sess[1] ? " " + sess[1] : ""), desc: "Checkout session identifier the team uses." };
   return null;
 }
 
@@ -1733,7 +1733,7 @@ const PARAM_CONFIG = {
   //   descriptions INFERRED from real links, trust:"inferred" surfaces that in
   //   the UI so an AM knows it's a best-guess. Promote to confirmed (drop the
   //   flag) as the team verifies each one., 
-  external_order_id: { label: "External order ID", desc: "Order ID carried through from the merchant / external system.", trust: "inferred" },
+  external_order_id: { label: "External order ID", desc: "Order ID carried through from the merchant / external system." },
   vtid:              { label: "Visitor tracking ID", desc: "The v3 token identifying this visitor/session (often mirrors subid5).", trust: "inferred" },
   pfnid:             { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with fnid).", trust: "inferred" },
   fnid:              { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with pfnid).", trust: "inferred" },
@@ -1917,8 +1917,9 @@ loadTemplates();
 const POSTBACK_TOKENS = {
   SUBID: "SubID slot 1", SUBID2: "SubID slot 2", SUBID3: "SubID slot 3",
   SUBID4: "SubID slot 4", SUBID5: "SubID slot 5",
-  ORDERID: "Unique order ID", PRODUCT_CODENAME: "Product code",
-  COMMISSION_AMOUNT: "Commission amount", EMAILHASH: "Hashed buyer email",
+  ORDERID: "Unique order ID", COMMISSION_AMOUNT: "Commission amount",
+  EMAILHASH: "Hashed buyer email (SHA256)", NAME: "Hashed buyer name (SHA256)",
+  PHONE: "Hashed buyer phone (SHA256)", CONV_TYPE: "Conversion type (frontend or upsell)",
 };
 
 /* ------------------------------------------------------------
@@ -2439,20 +2440,21 @@ function classifyParam(key, value) {
 }
 
 /**
- * A BuyGoods secure-checkout link (…/secure/checkout…). On these, commission
- * is usually attributed upstream at the offer/redirect link, so a missing
- * aff_id is a heads-up to confirm, NOT the hard "no commission" error that a
- * bare offer/param link earns. (Team to confirm the attribution model.)
+ * A BuyGoods secure-checkout link (…/secure/checkout…). Team-confirmed
+ * (Virgil, 2026-06-12): a checkout link with no aff_id credits ONLY the
+ * vendor, the affiliate earns nothing. So a missing aff_id is a hard error
+ * here exactly as on an offer/param link, NOT a soft heads-up. This helper
+ * now only feeds the plain-English summary; it no longer softens validation.
  */
 const isCheckoutLink = (parsed) => !!parsed && /\/secure\/checkout/i.test(parsed.path || "");
 
 /**
  * Validate a list of params (the currently active set). Returns rows
  * (each annotated with status/note/label), URL-level banners, and counts.
- * opts.isCheckout softens the aff_id verdict for secure-checkout links.
+ * A missing/empty aff_id is a hard error on every link, checkout included
+ * (team-confirmed: no aff_id on a checkout link means the affiliate is not credited).
  */
-function validate(params, opts = {}) {
-  const isCheckout = !!opts.isCheckout;
+function validate(params) {
   const rows = params.map((p) => ({ ...p, ...classifyParam(p.key, p.value) }));
 
   //, duplicate keys with differing values → warning on each occurrence, 
@@ -2481,18 +2483,11 @@ function validate(params, opts = {}) {
   const affEmpty = affRow && affRow.value === "";
   if (affMissing || affEmpty) {
     banners.push({
-      level: isCheckout ? STATUS.warn : STATUS.error,
+      level: STATUS.error,
       title: affMissing ? "No affiliate ID" : "Affiliate ID is empty",
-      message: isCheckout
-        ? "No aff_id on this checkout link. Checkout pages usually inherit commission from the offer/redirect link upstream, so this is often fine. Confirm attribution happened there before treating it as broken."
-        : "This link won't attribute commission. Set aff_id before it goes live.",
+      message: "This link won't attribute commission to an affiliate (a checkout link with no aff_id credits only the vendor). Set aff_id before it goes live.",
       fix: "add-affid",
     });
-    // on checkout links, a present-but-empty aff_id is a heads-up, not a red error
-    if (isCheckout && affEmpty && affRow.status === STATUS.error) {
-      affRow.status = STATUS.warn;
-      affRow.note = "Empty, but checkout links usually attribute commission upstream. Confirm before treating as broken.";
-    }
   }
 
   //, click-ID insight: distinct from commission. A subid slot must carry
@@ -2559,7 +2554,7 @@ function composeSummary(parsed, rows) {
   } else if (aff && isPlaceholder(aff.value)) {
     text("A link with a "); val(aff.value); text(" affiliate-ID placeholder");
   } else if (isCheckoutLink(parsed)) {
-    text("A checkout link with "); parts.push({ t: "no aff_id", tone: "warn" }); text(" (commission usually set upstream)");
+    text("A checkout link with "); bad("no valid affiliate ID"); text(" (credits the vendor, not an affiliate)");
   } else {
     text("A link with "); bad("no valid affiliate ID");
   }
@@ -2653,7 +2648,7 @@ function el(tag, className, text) {
 }
 
 /* worked examples used by the empty-state "Try an example" buttons */
-const EXAMPLE_POSTBACK = "https://yourtracker.com/postback?subid={SUBID}&subid2={SUBID2}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}&product={PRODUCT_CODENAME}";
+const EXAMPLE_POSTBACK = "https://yourtracker.com/postback?subid={SUBID}&subid2={SUBID2}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}";
 const EXAMPLE_BATCH = [
   "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=162939&subid=facebook",
   "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=",
@@ -3062,7 +3057,7 @@ function buildCaptureControl(row) {
 function recompute() {
   const active = state.rows.filter((r) => r.enabled);
   const { rows: annotated, banners, summary } =
-    validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })), { isCheckout: isCheckoutLink(state.parsed) });
+    validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })));
 
   active.forEach((r, i) => { r.status = annotated[i].status; r.note = annotated[i].note; r.decoded = annotated[i].decoded || null; });
   state.rows.forEach((r) => { r._fix = computeFix(r, active); });
@@ -3272,7 +3267,7 @@ function buildDiagnosis() {
   if (!state) return "";
   const parsed = state.parsed;
   const active = state.rows.filter((r) => r.enabled);
-  const { rows: ann, banners } = validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })), { isCheckout: isCheckoutLink(parsed) });
+  const { rows: ann, banners } = validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })));
 
   const lines = ["PARAM DECODER: DIAGNOSIS"];
   lines.push("Base: " + parsed.scheme + "://" + parsed.host + parsed.path);
@@ -3612,7 +3607,7 @@ function auditLink(line) {
   if (!parsed.ok) {
     return { line, status: "error", aff: null, affMissing: true, verdict: "Doesn't parse as a URL" };
   }
-  const { rows, banners, summary } = validate(parsed.params, { isCheckout: isCheckoutLink(parsed) });
+  const { rows, banners, summary } = validate(parsed.params);
   const worst = summary.error ? "error" : summary.warn ? "warn" : "ok";
   const pick = (lvl) => banners.find((b) => b.level === lvl) || rows.find((r) => r.status === lvl);
   let verdict = "Clean";
@@ -4242,7 +4237,7 @@ function renderSavedParams() {
 function renderHelpManagers() { renderSavedNames(); renderSavedTemplates(); renderSavedParams(); }
 
 /* the real BuyGoods checkout link used as the worked example */
-const EXAMPLE_URL = "https://buygoods.com/secure/checkout.html?account_id=11308&product_codename=her6&redirect=aHR0cHM6Ly9oZXJvdXBvZmZpY2lhbC5jb20vdXBzZWxsL2JnLzZhLzMvdjMvYi8%3D&subid=%7Bclickid%7D&sub19=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub18=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub17=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1";
+const EXAMPLE_URL = "https://buygoods.com/secure/checkout.html?account_id=11308&aff_id=259107&product_codename=her6&redirect=aHR0cHM6Ly9oZXJvdXBvZmZpY2lhbC5jb20vdXBzZWxsL2JnLzZhLzMvdjMvYi8%3D&subid=%7Bclickid%7D&sub19=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub18=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub17=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1";
 
 function helpInit() {
   document.getElementById("demoUrl").textContent = EXAMPLE_URL;

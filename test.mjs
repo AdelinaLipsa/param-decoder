@@ -803,6 +803,19 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   check("PB4 static value ok", pbRow(r, "fixed=42")?.status === "ok", JSON.stringify(pbRow(r,"fixed=42")));
   check("PB4 static meaning", /Static value/i.test(pbRow(r, "fixed=42")?.meaning ?? ""), pbRow(r,"fixed=42")?.meaning);
 }
+{
+  // team-confirmed BuyGoods postback variables (screenshot 2026-06-12): NAME, PHONE, CONV_TYPE are fillable.
+  const r = await postback("https://trk.com/pb?name={NAME}&phone={PHONE}&conv={CONV_TYPE}");
+  check("PB5 {NAME} valid", pbRow(r, "{NAME}")?.status === "ok", JSON.stringify(pbRow(r,"{NAME}")));
+  check("PB5 {PHONE} valid", pbRow(r, "{PHONE}")?.status === "ok", JSON.stringify(pbRow(r,"{PHONE}")));
+  check("PB5 {CONV_TYPE} valid", pbRow(r, "{CONV_TYPE}")?.status === "ok", JSON.stringify(pbRow(r,"{CONV_TYPE}")));
+  check("PB5 {CONV_TYPE} meaning", /frontend or upsell/i.test(pbRow(r, "{CONV_TYPE}")?.meaning ?? ""), pbRow(r,"{CONV_TYPE}")?.meaning);
+}
+{
+  // {PRODUCT_CODENAME} is NOT in BuyGoods' postback-pixel variable list, so it must flag as unsupported.
+  const r = await postback("https://trk.com/pb?subid={SUBID}&product={PRODUCT_CODENAME}");
+  check("PB6 {PRODUCT_CODENAME} not a fillable token", pbRow(r, "{PRODUCT_CODENAME}")?.status === "error", JSON.stringify(pbRow(r,"{PRODUCT_CODENAME}")));
+}
 
 // ============================================================
 //  FEATURE 11.5 — postback generator: pure builder
@@ -988,14 +1001,15 @@ const build = (id, opts) => page.evaluate(([id, opts]) => {
   check("CK6 over-padded redirect not flagged", rowFor(r, "redirect").status === "ok", JSON.stringify(rowFor(r,"redirect")));
 }
 {
-  // checkout links usually inherit commission upstream — missing aff_id is a heads-up, not a red error
+  // team-confirmed: a checkout link with no aff_id credits only the vendor, the affiliate earns nothing.
+  // So missing aff_id is a hard error on checkout links too, not a softened heads-up.
   const r = await inspect("https://buygoods.com/secure/checkout.html?account_id=11308&product_codename=her6&subid={clickid}");
-  check("CK3 missing-aff banner softened to warn on checkout", banner(r, "No affiliate ID")?.level === "warn", JSON.stringify(r.banners));
-  check("CK3 no hard error from missing aff on checkout", r.summary.error === 0, JSON.stringify(r.summary));
+  check("CK3 missing-aff banner is error on checkout", banner(r, "No affiliate ID")?.level === "error", JSON.stringify(r.banners));
+  check("CK3 missing aff on checkout raises a hard error", r.summary.error >= 1, JSON.stringify(r.summary));
 }
 {
   const r = await inspect("https://buygoods.com/secure/checkout.html?account_id=11308&aff_id=&product_codename=her6");
-  check("CK4 empty aff row is warn (not error) on checkout", rowFor(r, "aff_id").status === "warn", JSON.stringify(rowFor(r,"aff_id")));
+  check("CK4 empty aff row is error on checkout", rowFor(r, "aff_id").status === "error", JSON.stringify(rowFor(r,"aff_id")));
 }
 {
   // the same missing aff_id on a NON-checkout link stays a hard error
