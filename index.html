@@ -2073,10 +2073,20 @@ function classifyParam(key, value) {
 }
 
 /**
+ * A BuyGoods secure-checkout link (…/secure/checkout…). On these, commission
+ * is usually attributed upstream at the offer/redirect link, so a missing
+ * aff_id is a heads-up to confirm — NOT the hard "no commission" error that a
+ * bare offer/param link earns. (Team to confirm the attribution model.)
+ */
+const isCheckoutLink = (parsed) => !!parsed && /\/secure\/checkout/i.test(parsed.path || "");
+
+/**
  * Validate a list of params (the currently active set). Returns rows
  * (each annotated with status/note/label), URL-level banners, and counts.
+ * opts.isCheckout softens the aff_id verdict for secure-checkout links.
  */
-function validate(params) {
+function validate(params, opts = {}) {
+  const isCheckout = !!opts.isCheckout;
   const rows = params.map((p) => ({ ...p, ...classifyParam(p.key, p.value) }));
 
   // — duplicate keys with differing values → warning on each occurrence —
@@ -2105,11 +2115,18 @@ function validate(params) {
   const affEmpty = affRow && affRow.value === "";
   if (affMissing || affEmpty) {
     banners.push({
-      level: STATUS.error,
+      level: isCheckout ? STATUS.warn : STATUS.error,
       title: affMissing ? "No affiliate ID" : "Affiliate ID is empty",
-      message: "This link won't attribute commission — set aff_id before it goes live.",
+      message: isCheckout
+        ? "No aff_id on this checkout link. Checkout pages usually inherit commission from the offer/redirect link upstream, so this is often fine — confirm attribution happened there before treating it as broken."
+        : "This link won't attribute commission — set aff_id before it goes live.",
       fix: "add-affid",
     });
+    // on checkout links, a present-but-empty aff_id is a heads-up, not a red error
+    if (isCheckout && affEmpty && affRow.status === STATUS.error) {
+      affRow.status = STATUS.warn;
+      affRow.note = "Empty — but checkout links usually attribute commission upstream. Confirm before treating as broken.";
+    }
   }
 
   // — click-ID insight: distinct from commission. A subid slot must carry
@@ -2175,6 +2192,8 @@ function composeSummary(parsed, rows) {
     text("’s link");
   } else if (aff && isPlaceholder(aff.value)) {
     text("A link with a "); val(aff.value); text(" affiliate-ID placeholder");
+  } else if (isCheckoutLink(parsed)) {
+    text("A checkout link with "); parts.push({ t: "no aff_id", tone: "warn" }); text(" (commission usually set upstream)");
   } else {
     text("A link with "); bad("no valid affiliate ID");
   }
@@ -2607,7 +2626,7 @@ function addParam(key, value, atFront) {
 function recompute() {
   const active = state.rows.filter((r) => r.enabled);
   const { rows: annotated, banners, summary } =
-    validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })));
+    validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })), { isCheckout: isCheckoutLink(state.parsed) });
 
   active.forEach((r, i) => { r.status = annotated[i].status; r.note = annotated[i].note; r.decoded = annotated[i].decoded || null; });
   state.rows.forEach((r) => { r._fix = computeFix(r, active); });
@@ -2817,7 +2836,7 @@ function buildDiagnosis() {
   if (!state) return "";
   const parsed = state.parsed;
   const active = state.rows.filter((r) => r.enabled);
-  const { rows: ann, banners } = validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })));
+  const { rows: ann, banners } = validate(active.map((r) => ({ key: r.key, value: r.value, rawValue: r.rawValue })), { isCheckout: isCheckoutLink(parsed) });
 
   const lines = ["PARAM DECODER — DIAGNOSIS"];
   lines.push("Base: " + parsed.scheme + "://" + parsed.host + parsed.path);
@@ -3157,7 +3176,7 @@ function auditLink(line) {
   if (!parsed.ok) {
     return { line, status: "error", aff: null, affMissing: true, verdict: "Doesn't parse as a URL" };
   }
-  const { rows, banners, summary } = validate(parsed.params);
+  const { rows, banners, summary } = validate(parsed.params, { isCheckout: isCheckoutLink(parsed) });
   const worst = summary.error ? "error" : summary.warn ? "warn" : "ok";
   const pick = (lvl) => banners.find((b) => b.level === lvl) || rows.find((r) => r.status === lvl);
   let verdict = "Clean";

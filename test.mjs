@@ -846,6 +846,21 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   const r = await inspect("https://buygoods.com/secure/checkout.html?aff_id=639&redirect=@@@notbase64@@@");
   check("CK2 bad base64 warns", rowFor(r, "redirect").status === "warn", JSON.stringify(rowFor(r,"redirect")));
 }
+{
+  // checkout links usually inherit commission upstream — missing aff_id is a heads-up, not a red error
+  const r = await inspect("https://buygoods.com/secure/checkout.html?account_id=11308&product_codename=her6&subid={clickid}");
+  check("CK3 missing-aff banner softened to warn on checkout", banner(r, "No affiliate ID")?.level === "warn", JSON.stringify(r.banners));
+  check("CK3 no hard error from missing aff on checkout", r.summary.error === 0, JSON.stringify(r.summary));
+}
+{
+  const r = await inspect("https://buygoods.com/secure/checkout.html?account_id=11308&aff_id=&product_codename=her6");
+  check("CK4 empty aff row is warn (not error) on checkout", rowFor(r, "aff_id").status === "warn", JSON.stringify(rowFor(r,"aff_id")));
+}
+{
+  // the same missing aff_id on a NON-checkout link stays a hard error
+  const r = await inspect("https://getoffer.com/af/?subid=x");
+  check("CK5 non-checkout missing aff stays error", banner(r, "No affiliate ID")?.level === "error" && r.summary.error >= 1, JSON.stringify(r.banners));
+}
 
 // ============================================================
 //  FEATURE 14 — Help tab
