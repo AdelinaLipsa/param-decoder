@@ -921,6 +921,24 @@ const build = (id, opts) => page.evaluate(([id, opts]) => {
 }
 
 // ============================================================
+//  FEATURE 11.9 — postback generator: shareable hash
+// ============================================================
+{
+  await page.click("#modePostback");
+  await page.click("#pbViewGenerate");
+  await page.selectOption("#pbTrackerSel", "binom");
+  await page.selectOption("#pbSlotSel", "4");
+  await page.fill("#pbPersonalize", "go.binom.dev");
+  const hash = await page.evaluate(() => location.hash);
+  check("SH1 hash carries generator state", /pv=generate/.test(hash) && /pt=binom/.test(hash) && /ps=4/.test(hash) && /pd=go\.binom\.dev/.test(hash), hash);
+
+  await page.evaluate((h) => { location.hash = h; }, hash);
+  await page.evaluate(() => restoreFromHash());
+  const url = await page.evaluate(() => document.querySelector("#pbGenFull .pbgen-url")?.textContent ?? null);
+  check("SH2 restore rebuilds personalized URL", url === "https://go.binom.dev/click.php?cnv_id={SUBID4}&payout={COMMISSION_AMOUNT}", url);
+}
+
+// ============================================================
 //  FEATURE 12 — shareable URL hash
 // ============================================================
 {

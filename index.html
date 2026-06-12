@@ -4132,7 +4132,15 @@ function syncHash() {
   if (activeMode === "inspect")  add("i", out.value);
   if (activeMode === "compare") { add("a", srcA.value); add("b", srcB.value); }
   if (activeMode === "batch")    add("k", srcBatch.value);
-  if (activeMode === "postback") add("p", srcPostback.value);
+  if (activeMode === "postback") {
+    add("p", srcPostback.value);
+    add("pv", pbView);
+    if (pbView === "generate") {
+      add("pt", pbTrackerId);
+      add("ps", pbClickSlot);
+      add("pd", pbTrackerId === "custom" ? "" : pbPersonalize);
+    }
+  }
   if (activeMode === "decline")  add("d", srcDecline.value);
   history.replaceState(null, "", location.pathname + location.search + "#" + p.toString());
 }
@@ -4147,7 +4155,12 @@ function restoreFromHash() {
   if (p.get("k")) srcBatch.value = p.get("k");
   if (p.get("p")) srcPostback.value = p.get("p");
   if (p.get("d")) srcDecline.value = p.get("d");
+  if (p.get("pt") && (TRACKER_POSTBACKS.some((t) => t.id === p.get("pt")) || p.get("pt") === "custom")) pbTrackerId = p.get("pt");
+  if (p.get("ps") != null && CLICK_SLOTS.some((s) => s.value === p.get("ps"))) pbClickSlot = p.get("ps");
+  if (p.get("pd")) pbPersonalize = p.get("pd");
+  const pv = p.get("pv");
   setMode(mode);
+  if (mode === "postback" && pv) setPbView(pv === "check" ? "check" : "generate");
   return true;
 }
 
