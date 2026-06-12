@@ -761,6 +761,7 @@ async function batch(text) {
 // ============================================================
 async function postback(text) {
   await page.click("#modePostback");
+  await page.click("#pbViewCheck");
   await page.fill("#srcPostback", "");
   await page.fill("#srcPostback", text);
   return page.evaluate(() => {
@@ -801,32 +802,6 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   const r = await postback("https://trk.com/pb?subid={SUBID}&fixed=42");
   check("PB4 static value ok", pbRow(r, "fixed=42")?.status === "ok", JSON.stringify(pbRow(r,"fixed=42")));
   check("PB4 static meaning", /Static value/i.test(pbRow(r, "fixed=42")?.meaning ?? ""), pbRow(r,"fixed=42")?.meaning);
-}
-{
-  // per-tracker postback reference: correct param names per tracker, each sourced
-  await postback("https://trk.com/pb?subid={SUBID}");
-  const ref = await page.evaluate(() => {
-    const card = document.querySelector("#pbOut .pbref");
-    if (!card) return null;
-    return {
-      names: [...card.querySelectorAll(".pbref-name")].map(e => e.textContent),
-      codes: [...card.querySelectorAll(".pbref-code")].map(e => e.textContent),
-      srcs: [...card.querySelectorAll(".pbref-src")].map(a => a.getAttribute("href")),
-      copyBtns: card.querySelectorAll(".pbref-copy").length,
-    };
-  });
-  check("PB5 reference shows trackers", ref && /Voluum/.test(ref.names.join()) && /RedTrack/.test(ref.names.join()) && /ClickMagick/.test(ref.names.join()), JSON.stringify(ref?.names));
-  check("PB5 voluum click ID = cid subid2", ref && ref.codes.some(c => /cid=\{SUBID2\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 cpvlab = subid + revenue", ref && ref.codes.some(c => /subid=\{SUBID2\}.*revenue=\{COMMISSION_AMOUNT\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 anytrack click ID = click_id", ref && ref.codes.some(c => /click_id=\{SUBID2\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 each tracker cites a source", ref && ref.srcs.length === 8 && ref.srcs.every(s => /^https?:/.test(s)), JSON.stringify(ref?.srcs));
-  check("PB5 copy buttons present", ref && ref.copyBtns === 8, JSON.stringify(ref));
-}
-{
-  // reference is available even before pasting (empty state)
-  await page.click("#modePostback");
-  await page.fill("#srcPostback", "");
-  check("PB6 reference shown in empty state", await page.evaluate(() => !!document.querySelector("#pbOut .pbref")), "no reference in empty state");
 }
 
 // ============================================================
@@ -884,6 +859,50 @@ const build = (id, opts) => page.evaluate(([id, opts]) => {
     { personalize: "" }));
   check("BLD5 custom url", customUrl ===
     "https://t.example.com?cid={SUBID2}&amount={COMMISSION_AMOUNT}&oid={ORDERID}", customUrl);
+}
+
+// ============================================================
+//  FEATURE 11.6 — postback generate/check toggle
+// ============================================================
+{
+  await page.click("#modePostback");
+  check("TG1 generate is default view", await page.isVisible("#pbGenerate") && !(await page.isVisible("#pbCheck")), "generate not default");
+  await page.click("#pbViewCheck");
+  check("TG2 check shows validator", await page.isVisible("#pbCheck") && await page.isVisible("#srcPostback"), "check not shown");
+  await page.click("#pbViewGenerate");
+  check("TG3 back to generate", await page.isVisible("#pbGenerate") && !(await page.isVisible("#pbCheck")), "generate not restored");
+}
+
+// ============================================================
+//  FEATURE 11.7 — postback generator behavior
+// ============================================================
+{
+  await page.click("#modePostback");
+  await page.click("#pbViewGenerate");
+  await page.selectOption("#pbTrackerSel", "redtrack");
+  let url = await page.evaluate(() => document.querySelector("#pbGenOut .pbgen-url").textContent);
+  check("GEN1 tracker select drives output", /clickid=\{SUBID2\}&sum=\{COMMISSION_AMOUNT\}&type=Sale/.test(url), url);
+
+  await page.selectOption("#pbSlotSel", "3");
+  url = await page.evaluate(() => document.querySelector("#pbGenOut .pbgen-url").textContent);
+  check("GEN2 slot selector rewrites click token", /clickid=\{SUBID3\}/.test(url) && /sum=\{COMMISSION_AMOUNT\}/.test(url), url);
+
+  await page.selectOption("#pbSlotSel", "2");
+  await page.fill("#pbPersonalize", "abc.redtrack.io");
+  const full = await page.evaluate(() => document.querySelector("#pbGenFull .pbgen-url")?.textContent ?? null);
+  check("GEN3 personalize builds complete URL", full === "https://abc.redtrack.io/postback?clickid={SUBID2}&sum={COMMISSION_AMOUNT}&type=Sale", full);
+
+  check("GEN4 has 'what do I do' note", await page.evaluate(() => !!document.querySelector("#pbGenOut .pbgen-note")), "no note");
+  check("GEN5 note cites source", await page.evaluate(() => /redtrack\.io/.test(document.querySelector("#pbGenOut .pbgen-src a")?.getAttribute("href") || "")), "no source link");
+}
+{
+  // Check view still validates exactly as before
+  await page.click("#modePostback");
+  await page.click("#pbViewCheck");
+  await page.fill("#srcPostback", "");
+  await page.fill("#srcPostback", "https://trk.com/pb?subid={SUBID}&amount={COMMISSION_AMOUNT}");
+  const ok = await page.evaluate(() => [...document.querySelectorAll("#pbOut .prow.pb:not(.colhead) .gutter")].every(g => g.classList.contains("ok")));
+  check("GEN6 check still validates", ok, "check broke");
 }
 
 // ============================================================
@@ -1024,6 +1043,7 @@ const build = (id, opts) => page.evaluate(([id, opts]) => {
 // ============================================================
 {
   await page.click("#modePostback");
+  await page.click("#pbViewCheck");
   await page.fill("#srcPostback", "");
   check("EX1 postback example btn", await page.isVisible("#pbOut .ex-btn"), "no example button");
   await page.click("#pbOut .ex-btn");

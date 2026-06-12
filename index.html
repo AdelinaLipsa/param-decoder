@@ -804,6 +804,36 @@
   .pbref-copy { flex: none; font-size: 12px; padding: 7px 12px; }
   .pbref-note { font-size: 12.5px; color: var(--ink-soft); margin: 7px 0 0; line-height: 1.45; }
 
+  /* postback generate/check toggle + generator */
+  .pb-toggle { display: inline-flex; gap: 4px; background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 3px; margin-bottom: 16px; }
+  .pb-vtab { font-size: 13px; font-weight: 600; color: var(--ink-soft); background: none; border: none; border-radius: 6px; padding: 6px 16px; cursor: pointer; }
+  .pb-vtab.on { color: var(--ink); background: var(--bg); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .pbgen-controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; margin-bottom: 16px; }
+  .pbgen-field { display: flex; flex-direction: column; gap: 5px; }
+  .pbgen-field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); }
+  .pbgen-field select, .pbgen-field input {
+    font-size: 13.5px; color: var(--ink); background: var(--field);
+    border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; min-width: 180px;
+    font-family: inherit;
+  }
+  .pbgen-out { margin-top: 4px; }
+  .pbgen-line { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .pbgen-url {
+    flex: 1 1 auto; font-family: var(--mono); font-size: 12.5px; color: var(--ink);
+    background: var(--field); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 10px 12px; word-break: break-all; line-height: 1.55;
+  }
+  .pbgen-url .tok { color: var(--ok); font-weight: 600; }
+  .pbgen-copy { flex: none; font-size: 12px; padding: 8px 13px; }
+  .pbgen-full-label { font-size: 11.5px; color: var(--ink-soft); margin: 2px 0 5px; }
+  .pbgen-note { margin: 6px 0 14px; }
+  .pbgen-note summary { cursor: pointer; font-size: 12.5px; color: var(--ink); font-weight: 600; }
+  .pbgen-note p { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin: 8px 0 0; }
+  .pbgen-src { font-size: 11px; color: var(--ink-faint); margin: 8px 0 0; }
+  .pbgen-personalize { border-top: 1px solid var(--rule); margin-top: 14px; padding-top: 14px; }
+  .pbgen-personalize .eyebrow { margin-bottom: 9px; }
+  .pbgen-custom { display: flex; flex-wrap: wrap; gap: 12px 18px; }
+
   /* "why not a generic decoder", animated generic-vs-ours comparison */
   .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
   .vs-side { background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; }
@@ -1197,12 +1227,24 @@
     </section>
 
     <section id="postbackPanel" role="tabpanel" aria-labelledby="modePostback" hidden>
-      <div class="input-block">
-        <p class="eyebrow">Paste a postback URL</p>
-        <textarea id="srcPostback" spellcheck="false" autocomplete="off"
-          placeholder="https://tracker.com/postback?subid={SUBID}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}"></textarea>
+      <div class="pb-toggle" role="tablist" aria-label="Postback tool">
+        <button id="pbViewGenerate" class="pb-vtab on" type="button" role="tab" aria-selected="true">Generate</button>
+        <button id="pbViewCheck" class="pb-vtab" type="button" role="tab" aria-selected="false">Check</button>
       </div>
-      <div id="pbOut" aria-live="polite"></div>
+
+      <div id="pbGenerate">
+        <div id="pbGenControls" class="pbgen-controls"></div>
+        <div id="pbGenOut" aria-live="polite"></div>
+      </div>
+
+      <div id="pbCheck" hidden>
+        <div class="input-block">
+          <p class="eyebrow">Paste a postback URL</p>
+          <textarea id="srcPostback" spellcheck="false" autocomplete="off"
+            placeholder="https://tracker.com/postback?subid={SUBID}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}"></textarea>
+        </div>
+        <div id="pbOut" aria-live="polite"></div>
+      </div>
     </section>
 
     <section id="declinePanel" role="tabpanel" aria-labelledby="modeDecline" hidden>
@@ -3758,6 +3800,16 @@ srcBatch.addEventListener("input", () => { renderBatch(); syncHash(); });
 const srcPostback = document.getElementById("srcPostback");
 const pbTarget = document.getElementById("pbOut");
 
+let pbView = "generate";                 // "generate" | "check"
+let pbTrackerId = TRACKER_POSTBACKS[0].id;
+let pbClickSlot = DEFAULT_CLICK_SLOT;
+let pbPersonalize = "";
+const pbCustom = { domain: "", clickParam: "", payoutParam: "", orderParam: "" };
+const pbGenControls = document.getElementById("pbGenControls");
+const pbGenOut = document.getElementById("pbGenOut");
+const pbGenerate = document.getElementById("pbGenerate");
+const pbCheck = document.getElementById("pbCheck");
+
 function analyzePostback(params) {
   const rows = params.map((p) => {
     const v = p.value;
@@ -3824,46 +3876,38 @@ function renderPostbackTable(rows) {
   const wrap = el("div", null); wrap.append(head); wrap.append(table); return wrap;
 }
 
-/** A reference card: the correct postback template per tracker, sourced. */
-function renderTrackerReference() {
-  const card = el("div", "help-card pbref reveal");
-  card.append(el("p", "eyebrow", "Tracker postback reference, the params each tracker expects"));
-  card.append(el("p", "pbref-lead", "The keys are the tracker's own param names; the {TOKENS} are what BuyGoods fills on conversion. Copy the line for the affiliate's tracker and swap in their domain."));
-  TRACKER_POSTBACKS.forEach((t) => {
-    const row = el("div", "pbref-row");
-    const top = el("div", "pbref-top");
-    top.append(el("span", "pbref-name", t.label));
-    const a = el("a", "pbref-src", "source"); a.href = t.source; a.target = "_blank"; a.rel = "noopener noreferrer";
-    top.append(a);
-    row.append(top);
-    const tmpl = el("div", "pbref-tmpl");
-    const built = buildPostback(t);
-    const code = el("code", "pbref-code");
-    built.split(/(\{[A-Z_]+\})/).forEach((seg) => {
-      if (/^\{[A-Z_]+\}$/.test(seg)) code.append(el("span", "tok", seg));
-      else code.append(document.createTextNode(seg));
-    });
-    tmpl.append(code);
-    const copy = el("button", "btn ghost pbref-copy", "Copy"); copy.type = "button"; copy.dataset.label = "Copy";
-    copy.addEventListener("click", () => copyAndFlash(built, copy));
-    tmpl.append(copy);
-    row.append(tmpl);
-    row.append(el("p", "pbref-note", t.note));
-    card.append(row);
-  });
-  return card;
+/* ---- Generate / Check view dispatch ---- */
+function applyPbView() {
+  pbGenerate.hidden = pbView !== "generate";
+  pbCheck.hidden = pbView !== "check";
+  const g = document.getElementById("pbViewGenerate"), c = document.getElementById("pbViewCheck");
+  g.classList.toggle("on", pbView === "generate"); g.setAttribute("aria-selected", String(pbView === "generate"));
+  c.classList.toggle("on", pbView === "check"); c.setAttribute("aria-selected", String(pbView === "check"));
 }
+function setPbView(view) {
+  pbView = view === "check" ? "check" : "generate";
+  applyPbView();
+  renderPostback();
+  syncHash();
+}
+document.getElementById("pbViewGenerate").addEventListener("click", () => setPbView("generate"));
+document.getElementById("pbViewCheck").addEventListener("click", () => setPbView("check"));
 
 function renderPostback() {
+  if (pbView === "check") { renderPostbackCheck(); return; }
+  renderPostbackGenerate();
+}
+
+/* ---- Check: validate a pasted postback against BuyGoods' tokens ---- */
+function renderPostbackCheck() {
   const parsed = parseInput(srcPostback.value);
   pbTarget.replaceChildren();
   if (parsed.empty) {
     const box = el("div", "empty reveal");
     box.append(el("div", "big", "{ }"));
     box.append(el("div", null, "Paste your tracker's postback URL to check it against BuyGoods' tokens."));
-    box.append(exampleButton(() => { srcPostback.value = EXAMPLE_POSTBACK; renderPostback(); syncHash(); }));
+    box.append(exampleButton(() => { srcPostback.value = EXAMPLE_POSTBACK; renderPostbackCheck(); syncHash(); }));
     pbTarget.append(box);
-    pbTarget.append(renderTrackerReference());
     return;
   }
   if (!parsed.ok) { pbTarget.append(renderError(parsed.error)); return; }
@@ -3876,10 +3920,120 @@ function renderPostback() {
   if (banners.length) pbTarget.append(bEl);
   pbTarget.append(renderBase(parsed, true));
   if (rows.length) pbTarget.append(renderPostbackTable(rows));
-  pbTarget.append(renderTrackerReference());
 }
 
 srcPostback.addEventListener("input", () => { renderPostback(); syncHash(); });
+
+/* ---- Generate: pick a tracker, get a paste-ready postback ---- */
+
+/** Render a token-highlighted URL into a .pbgen-url code element. */
+function pbUrlCode(url) {
+  const code = el("code", "pbgen-url");
+  url.split(/(\{[A-Z_0-9]+\})/).forEach((seg) => {
+    if (/^\{[A-Z_0-9]+\}$/.test(seg)) code.append(el("span", "tok", seg));
+    else code.append(document.createTextNode(seg));
+  });
+  return code;
+}
+
+/** A url line: highlighted code + a Copy button bound to the raw string. */
+function pbUrlLine(url, wrapId) {
+  const line = el("div", "pbgen-line");
+  if (wrapId) line.id = wrapId;
+  line.append(pbUrlCode(url));
+  const copy = el("button", "btn ghost pbgen-copy", "Copy"); copy.type = "button";
+  copy.addEventListener("click", () => copyAndFlash(url, copy));
+  line.append(copy);
+  return line;
+}
+
+function activeTracker() {
+  if (pbTrackerId === "custom") return customTracker(pbCustom);
+  return TRACKER_POSTBACKS.find((t) => t.id === pbTrackerId) || TRACKER_POSTBACKS[0];
+}
+
+/** Rebuild only the output region (template line, complete-URL line, note). */
+function refreshGenOut() {
+  const tracker = activeTracker();
+  pbGenOut.replaceChildren();
+  const wrap = el("div", "pbgen-out reveal");
+
+  wrap.append(pbUrlLine(buildPostback(tracker, { clickSlot: pbClickSlot }), null));
+
+  if (tracker.personalize && pbPersonalize.trim()) {
+    wrap.append(el("p", "pbgen-full-label", "Complete URL:"));
+    wrap.append(pbUrlLine(buildPostback(tracker, { clickSlot: pbClickSlot, personalize: pbPersonalize }), "pbGenFull"));
+  }
+
+  const note = el("details", "pbgen-note");
+  note.append(el("summary", null, "What do I do with this?"));
+  note.append(el("p", null, "Paste this into your tracker's postback / S2S settings. BuyGoods fills the {TOKEN} values automatically at sale time, you do not edit those. " + tracker.note));
+  wrap.append(note);
+
+  if (tracker.source) {
+    const srcP = el("p", "pbgen-src", "Param names from ");
+    const a = el("a", null, tracker.label + " docs"); a.href = tracker.source; a.target = "_blank"; a.rel = "noopener noreferrer";
+    srcP.append(a);
+    wrap.append(srcP);
+  }
+  pbGenOut.append(wrap);
+}
+
+/** Build the persistent controls (tracker + slot selects, personalize/custom fields). */
+function renderPostbackGenerate() {
+  pbGenControls.replaceChildren();
+
+  const tField = el("div", "pbgen-field");
+  tField.append(el("label", null, "Tracker"));
+  const tSel = el("select"); tSel.id = "pbTrackerSel";
+  TRACKER_POSTBACKS.forEach((t) => { const o = el("option", null, t.label); o.value = t.id; tSel.append(o); });
+  const customOpt = el("option", null, "Other / custom"); customOpt.value = "custom"; tSel.append(customOpt);
+  tSel.value = pbTrackerId;
+  tSel.addEventListener("change", () => { pbTrackerId = tSel.value; pbPersonalize = ""; renderPostbackGenerate(); syncHash(); });
+  tField.append(tSel);
+  pbGenControls.append(tField);
+
+  const sField = el("div", "pbgen-field");
+  sField.append(el("label", null, "Click ID is in"));
+  const sSel = el("select"); sSel.id = "pbSlotSel";
+  CLICK_SLOTS.forEach((s) => { const o = el("option", null, s.label); o.value = s.value; sSel.append(o); });
+  sSel.value = pbClickSlot;
+  sSel.addEventListener("change", () => { pbClickSlot = sSel.value; refreshGenOut(); syncHash(); });
+  sField.append(sSel);
+  pbGenControls.append(sField);
+
+  // personalize / custom fields live outside refreshGenOut so they keep focus while typing
+  const tracker = activeTracker();
+  const pBox = el("div", "pbgen-personalize");
+  if (pbTrackerId === "custom") {
+    pBox.append(el("p", "eyebrow", "Custom tracker"));
+    const grid = el("div", "pbgen-custom");
+    const field = (label, key, ph) => {
+      const f = el("div", "pbgen-field");
+      f.append(el("label", null, label));
+      const inp = el("input"); inp.id = "pbCustom_" + key; inp.placeholder = ph; inp.value = pbCustom[key];
+      inp.addEventListener("input", () => { pbCustom[key] = inp.value; refreshGenOut(); syncHash(); });
+      f.append(inp); return f;
+    };
+    grid.append(field("Tracker domain", "domain", "t.example.com"));
+    grid.append(field("Click ID param", "clickParam", "clickid"));
+    grid.append(field("Payout param", "payoutParam", "payout"));
+    grid.append(field("Order ID param", "orderParam", "oid"));
+    pBox.append(grid);
+  } else if (tracker.personalize) {
+    pBox.append(el("p", "eyebrow", "Personalize (optional)"));
+    const f = el("div", "pbgen-field");
+    f.append(el("label", null, tracker.personalize.label));
+    const inp = el("input"); inp.id = "pbPersonalize"; inp.placeholder = tracker.personalize.kind === "domain" ? "abc.example.com" : "your id";
+    inp.value = pbPersonalize;
+    inp.addEventListener("input", () => { pbPersonalize = inp.value; refreshGenOut(); syncHash(); });
+    f.append(inp);
+    pBox.append(f);
+  }
+  pbGenControls.append(pBox);
+
+  refreshGenOut();
+}
 
 /* ============================================================
    DECLINE MODE, plain-language lookup for a gateway decline code
@@ -4119,6 +4273,7 @@ function setMode(mode) {
   // switching into a panel should feel fresh, replay its entrance
   inspectHasContent = false;
   compareHasContent = false;
+  if (mode === "postback") { pbView = "generate"; applyPbView(); }  // Postback defaults to Generate
   PANELS[mode].render();
 
   const panel = PANELS[mode].panel;
