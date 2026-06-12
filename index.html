@@ -1912,25 +1912,111 @@ const POSTBACK_TOKENS = {
    domain, only the PARAM NAMES are asserted as fact.
    ------------------------------------------------------------ */
 const TRACKER_POSTBACKS = [
-  {
-    id: "voluum", label: "Voluum",
+  { id: "voluum", label: "Voluum",
     source: "https://doc.voluum.com/article/parameters-in-postback-urls",
-    note: "cid carries the click ID (required); payout (or p) the revenue; txid an optional transaction ID.",
-    template: "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID}&payout={COMMISSION_AMOUNT}&txid={ORDERID}",
-  },
-  {
-    id: "cpvlab", label: "CPV Lab Pro",
+    host: "YOUR-VOLUUM-DOMAIN", path: "/postback",
+    personalize: { label: "Your Voluum domain", token: "YOUR-VOLUUM-DOMAIN", kind: "domain" },
+    query: [{ key: "cid", click: true }, { key: "payout", token: "COMMISSION_AMOUNT" }, { key: "txid", token: "ORDERID" }],
+    note: "cid carries the click ID (required); payout the revenue; txid an optional transaction ID." },
+
+  { id: "cpvlab", label: "CPV Lab Pro",
     source: "https://cpvlab.pro/docs/postback-url.html",
-    note: "subid carries the click ID; revenue the payout. Called at adclick.php on your CPV Lab domain.",
-    template: "https://YOUR-CPVLAB-DOMAIN/adclick.php?subid={SUBID}&revenue={COMMISSION_AMOUNT}",
-  },
-  {
-    id: "anytrack", label: "AnyTrack",
+    host: "YOUR-CPVLAB-DOMAIN", path: "/adclick.php",
+    personalize: { label: "Your CPV Lab domain", token: "YOUR-CPVLAB-DOMAIN", kind: "domain" },
+    query: [{ key: "subid", click: true }, { key: "revenue", token: "COMMISSION_AMOUNT" }],
+    note: "subid carries the click ID; revenue the payout. Called at adclick.php on your CPV Lab domain." },
+
+  { id: "anytrack", label: "AnyTrack",
     source: "https://readme.anytrack.io/docs/event-attributes",
-    note: "click_id carries the click ID; value the conversion value; transactionId the order ID.",
-    template: "https://YOUR-ANYTRACK-POSTBACK?click_id={SUBID}&value={COMMISSION_AMOUNT}&transactionId={ORDERID}",
-  },
+    host: "YOUR-ANYTRACK-POSTBACK", path: "",
+    personalize: { label: "Your AnyTrack postback domain", token: "YOUR-ANYTRACK-POSTBACK", kind: "domain" },
+    query: [{ key: "click_id", click: true }, { key: "value", token: "COMMISSION_AMOUNT" }, { key: "transactionId", token: "ORDERID" }],
+    note: "click_id carries the click ID; value the conversion value; transactionId the order ID." },
+
+  { id: "redtrack", label: "RedTrack",
+    source: "https://help.redtrack.io/knowledgebase/kb/conversion-tracking/postback-offer-source/",
+    host: "YOUR-REDTRACK-DOMAIN", path: "/postback",
+    personalize: { label: "Your RedTrack domain", token: "YOUR-REDTRACK-DOMAIN", kind: "domain" },
+    query: [{ key: "clickid", click: true }, { key: "sum", token: "COMMISSION_AMOUNT" }, { key: "type", value: "Sale" }],
+    note: "clickid carries the click ID; sum the payout; type the conversion event name (rename 'Sale' to your RedTrack conversion type)." },
+
+  { id: "binom", label: "Binom",
+    source: "https://docs.binom.org/postback-url.php",
+    host: "YOUR-BINOM-DOMAIN", path: "/click.php",
+    personalize: { label: "Your Binom domain", token: "YOUR-BINOM-DOMAIN", kind: "domain" },
+    query: [{ key: "cnv_id", click: true }, { key: "payout", token: "COMMISSION_AMOUNT" }],
+    note: "cnv_id carries the click ID; payout the revenue. Add &cnv_status= if you track conversion statuses." },
+
+  { id: "bemob", label: "BeMob",
+    source: "https://docs.bemob.com/en/postback-settings-of-traffic-source",
+    host: "YOUR-BEMOB-DOMAIN", path: "/postback",
+    personalize: { label: "Your BeMob domain", token: "YOUR-BEMOB-DOMAIN", kind: "domain" },
+    query: [{ key: "cid", click: true }, { key: "payout", token: "COMMISSION_AMOUNT" }, { key: "txid", token: "ORDERID" }],
+    note: "cid carries the click ID (required); payout the revenue; txid the order ID." },
+
+  { id: "funnelflux", label: "FunnelFlux Pro",
+    source: "https://help.funnelflux.pro/en/article/46-integration-guide-for-clickbank",
+    host: "YOUR-FUNNELFLUX-DOMAIN", path: "/pb/",
+    personalize: { label: "Your FunnelFlux domain", token: "YOUR-FUNNELFLUX-DOMAIN", kind: "domain" },
+    query: [{ key: "hit", click: true }, { key: "rev", token: "COMMISSION_AMOUNT" }, { key: "tx", token: "ORDERID" }],
+    note: "hit carries the hit/click ID; rev the revenue; tx an optional transaction ID." },
+
+  { id: "clickmagick", label: "ClickMagick",
+    source: "https://www.clickmagick.com/kb/?answer=582",
+    host: "www.clkmg.com", path: "/api/s/post/",
+    personalize: { label: "Your ClickMagick UID", token: "XXXXXX", kind: "raw" },
+    query: [{ key: "uid", fill: "XXXXXX" }, { key: "s1", click: true }, { key: "amt", token: "COMMISSION_AMOUNT" }],
+    note: "uid is your ClickMagick account ID; s1 carries the click ID; amt the revenue. Host is fixed (clkmg.com)." },
 ];
+
+/* BuyGoods subid slots the affiliate's click ID can live in. Default subid2,
+   the slot a tracker usually reads (see the param dictionary). Suffix "" = slot 1 = {SUBID}. */
+const CLICK_SLOTS = [
+  { value: "",  label: "subid"  },
+  { value: "2", label: "subid2" },
+  { value: "3", label: "subid3" },
+  { value: "4", label: "subid4" },
+  { value: "5", label: "subid5" },
+];
+const DEFAULT_CLICK_SLOT = "2";
+
+/** Pure: build a tracker's postback string. opts: { clickSlot, personalize }.
+    The click param gets {SUBID<slot>}; token params get {TOKEN}; fill/value are literals.
+    A non-empty personalize replaces the tracker's personalize.token (domain sanitized). */
+function buildPostback(tracker, opts = {}) {
+  const slot = opts.clickSlot != null ? opts.clickSlot : DEFAULT_CLICK_SLOT;
+  const pairs = tracker.query.map((q) => {
+    let v;
+    if (q.click) v = "{SUBID" + slot + "}";
+    else if (q.token) v = "{" + q.token + "}";
+    else if (q.fill != null) v = q.fill;
+    else v = q.value;
+    return q.key + "=" + v;
+  });
+  let url = "https://" + tracker.host + tracker.path + "?" + pairs.join("&");
+  const fill = (opts.personalize || "").trim();
+  if (fill && tracker.personalize) {
+    const clean = tracker.personalize.kind === "domain"
+      ? fill.replace(/^https?:\/\//, "").replace(/\/+$/, "")
+      : fill;
+    url = url.split(tracker.personalize.token).join(clean);
+  }
+  return url;
+}
+
+/** Pure: a synthetic tracker for the "Other / custom" option. Params are the
+    affiliate's own names; values map to BuyGoods tokens. Not doc-verified. */
+function customTracker({ domain, clickParam, payoutParam, orderParam }) {
+  const query = [{ key: (clickParam || "clickid").trim(), click: true }];
+  if (payoutParam && payoutParam.trim()) query.push({ key: payoutParam.trim(), token: "COMMISSION_AMOUNT" });
+  if (orderParam && orderParam.trim()) query.push({ key: orderParam.trim(), token: "ORDERID" });
+  return {
+    id: "custom", label: "Custom",
+    host: (domain && domain.trim()) ? domain.trim().replace(/^https?:\/\//, "").replace(/\/+$/, "") : "YOUR-TRACKER-DOMAIN",
+    path: "", personalize: null, source: null, query,
+    note: "Custom tracker: these param names are yours, not verified against tracker docs.",
+  };
+}
 
 /* ------------------------------------------------------------
    DECLINE CODES, authoritative, per-processor
@@ -3751,14 +3837,15 @@ function renderTrackerReference() {
     top.append(a);
     row.append(top);
     const tmpl = el("div", "pbref-tmpl");
+    const built = buildPostback(t);
     const code = el("code", "pbref-code");
-    t.template.split(/(\{[A-Z_]+\})/).forEach((seg) => {
+    built.split(/(\{[A-Z_]+\})/).forEach((seg) => {
       if (/^\{[A-Z_]+\}$/.test(seg)) code.append(el("span", "tok", seg));
       else code.append(document.createTextNode(seg));
     });
     tmpl.append(code);
     const copy = el("button", "btn ghost pbref-copy", "Copy"); copy.type = "button"; copy.dataset.label = "Copy";
-    copy.addEventListener("click", () => copyAndFlash(t.template, copy));
+    copy.addEventListener("click", () => copyAndFlash(built, copy));
     tmpl.append(copy);
     row.append(tmpl);
     row.append(el("p", "pbref-note", t.note));

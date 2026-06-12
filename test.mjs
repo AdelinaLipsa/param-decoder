@@ -815,18 +815,75 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
       copyBtns: card.querySelectorAll(".pbref-copy").length,
     };
   });
-  check("PB5 reference shows 3 trackers", ref && /Voluum/.test(ref.names.join()) && /CPV Lab/.test(ref.names.join()) && /AnyTrack/.test(ref.names.join()), JSON.stringify(ref?.names));
-  check("PB5 voluum click ID = cid", ref && ref.codes.some(c => /cid=\{SUBID\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 cpvlab = subid + revenue", ref && ref.codes.some(c => /subid=\{SUBID\}.*revenue=\{COMMISSION_AMOUNT\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 anytrack click ID = click_id", ref && ref.codes.some(c => /click_id=\{SUBID\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 each tracker cites a source", ref && ref.srcs.length === 3 && ref.srcs.every(s => /^https?:/.test(s)), JSON.stringify(ref?.srcs));
-  check("PB5 copy buttons present", ref && ref.copyBtns === 3, JSON.stringify(ref));
+  check("PB5 reference shows trackers", ref && /Voluum/.test(ref.names.join()) && /RedTrack/.test(ref.names.join()) && /ClickMagick/.test(ref.names.join()), JSON.stringify(ref?.names));
+  check("PB5 voluum click ID = cid subid2", ref && ref.codes.some(c => /cid=\{SUBID2\}/.test(c)), JSON.stringify(ref?.codes));
+  check("PB5 cpvlab = subid + revenue", ref && ref.codes.some(c => /subid=\{SUBID2\}.*revenue=\{COMMISSION_AMOUNT\}/.test(c)), JSON.stringify(ref?.codes));
+  check("PB5 anytrack click ID = click_id", ref && ref.codes.some(c => /click_id=\{SUBID2\}/.test(c)), JSON.stringify(ref?.codes));
+  check("PB5 each tracker cites a source", ref && ref.srcs.length === 8 && ref.srcs.every(s => /^https?:/.test(s)), JSON.stringify(ref?.srcs));
+  check("PB5 copy buttons present", ref && ref.copyBtns === 8, JSON.stringify(ref));
 }
 {
   // reference is available even before pasting (empty state)
   await page.click("#modePostback");
   await page.fill("#srcPostback", "");
   check("PB6 reference shown in empty state", await page.evaluate(() => !!document.querySelector("#pbOut .pbref")), "no reference in empty state");
+}
+
+// ============================================================
+//  FEATURE 11.5 — postback generator: pure builder
+// ============================================================
+const build = (id, opts) => page.evaluate(([id, opts]) => {
+  const t = TRACKER_POSTBACKS.find(x => x.id === id);
+  return buildPostback(t, opts || {});
+}, [id, opts]);
+
+{
+  // default click slot is subid2 for every curated tracker
+  check("BLD1 voluum default", await build("voluum") ===
+    "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum"));
+  check("BLD1 cpvlab default", await build("cpvlab") ===
+    "https://YOUR-CPVLAB-DOMAIN/adclick.php?subid={SUBID2}&revenue={COMMISSION_AMOUNT}", await build("cpvlab"));
+  check("BLD1 anytrack default", await build("anytrack") ===
+    "https://YOUR-ANYTRACK-POSTBACK?click_id={SUBID2}&value={COMMISSION_AMOUNT}&transactionId={ORDERID}", await build("anytrack"));
+  check("BLD1 redtrack default", await build("redtrack") ===
+    "https://YOUR-REDTRACK-DOMAIN/postback?clickid={SUBID2}&sum={COMMISSION_AMOUNT}&type=Sale", await build("redtrack"));
+  check("BLD1 binom default", await build("binom") ===
+    "https://YOUR-BINOM-DOMAIN/click.php?cnv_id={SUBID2}&payout={COMMISSION_AMOUNT}", await build("binom"));
+  check("BLD1 bemob default", await build("bemob") ===
+    "https://YOUR-BEMOB-DOMAIN/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("bemob"));
+  check("BLD1 funnelflux default", await build("funnelflux") ===
+    "https://YOUR-FUNNELFLUX-DOMAIN/pb/?hit={SUBID2}&rev={COMMISSION_AMOUNT}&tx={ORDERID}", await build("funnelflux"));
+  check("BLD1 clickmagick default", await build("clickmagick") ===
+    "https://www.clkmg.com/api/s/post/?uid=XXXXXX&s1={SUBID2}&amt={COMMISSION_AMOUNT}", await build("clickmagick"));
+}
+{
+  // click-slot selector rewrites ONLY the click token
+  check("BLD2 slot subid (slot 1)", await build("voluum", { clickSlot: "" }) ===
+    "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{clickSlot:""}));
+  check("BLD2 slot subid3", await build("voluum", { clickSlot: "3" }) ===
+    "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID3}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{clickSlot:"3"}));
+}
+{
+  // personalize: domain trackers strip scheme/trailing slash; clickmagick fills uid
+  check("BLD3 voluum domain", await build("voluum", { personalize: "abc.voluum.com" }) ===
+    "https://abc.voluum.com/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{personalize:"abc.voluum.com"}));
+  check("BLD3 voluum domain sanitized", await build("voluum", { personalize: "https://abc.voluum.com/" }) ===
+    "https://abc.voluum.com/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{personalize:"https://abc.voluum.com/"}));
+  check("BLD3 clickmagick uid", await build("clickmagick", { personalize: "9f2a10" }) ===
+    "https://www.clkmg.com/api/s/post/?uid=9f2a10&s1={SUBID2}&amt={COMMISSION_AMOUNT}", await build("clickmagick",{personalize:"9f2a10"}));
+}
+{
+  // every curated tracker cites a source URL
+  const srcs = await page.evaluate(() => TRACKER_POSTBACKS.map(t => t.source));
+  check("BLD4 all trackers sourced", srcs.length === 8 && srcs.every(s => /^https?:\/\//.test(s)), JSON.stringify(srcs));
+}
+{
+  // custom tracker builds from user-named params, marked not-verified
+  const customUrl = await page.evaluate(() => buildPostback(
+    customTracker({ domain: "t.example.com", clickParam: "cid", payoutParam: "amount", orderParam: "oid" }),
+    { personalize: "" }));
+  check("BLD5 custom url", customUrl ===
+    "https://t.example.com?cid={SUBID2}&amount={COMMISSION_AMOUNT}&oid={ORDERID}", customUrl);
 }
 
 // ============================================================
