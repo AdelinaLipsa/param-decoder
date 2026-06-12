@@ -359,6 +359,25 @@
     border: 1px dashed var(--rule-strong); border-radius: 4px;
     padding: 1px 6px; flex: none; cursor: help;
   }
+  /* "noted" — a meaning you captured locally: solid, not dashed */
+  .trustbadge.noted {
+    color: var(--ok); background: var(--ok-bg);
+    border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
+  }
+  /* capture-loop control under a row's note */
+  .captbox { margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+  .captbtn {
+    font-family: var(--sans); font-size: 11px; font-weight: 600; line-height: 1;
+    color: var(--ink-faint); background: none;
+    border: 1px dashed var(--rule-strong); border-radius: 5px;
+    padding: 4px 8px; cursor: pointer; transition: color .12s, border-color .12s;
+  }
+  .captbtn:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .captbtn:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
+  .captbtn.noted { color: var(--ok); border-style: solid; border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
+  .captrm { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--ink-faint); background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .captrm:hover { color: var(--error); }
+  .captinput { width: 240px; max-width: 100%; }
   .v {
     font-family: var(--mono);
     font-size: 13px;
@@ -1330,6 +1349,9 @@
 
         <p class="eyebrow help-sec">QA templates <span class="hs-note">— expected param sets per offer, this device only</span></p>
         <div class="help-card" id="savedTemplates"></div>
+
+        <p class="eyebrow help-sec">Param notes <span class="hs-note">— meanings you've captured, this device only</span></p>
+        <div class="help-card" id="savedParams"></div>
       </div>
     </section>
   </div>
@@ -1502,7 +1524,7 @@ function base64Url(value) {
  * Checkout pages carry sub1..subN tracking values alongside the offer-link
  * subid slots, so sub<N> is recognised generically.
  */
-function lookupConfig(key) {
+function lookupConfigBuiltin(key) {
   const direct = PARAM_CONFIG[key] || PARAM_CONFIG[key.toLowerCase()];
   if (direct) return direct;
   const sub = /^sub(\d+)$/i.exec(key);
@@ -1512,6 +1534,26 @@ function lookupConfig(key) {
   const sess = /^sessid(\d*)$/i.exec(key);
   if (sess) return { label: "Session ID" + (sess[1] ? " " + sess[1] : ""), desc: "Checkout session identifier (often embeds a timestamp).", trust: "inferred" };
   return null;
+}
+
+/**
+ * Config for a param, a device-local NOTE taking precedence over the built-in
+ * dictionary. A noted param explains itself with the team's wording and reads
+ * as trust:"noted" (so it drops the "inferred" badge). See PARAM_NOTES below.
+ */
+function lookupConfig(key) {
+  const note = getParamNote(key);
+  const builtin = lookupConfigBuiltin(key);
+  if (note) return { ...(builtin || {}), label: note.label || (builtin && builtin.label) || key, desc: note.desc, trust: "noted" };
+  return builtin;
+}
+
+/** Which capture state a param is in — drives the inline "describe/confirm" control. */
+function paramNoteState(key) {
+  if (getParamNote(key)) return "noted";
+  const b = lookupConfigBuiltin(key);
+  if (!b) return "unknown";
+  return b.trust === "inferred" ? "inferred" : "confirmed";
 }
 
 /* ------------------------------------------------------------
@@ -1709,6 +1751,32 @@ function userSavedNames() {
 }
 
 loadSavedNames();
+
+/* ------------------------------------------------------------
+   PARAM NOTES  —  device-local meanings the team captures
+   ------------------------------------------------------------
+   The capture loop that makes the dictionary a LIVING one:
+   describe an unknown param, or confirm/correct an inferred one,
+   and it's remembered on THIS device (never sent). A noted param
+   then explains itself and reads as trust:"noted". Promote the
+   shipped inferred guesses into verified meanings over time.
+   ------------------------------------------------------------ */
+const PARAM_NOTES_LS_KEY = "param-decoder-param-notes-v1";
+let PARAM_NOTES = {};
+const noteKey = (k) => k.trim().toLowerCase();
+function loadParamNotes() {
+  try { PARAM_NOTES = JSON.parse(localStorage.getItem(PARAM_NOTES_LS_KEY) || "{}"); }
+  catch { PARAM_NOTES = {}; }
+}
+function persistParamNotes() {
+  try { localStorage.setItem(PARAM_NOTES_LS_KEY, JSON.stringify(PARAM_NOTES)); } catch { /* blocked — session only */ }
+}
+const getParamNote = (key) => PARAM_NOTES[noteKey(key)] || null;
+function saveParamNote(key, desc) { PARAM_NOTES[noteKey(key)] = { desc: desc.trim() }; persistParamNotes(); }
+function removeParamNote(key) { delete PARAM_NOTES[noteKey(key)]; persistParamNotes(); }
+const userParamNotes = () => Object.keys(PARAM_NOTES).map((k) => ({ key: k, desc: PARAM_NOTES[k].desc }));
+
+loadParamNotes();
 
 /* ------------------------------------------------------------
    QA TEMPLATES  (per-host expected param set, device-only)
@@ -2615,11 +2683,15 @@ function buildRow(row) {
   toggle.setAttribute("aria-label", "Include " + row.key + " in rebuilt link");
   const dot = el("span", "dot");
   kline.append(toggle, dot, el("span", "k", row.key));
-  // trust badge: this param's meaning is inferred from real links, not yet team-confirmed
+  // trust badge: inferred (shipped best-guess) or noted (your local meaning)
   const cfgForKey = lookupConfig(row.key);
   if (cfgForKey && cfgForKey.trust === "inferred") {
     const badge = el("span", "trustbadge", "inferred");
     badge.title = "Meaning inferred from real links — not yet confirmed by the team. Treat the description as a best guess.";
+    kline.append(badge);
+  } else if (cfgForKey && cfgForKey.trust === "noted") {
+    const badge = el("span", "trustbadge noted", "noted");
+    badge.title = "You described this param on this device. Local note — never sent.";
     kline.append(badge);
   }
   keyCell.append(kline);
@@ -2627,6 +2699,9 @@ function buildRow(row) {
   keyCell.append(snote);
   const fixbox = el("div", "fixbox");
   keyCell.append(fixbox);
+  // capture loop: describe an unknown param / confirm an inferred one (device-only)
+  const capt = buildCaptureControl(row);
+  if (capt) keyCell.append(capt);
   rowEl.append(keyCell);
 
   // editable value (+ a decoded-target line and a raw/encoded line, shown only when relevant)
@@ -2724,10 +2799,66 @@ function addParam(key, value, atFront) {
     enabled: true, status: "ok", note: null, _fix: null, el: null,
   };
   if (atFront) state.rows.unshift(row); else state.rows.push(row);
+  rebuildTable();
+}
+
+/** Rebuild the whole table from state.rows (used when structure, not just status, changes). */
+function rebuildTable() {
   const fresh = buildTable(state.rows);
   ui.tableWrap.replaceWith(fresh);
   ui.tableWrap = fresh;
   recompute();
+}
+
+/**
+ * The capture-loop control for a row: "+ describe" an unknown param, "confirm /
+ * correct" an inferred one, or "edit / remove" a noted one. Saves device-only,
+ * then rebuilds the table so the badge + meaning refresh. confirmed params get
+ * no control (don't invite overrides of shipped truth).
+ */
+function buildCaptureControl(row) {
+  const st = paramNoteState(row.key);
+  if (st === "confirmed") return null;
+  const wrap = el("div", "captbox");
+  const labels = { unknown: "+ describe", inferred: "confirm / correct", noted: "edit note" };
+  const btn = el("button", "captbtn" + (st === "noted" ? " noted" : ""), labels[st]);
+  btn.type = "button";
+  btn.title = st === "unknown"
+    ? "Add what this param means — saved on this device only, never sent"
+    : st === "inferred"
+      ? "Confirm or correct this best-guess meaning — saved on this device only"
+      : "Edit your saved note for this param";
+  btn.addEventListener("click", () => {
+    const input = el("input", "name-input captinput");
+    input.placeholder = "what this param means";
+    input.setAttribute("aria-label", "Meaning for " + row.key);
+    const existing = getParamNote(row.key);
+    const builtin = lookupConfigBuiltin(row.key);
+    input.value = existing ? existing.desc : (builtin && builtin.desc) || "";
+    let done = false;
+    const save = () => {
+      if (done) return; done = true;
+      const v = input.value.trim();
+      if (v) saveParamNote(row.key, v);
+      rebuildTable();
+    };
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); save(); }
+      else if (e.key === "Escape") { done = true; rebuildTable(); }
+    });
+    input.addEventListener("blur", save);
+    wrap.replaceChildren(input);
+    input.focus();
+  });
+  wrap.append(btn);
+  if (st === "noted") {
+    const rm = el("button", "captrm", "remove");
+    rm.type = "button";
+    rm.title = "Remove your note for this param";
+    rm.addEventListener("click", () => { removeParamNote(row.key); rebuildTable(); });
+    wrap.append(rm);
+  }
+  return wrap;
 }
 
 /** Re-validate the active set and patch all status-dependent DOM. */
@@ -3761,7 +3892,31 @@ function renderSavedTemplates() {
   });
 }
 
-function renderHelpManagers() { renderSavedNames(); renderSavedTemplates(); }
+/** Help-tab manager for device-saved param notes (the capture loop). */
+function renderSavedParams() {
+  const box = document.getElementById("savedParams");
+  box.replaceChildren();
+  const notes = userParamNotes();
+  if (notes.length === 0) {
+    box.classList.add("emptynames");
+    box.append(el("p", "hs-empty", "No param notes yet. In Inspect, click “+ describe” on an unrecognised param, or “confirm / correct” on an inferred one, to capture what it means — it'll show here and explain itself on every link, on this device only."));
+    return;
+  }
+  box.classList.remove("emptynames");
+  notes.forEach(({ key, desc }) => {
+    const row = el("div", "hs-row");
+    row.append(el("span", "hs-key", key));
+    row.append(el("span", "hs-arrow", "→"));
+    row.append(el("span", "hs-name", desc));
+    const rm = el("button", "hs-remove", "Remove");
+    rm.type = "button";
+    rm.addEventListener("click", () => { removeParamNote(key); renderSavedParams(); });
+    row.append(rm);
+    box.append(row);
+  });
+}
+
+function renderHelpManagers() { renderSavedNames(); renderSavedTemplates(); renderSavedParams(); }
 
 /* the real BuyGoods checkout link used as the worked example */
 const EXAMPLE_URL = "https://buygoods.com/secure/checkout.html?account_id=11308&product_codename=her6&redirect=aHR0cHM6Ly9oZXJvdXBvZmZpY2lhbC5jb20vdXBzZWxsL2JnLzZhLzMvdjMvYi8%3D&subid=%7Bclickid%7D&sub19=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub18=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub17=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1";

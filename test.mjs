@@ -1230,6 +1230,51 @@ async function decline(code) {
   check("DR2 nested aff_id parsed", rowFor(r, "aff_id")?.value === "259107", JSON.stringify(rowFor(r,"aff_id")));
 }
 
+// ============================================================
+//  FEATURE 27 — param-dictionary capture loop
+// ============================================================
+{
+  // confirmed → no control; inferred → confirm/correct; unknown → describe
+  await inspect("https://buygoods.com/secure/checkout.html?account_id=11308&pfnid=abc&mystery_param=zzz");
+  const ctl = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("#inspectPanel .prow")];
+    const btn = (k) => rows.find(r => r.querySelector(".k")?.textContent === k)?.querySelector(".captbtn")?.textContent ?? null;
+    return { account_id: btn("account_id"), pfnid: btn("pfnid"), mystery: btn("mystery_param") };
+  });
+  check("CL1 confirmed param has no capture control", ctl.account_id === null, JSON.stringify(ctl));
+  check("CL1 inferred param offers confirm/correct", /confirm/i.test(ctl.pfnid ?? ""), JSON.stringify(ctl));
+  check("CL1 unknown param offers describe", /describe/i.test(ctl.mystery ?? ""), JSON.stringify(ctl));
+}
+{
+  // capture a meaning for an unknown param → it becomes "noted" and explains itself
+  await inspect("https://x.com/p?aff_id=639&mystery_param=zzz");
+  await page.evaluate(() => {
+    [...document.querySelectorAll("#inspectPanel .prow")]
+      .find(r => r.querySelector(".k")?.textContent === "mystery_param")
+      .querySelector(".captbtn").click();
+  });
+  await page.fill("#inspectPanel .captinput", "Our internal campaign tag");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(150);
+  const after = await page.evaluate(() => {
+    const r = [...document.querySelectorAll("#inspectPanel .prow")].find(r => r.querySelector(".k")?.textContent === "mystery_param");
+    return {
+      badge: r?.querySelector(".trustbadge.noted")?.textContent ?? null,
+      note: r?.querySelector(".snote")?.textContent ?? null,
+      btn: r?.querySelector(".captbtn")?.textContent ?? null,
+    };
+  });
+  check("CL2 noted badge appears", after.badge === "noted", JSON.stringify(after));
+  check("CL2 param now explains itself", /internal campaign tag/i.test(after.note ?? ""), JSON.stringify(after));
+  check("CL2 control switches to edit", /edit/i.test(after.btn ?? ""), JSON.stringify(after));
+}
+{
+  // the captured note shows in the Help manager
+  await page.click("#modeHelp");
+  const listed = await page.evaluate(() => document.querySelector("#savedParams")?.textContent ?? "");
+  check("CL3 note listed in Help manager", /mystery_param/.test(listed) && /internal campaign tag/i.test(listed), listed);
+}
+
 await browser.close();
 
 console.log(`\n  PASS ${pass}   FAIL ${fail}\n`);
