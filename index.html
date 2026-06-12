@@ -1316,7 +1316,7 @@
 
         <p class="eyebrow help-sec">Reading a decline code</p>
         <div class="help-card concept">
-          <p class="concept-lead">Decline mode answers a different question — not "why won't this link track?" but "<b>why did this charge fail?</b>" A decline code comes from the <b>transaction</b> — the BuyGoods backoffice, the gateway response, or the error shown to the customer — not from a URL. So you paste the <b>code</b>, not a link.</p>
+          <p class="concept-lead">Decline mode answers a different question — not "why won't this link track?" but "<b>why did this charge fail?</b>" A decline code usually comes from the <b>transaction</b> — the BuyGoods backoffice, the gateway response, or the error shown to the customer — so you paste the <b>code</b> here, not a link. <b>(And if a failure URL does carry the code</b> — e.g. <span class="mono">?decline_code=do_not_honor</span> — Inspect spots it and explains it inline.)</p>
           <div class="decl-axes" aria-hidden="true">
             <div class="decl-ax"><span class="decl-chip warn"><span class="dot"></span>Soft</span><span class="decl-desc"><b>Temporary.</b> A retry can still go through — insufficient funds, issuer busy, processing error.</span></div>
             <div class="decl-ax"><span class="decl-chip error"><span class="dot"></span>Hard</span><span class="decl-desc"><b>Permanent for this card.</b> Use a different one — expired, lost / stolen, do-not-honor.</span></div>
@@ -2085,6 +2085,31 @@ function lookupDecline(code, processor = null) {
    ============================================================ */
 
 /** Classify a single param in isolation (duplicates handled later). */
+/* ------------------------------------------------------------
+   DECLINE BRIDGE — surface a gateway decline code seen in a link
+   ------------------------------------------------------------
+   A failed-payment redirect/thank-you URL sometimes carries the
+   decline code in a param (…/failed?decline_code=do_not_honor or
+   ?response_code=202). When it does, explain it inline using the
+   decline tables — no need to switch to Decline mode and re-type it.
+
+   To stay false-positive-free: a NUMERIC code (202, 2001) is only
+   read when the KEY is an explicit decline/response key. A string
+   code (insufficient_funds) is distinctive enough to recognise on
+   any param. Tracking slots carrying "202" are NOT flagged.
+   ------------------------------------------------------------ */
+const DECLINE_PARAM_RE = /^(decline_?code|response_?code|error_?code|decline_?reason|gateway_?response|processor_?response|decline)$/i;
+
+function declineHint(key, value) {
+  if (!value || isPlaceholder(value)) return null;
+  const strongKey = DECLINE_PARAM_RE.test(key);
+  const stringCode = /^[a-z][a-z_]*[a-z]$/i.test(value) && value.includes("_"); // e.g. do_not_honor
+  if (!strongKey && !stringCode) return null;
+  const matches = lookupDecline(value);
+  if (matches.length) return { known: true, match: matches[0] };
+  return strongKey ? { known: false } : null;
+}
+
 function classifyParam(key, value) {
   const cfg = lookupConfig(key);
   const label = cfg ? cfg.label : null;
@@ -2092,6 +2117,18 @@ function classifyParam(key, value) {
 
   // 1. a pure {PLACEHOLDER} is always valid, for any param
   if (isPlaceholder(value)) return { status: STATUS.ok, note: "Template placeholder — filled in at click time.", label };
+
+  // 1b. a gateway decline code carried in the link → explain it inline
+  const dh = declineHint(key, value);
+  if (dh) {
+    if (dh.known) {
+      const m = dh.match;
+      const sev = m.type === "hard" ? "hard decline" : "soft decline";
+      const act = m.retry ? "a retry may work" : "don't retry";
+      return { ...warn(`Declined payment — “${m.title}” (${m.processorLabel}): ${sev}, ${act}. Open Decline mode for the full read.`), label: label || "Decline code", declineHint: dh };
+    }
+    return { ...warn(`Looks like a decline/response code, but “${value}” isn't in the Stripe / Braintree / NMI tables.`), label: label || "Decline code" };
+  }
 
   // 2. Base64-carrying params (e.g. redirect) → decode and show the destination
   //    (the decoded URL renders on its own line in the value cell, not the note)

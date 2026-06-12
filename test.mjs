@@ -900,6 +900,21 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   check("TB1 sub<N> pattern inferred", t.sub19, JSON.stringify(t));
   check("TB1 account_id confirmed (no badge)", t.account_id === false, JSON.stringify(t));
 }
+{
+  // decline bridge: a gateway decline code carried in a link is explained inline
+  const r = await inspect("https://buygoods.com/secure/checkout.html?decline_code=expired_card&response_code=2001&subid=202&reason=do_not_honor");
+  const note = (k) => rowFor(r, k)?.note ?? "";
+  check("DB1 decline_code explained (title+severity)", /expired card/i.test(note("decline_code")) && /hard decline/i.test(note("decline_code")), JSON.stringify(rowFor(r,"decline_code")));
+  check("DB1 decline_code flagged warn", rowFor(r, "decline_code")?.status === "warn", JSON.stringify(rowFor(r,"decline_code")));
+  check("DB1 numeric response_code mapped (Braintree)", /insufficient funds/i.test(note("response_code")), JSON.stringify(rowFor(r,"response_code")));
+  check("DB1 string code on arbitrary param recognized", /do not honor/i.test(note("reason")), JSON.stringify(rowFor(r,"reason")));
+  check("DB1 numeric on subid NOT mis-flagged as decline", !/declin/i.test(note("subid")), JSON.stringify(rowFor(r,"subid")));
+}
+{
+  // a strong decline key with an unknown value gets a gentle, honest note (not a confident read)
+  const r = await inspect("https://x.com/fail?decline_code=999999");
+  check("DB2 unknown decline code noted honestly", /isn.t in the/i.test(rowFor(r, "decline_code")?.note ?? ""), JSON.stringify(rowFor(r,"decline_code")));
+}
 
 // ============================================================
 //  FEATURE 14 — Help tab

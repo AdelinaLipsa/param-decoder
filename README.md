@@ -32,7 +32,7 @@ It's a single self‑contained `index.html` — no build, no install. Either:
 | A tracker's **postback URL** | Whether its tokens match what BuyGoods sends | **Postback** |
 | A **decline code** from a failed charge | What it means, and whether to retry | **Decline** |
 
-> **Note:** a **decline code is not a URL parameter.** You won't find one by inspecting a link — it comes from the *transaction* (BuyGoods backoffice, the gateway response, a postback, or the error shown to the customer). Decline mode is a standalone lookup, not a step after Inspect.
+> **Note:** a **decline code usually isn't a URL parameter** — it comes from the *transaction* (BuyGoods backoffice, the gateway response, a postback, or the error shown to the customer), so Decline mode is mostly a standalone lookup. The exception: if a failure/thank-you URL *does* carry the code (e.g. `?decline_code=do_not_honor`, `?response_code=202`), **Inspect detects it and explains it inline** — soft/hard, retry-or-not — without leaving the link view.
 
 ## Modes
 
