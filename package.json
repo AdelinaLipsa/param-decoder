@@ -1,7 +1,7 @@
 {
   "name": "param-decoder",
   "version": "1.0.0",
-  "description": "Internal tool to read, validate, fix, and compare BuyGoods checkout and offer URLs — 100% client-side.",
+  "description": "Browser-only utility for affiliate managers and tech support to read, validate, fix, and compare BuyGoods checkout/offer URLs, postbacks, and decline codes — nothing you paste leaves your browser.",
   "private": true,
   "type": "module",
   "scripts": {
