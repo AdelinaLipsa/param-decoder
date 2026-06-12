@@ -1374,19 +1374,21 @@ const PATH_RULES = [
   { re: /^up(\d+)$/i,           label: (m) => "Upsell " + m[1] },
   { re: /^(ds|down|downsell)(\d*)$/i, label: (m) => "Downsell" + (m[2] ? " " + m[2] : "") },
   { re: /^dtc$/i,              label: () => "Direct-to-consumer funnel" },
-  { re: /^(checkout|order|secure)(\.\w+)?$/i, label: () => "Checkout page" },
+  { re: /^(checkout|order)(\.\w+)?$/i, label: () => "Checkout page" },
   { re: /^(report|presell|advertorial|article)(\.\w+)?$/i, label: () => "Advertorial / pre-sell" },
 ];
 
-/** Interpret a URL path into [{ segment, meaning }] for recognised parts. */
+/** Interpret a URL path into [{ segment, meaning }], deduped by meaning. */
 function interpretPath(path) {
-  return path.split("/").filter(Boolean).map((seg) => {
+  const out = [];
+  const seen = new Set();
+  path.split("/").filter(Boolean).forEach((seg) => {
     const rule = PATH_RULES.find((r) => r.re.test(seg));
-    if (rule) return { segment: seg, meaning: rule.label(rule.re.exec(seg)) };
     const geo = GEO_CODES[seg.toLowerCase()];
-    if (geo) return { segment: seg, meaning: "Language / geo — " + geo };
-    return null;
-  }).filter(Boolean);
+    const meaning = rule ? rule.label(rule.re.exec(seg)) : (geo ? "Language / geo — " + geo : null);
+    if (meaning && !seen.has(meaning)) { seen.add(meaning); out.push({ segment: seg, meaning }); }
+  });
+  return out;
 }
 
 /** utm_source / utm_medium: lowercase single-token, warn (never block). */
@@ -1939,9 +1941,9 @@ function renderBase(result, animate) {
     card.append(note);
   }
 
-  // VSL path intelligence — read the funnel out of the path
+  // VSL path intelligence — only when it reveals more than a plain "Checkout page"
   const segs = interpretPath(result.path);
-  if (segs.length) {
+  if (segs.some((s) => s.meaning !== "Checkout page")) {
     const pathNote = el("div", "pathread");
     pathNote.append(el("span", "pathread-label", "Path reads as"));
     const chips = el("div", "pathchips");
