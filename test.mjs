@@ -854,7 +854,7 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   await page.click("#modeHelp");
   check("HP1 help visible", await page.isVisible("#helpPanel"), "help panel hidden");
   check("HP1 worked example shown", (await page.textContent("#demoUrl")).includes("checkout.html"), "");
-  check("HP1 base64 decoded in demo", (await page.textContent(".demo-decode")).includes("visiumpro.com/fnn2/up1"), "");
+  check("HP1 base64 decoded in demo", (await page.textContent(".demo-decode")).includes("heroupofficial.com/upsell"), "");
   // concept explainer diagrams render
   const diagrams = await page.evaluate(() => ({
     twoJobs: !!document.querySelector(".twojobs .tj-flow.comm") && !!document.querySelector(".twojobs .tj-flow.track"),
@@ -869,7 +869,7 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   // Try-this-example deep-links into Inspect
   await page.click("#tryExample");
   check("HP2 switched to inspect", await page.isVisible("#inspectPanel"), "");
-  check("HP2 example loaded", (await page.inputValue("#src")).includes("product_codename=vis2fnn2"), "");
+  check("HP2 example loaded", (await page.inputValue("#src")).includes("product_codename=her6"), "");
   // an Open button switches mode
   await page.click("#modeHelp");
   await page.click('.help-card [data-open="postback"]');

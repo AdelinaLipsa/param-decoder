@@ -1167,14 +1167,14 @@
           <p class="eyebrow">Worked example — a live checkout link</p>
           <div class="demo-url" id="demoUrl"></div>
           <div class="demo-decode" aria-hidden="true">
-            <div class="dline d1"><span class="dk">account_id</span><span class="dv">11292</span><span class="dm">the BuyGoods account</span></div>
-            <div class="dline d2"><span class="dk">product_codename</span><span class="dv">vis2fnn2</span><span class="dm">the offer being sold</span></div>
+            <div class="dline d1"><span class="dk">account_id</span><span class="dv">11308</span><span class="dm">the BuyGoods account</span></div>
+            <div class="dline d2"><span class="dk">product_codename</span><span class="dv">her6</span><span class="dm">the offer being sold</span></div>
             <div class="dline d3">
-              <span class="dk">redirect</span><span class="dv b64">aHR0cDovL3Zpc2l1…</span>
-              <span class="arrow">↳</span><span class="dv decoded">http://visiumpro.com/fnn2/up1</span>
+              <span class="dk">redirect</span><span class="dv b64">aHR0cHM6Ly9oZXJvdXBv…</span>
+              <span class="arrow">↳</span><span class="dv decoded">https://heroupofficial.com/upsell/bg/6a/3/v3/b/</span>
               <span class="dm">decoded from Base64</span>
             </div>
-            <div class="dline d4"><span class="dk">sub19 · sub20</span><span class="dv">v3_a962a533…</span><span class="dm">checkout tracking</span></div>
+            <div class="dline d4"><span class="dk">subid</span><span class="dv">{clickid}</span><span class="dm">click-ID placeholder — filled at click time (sub17–19 carry the checkout tracking)</span></div>
           </div>
           <button class="btn primary" id="tryExample" type="button">Try this in Inspect →</button>
         </div>
@@ -3606,7 +3606,7 @@ function renderSavedTemplates() {
 function renderHelpManagers() { renderSavedNames(); renderSavedTemplates(); }
 
 /* the real BuyGoods checkout link used as the worked example */
-const EXAMPLE_URL = "https://buygoods.com/secure/checkout.html?account_id=11292&product_codename=vis2fnn2&redirect=aHR0cDovL3Zpc2l1bXByby5jb20vZm5uMi91cDE=&sub20=v3_a962a533-4eb3-46e0-8096-a9da5e4c9466_684a48ea058670622823097e_3340_t-12_s-2&sub19=v3_a962a533-4eb3-46e0-8096-a9da5e4c9466_684a48ea058670622823097e_3340_t-12_s-2";
+const EXAMPLE_URL = "https://buygoods.com/secure/checkout.html?account_id=11308&product_codename=her6&redirect=aHR0cHM6Ly9oZXJvdXBvZmZpY2lhbC5jb20vdXBzZWxsL2JnLzZhLzMvdjMvYi8%3D&subid=%7Bclickid%7D&sub19=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub18=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1&sub17=v3_85fa8093-bceb-4735-bdf7-ee1945ca4520_68e976fde75a13e32c888406_1000000_t-10_s-1";
 
 function helpInit() {
   document.getElementById("demoUrl").textContent = EXAMPLE_URL;
