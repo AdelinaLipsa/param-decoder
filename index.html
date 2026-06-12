@@ -790,6 +790,30 @@
   .pbref-copy { flex: none; font-size: 12px; padding: 7px 12px; }
   .pbref-note { font-size: 12px; color: var(--ink-faint); margin: 7px 0 0; line-height: 1.45; }
 
+  /* "why not a generic decoder" — animated generic-vs-ours comparison */
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .vs-side { background: var(--field); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; }
+  .vs-side.generic { opacity: .72; }
+  .vs-tag { display: inline-block; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-faint); margin-bottom: 11px; }
+  .vs-tag.ok { color: var(--ok); }
+  .vs-row { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; padding: 4px 0; }
+  .vs-g { width: 3px; align-self: stretch; border-radius: 2px; background: var(--ok); flex: none; }
+  .vs-k { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .vs-v { font-family: var(--mono); color: var(--ink-faint); }
+  .vs-meaning { color: var(--ink-soft); }
+  .vs-cap { font-size: 11px; color: var(--ink-faint); margin: 10px 0 0; font-style: italic; }
+  .why-points { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+  .why-points p { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.5; }
+  .why-points b { color: var(--ink); font-weight: 600; }
+
+  /* "which mode do I use?" — input → mode guide with a walking highlight */
+  .modeguide { display: flex; flex-direction: column; gap: 2px; }
+  .mguide-row { display: grid; grid-template-columns: 1fr 18px 130px; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; }
+  .mguide-in { font-size: 13.5px; color: var(--ink-soft); }
+  .mguide-in b { color: var(--ink); font-weight: 600; }
+  .mguide-arrow { color: var(--ink-faint); text-align: center; }
+  .mguide-mode { font-family: var(--sans); font-size: 12.5px; font-weight: 700; color: var(--ink); background: var(--panel); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 4px 11px; text-align: center; }
+
   .btn.ghost { background: var(--field); }
 
   @media (max-width: 640px) {
@@ -858,6 +882,22 @@
     /* decline demo: the verdict chip breathes */
     .decl-demo .chip { animation: declPulse 2.8s ease-in-out infinite; }
     @keyframes declPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+
+    /* why-comparison: the green gutters on "our" side gently pulse */
+    .vs-side.ours .vs-g { animation: gShimmer 2.6s ease-in-out infinite; }
+    .vs-side.ours .vs-row:nth-child(3) .vs-g { animation-delay: .5s; }
+    @keyframes gShimmer { 0%,100% { background: color-mix(in srgb, var(--ok) 55%, var(--rule-strong)); } 50% { background: var(--ok); } }
+
+    /* mode guide: a highlight walks down the input→mode rows */
+    .modeguide .mguide-row { animation: mgWalk 6s ease-in-out infinite; }
+    .modeguide .mguide-row:nth-child(2) { animation-delay: 1.2s; }
+    .modeguide .mguide-row:nth-child(3) { animation-delay: 2.4s; }
+    .modeguide .mguide-row:nth-child(4) { animation-delay: 3.6s; }
+    .modeguide .mguide-row:nth-child(5) { animation-delay: 4.8s; }
+    @keyframes mgWalk {
+      0%, 12%  { background: var(--ok-bg); }
+      18%, 100% { background: transparent; }
+    }
   }
 
   /* ---------- messages / empty ---------- */
@@ -1259,6 +1299,44 @@
           </div>
         </div>
 
+        <p class="eyebrow help-sec">Why not just a generic URL decoder?</p>
+        <div class="help-card concept">
+          <p class="concept-lead">A generic parser splits a query string and decodes %-encoding — useful, but blind to BuyGoods. This tool's edge is narrow and lives only here:</p>
+          <div class="vs" aria-hidden="true">
+            <div class="vs-side generic">
+              <span class="vs-tag">Generic decoder</span>
+              <div class="vs-row"><span class="vs-k">aff_id</span><span class="vs-v">= 162939</span></div>
+              <div class="vs-row"><span class="vs-k">subid2</span><span class="vs-v">= {clickid}</span></div>
+              <p class="vs-cap">echoes the keys back</p>
+            </div>
+            <div class="vs-side ours">
+              <span class="vs-tag ok">Param Decoder</span>
+              <div class="vs-row"><span class="vs-g"></span><span class="vs-k">aff_id</span><span class="vs-meaning">earns the affiliate's commission</span></div>
+              <div class="vs-row"><span class="vs-g"></span><span class="vs-k">subid2</span><span class="vs-meaning">click ID — reports the sale to their tracker</span></div>
+              <p class="vs-cap">explains, flags &amp; fixes — in BuyGoods terms</p>
+            </div>
+          </div>
+          <div class="why-points">
+            <p><b>Knows BuyGoods.</b> aff_id, the five subid slots, postback tokens, the funnel in the path — a generic tool sees none of it.</p>
+            <p><b>Validates, not just lists.</b> It flags the broken thing — empty aff_id, a typo'd param name — in plain terms.</p>
+            <p><b>100% private.</b> Online parsers POST your URL to their server; this runs entirely in your browser, so live customer links are safe to paste.</p>
+            <p><b>Hands you a ticket.</b> Inspect → diagnosis → a copy-paste, ticket-ready report, fitted to a support flow.</p>
+          </div>
+        </div>
+
+        <p class="eyebrow help-sec">Which mode do I use?</p>
+        <div class="help-card concept">
+          <p class="concept-lead">Match what you're holding to a mode:</p>
+          <div class="modeguide" aria-hidden="true">
+            <div class="mguide-row"><span class="mguide-in">One offer or <b>checkout link</b></span><span class="mguide-arrow">→</span><span class="mguide-mode">Inspect</span></div>
+            <div class="mguide-row"><span class="mguide-in"><b>Two links</b> to compare</span><span class="mguide-arrow">→</span><span class="mguide-mode">Compare</span></div>
+            <div class="mguide-row"><span class="mguide-in">A whole <b>column of links</b></span><span class="mguide-arrow">→</span><span class="mguide-mode">Batch</span></div>
+            <div class="mguide-row"><span class="mguide-in">A tracker's <b>postback URL</b></span><span class="mguide-arrow">→</span><span class="mguide-mode">Postback</span></div>
+            <div class="mguide-row"><span class="mguide-in">A <b>decline code</b> from a failed charge</span><span class="mguide-arrow">→</span><span class="mguide-mode">Decline</span></div>
+          </div>
+          <p class="concept-note">A decline code comes from the <b>transaction</b>, not a URL — so paste the code, not a link. (Though if a failure URL carries it, Inspect spots it too.)</p>
+        </div>
+
         <p class="eyebrow help-sec">The modes</p>
         <div class="help-modes">
           <div class="help-card mode-card">
@@ -1331,6 +1409,7 @@
           <div class="leg"><span class="dot ok"></span><div><strong>OK</strong> — recognised and valid. Unknown offer params default here; <span class="mono">{PLACEHOLDER}</span> tokens are always fine.</div></div>
           <div class="leg"><span class="dot info"></span><div><strong>Heads-up</strong> — <span class="mono">aff_id</span> pays the affiliate; a <span class="mono">subid</span> click-ID is what reports the conversion back to a tracker. They're different jobs.</div></div>
           <div class="leg"><span class="trustbadge">inferred</span><div><strong>Inferred</strong> — this param's meaning is a best guess from real links, not yet confirmed by the team (e.g. <span class="mono">pfnid</span>, <span class="mono">vtid</span>). Everything without the badge is confirmed. The tool never bluffs about what it doesn't know.</div></div>
+          <div class="leg"><span class="trustbadge noted">noted</span><div><strong>Noted</strong> — a meaning <em>you</em> captured on this device. Click <span class="mono">+ describe</span> on an unknown param, or <span class="mono">confirm / correct</span> on an inferred one, and it explains itself on every link from then on. Stored locally, never sent.</div></div>
         </div>
 
         <p class="eyebrow help-sec">Reading a decline code</p>

@@ -935,6 +935,17 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   check("HP4 two-jobs diagram (commission + reporting flows)", diagrams.twoJobs, JSON.stringify(diagrams));
   check("HP4 path anatomy segments labelled", diagrams.pathSegs === 4 && /Hungarian/.test(diagrams.pathText) && /affiliate redirect/.test(diagrams.pathText), JSON.stringify(diagrams));
   check("HP4 decline explainer (soft/hard + sourced)", diagrams.softHard && diagrams.sourced, JSON.stringify(diagrams));
+  // README-parity explainers: why-not-generic, which-mode guide, noted legend
+  const parity = await page.evaluate(() => ({
+    vs: !!document.querySelector(".vs .vs-side.ours") && !!document.querySelector(".vs .vs-side.generic"),
+    whyPoints: document.querySelectorAll(".why-points p").length,
+    modeGuideRows: document.querySelectorAll(".modeguide .mguide-row").length,
+    modeGuideText: document.querySelector(".modeguide")?.textContent ?? "",
+    notedLegend: !!document.querySelector(".leg .trustbadge.noted"),
+  }));
+  check("HP5 why-not-generic comparison renders", parity.vs && parity.whyPoints === 4, JSON.stringify(parity));
+  check("HP5 which-mode guide has all 5 modes", parity.modeGuideRows === 5 && /Inspect/.test(parity.modeGuideText) && /Postback/.test(parity.modeGuideText) && /Decline/.test(parity.modeGuideText), JSON.stringify(parity));
+  check("HP5 noted trust level in legend", parity.notedLegend, JSON.stringify(parity));
   // Try-this-example deep-links into Inspect
   await page.click("#tryExample");
   check("HP2 switched to inspect", await page.isVisible("#inspectPanel"), "");
