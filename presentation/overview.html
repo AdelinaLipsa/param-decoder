@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Param Decoder — Overview</title>
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+
+<!-- 1 · COVER -->
+<section class="slide cover">
+  <p class="kicker">Internal tool · affiliate managers &amp; tech support</p>
+  <h1>Param&nbsp;Decoder</h1>
+  <p class="lead">Read, validate, and fix any BuyGoods link, postback, or decline code — in one glance, in the browser.</p>
+  <div class="cover-tag"><span class="pill">100% client-side</span> <span>nothing you paste ever leaves your browser</span></div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>Overview</span></div>
+</section>
+
+<!-- 2 · PROBLEM -->
+<section class="slide">
+  <p class="kicker">The problem</p>
+  <h2>Reading a BuyGoods link takes a veteran.</h2>
+  <p class="body">A support person stares at a wall of <span class="mono">aff_id</span>, <span class="mono">subid</span>, <span class="mono">pfnid</span>, Base64 redirects and decline codes — and has to pull in an affiliate manager just to answer “why isn’t this tracking?” or “why did this charge fail?”</p>
+  <div class="grow"></div>
+  <div class="cards c3">
+    <div class="card"><h3>Tribal knowledge</h3><p>The meaning of each param lives in a few people’s heads.</p></div>
+    <div class="card"><h3>Slow tickets</h3><p>Every broken link is a back-and-forth with an AM.</p></div>
+    <div class="card"><h3>Risky tools</h3><p>Generic online parsers POST live customer links to a server.</p></div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>2</span></div>
+</section>
+
+<!-- 3 · WHAT IT IS -->
+<section class="slide">
+  <p class="kicker">What it is</p>
+  <h2>A parameter utility — nothing more, on purpose.</h2>
+  <p class="body">It reads, validates, fixes, and compares BuyGoods URLs, checks tracker postbacks, and explains decline codes. Analytics and reporting stay in the company’s own <b>clickcrm.com</b> platform — this tool doesn’t duplicate them.</p>
+  <div class="grow"></div>
+  <div class="rows">
+    <div class="row"><span class="dot ok"></span><div>So a junior can paste a link and get the right answer <b>without a veteran AM</b>.</div></div>
+    <div class="row"><span class="dot ok"></span><div>And paste <b>live customer / order links safely</b> — it never phones home.</div></div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>3</span></div>
+</section>
+
+<!-- 4 · THE MOAT -->
+<section class="slide">
+  <p class="kicker">The moat</p>
+  <h2>It knows BuyGoods — the two jobs of every link.</h2>
+  <p class="body">A single click does two separate jobs. Telling them apart is the whole point.</p>
+  <div class="twojobs">
+    <div class="tj-link"><span class="tj-node">aff_id</span><span class="tj-node">subid</span></div>
+    <div class="tj-flows">
+      <div class="tj-flow comm"><span class="tj-wire"></span><div><span class="hl-ok">Commission</span> — <b>aff_id</b> tells BuyGoods which affiliate to pay.</div></div>
+      <div class="tj-flow track"><span class="tj-wire"></span><div><b>Reporting</b> — the click ID in a <b>subid</b> lets the affiliate’s tracker credit the sale.</div></div>
+    </div>
+  </div>
+  <p class="body" style="margin-top:22px">A link can pay the affiliate yet never report back — or track perfectly yet earn no commission. <b>Different breakage, different fix.</b></p>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>4</span></div>
+</section>
+
+<!-- 5 · MODES -->
+<section class="slide">
+  <p class="kicker">One tool, five jobs</p>
+  <h2>The modes.</h2>
+  <div class="grow" style="display:flex;align-items:center">
+    <div class="cards c3" style="width:100%">
+      <div class="card"><span class="tag">Inspect</span><h3>Read &amp; fix one link</h3><p>Plain-English param table, red/amber/green flags, inline fixes, a clean rebuilt link, and a ticket-ready diagnosis.</p></div>
+      <div class="card"><span class="tag">Compare</span><h3>Two links, merged</h3><p>See exactly why one tracks and the other doesn’t.</p></div>
+      <div class="card"><span class="tag">Batch</span><h3>A column of links</h3><p>Green/red pass-fail audit across a whole campaign.</p></div>
+      <div class="card"><span class="tag">Postback</span><h3>Tracker postbacks</h3><p>Validate tokens + copy the right per-tracker template.</p></div>
+      <div class="card"><span class="tag">Decline</span><h3>Failed payments</h3><p>~190 codes explained: soft/hard, retry, customer message.</p></div>
+      <div class="card" style="background:var(--ink);border-color:var(--ink)"><h3 style="color:#fff">+ Help</h3><p style="color:#aeb6c0">A built-in, animated guide for the whole team.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>5</span></div>
+</section>
+
+<!-- 6 · DECLINE -->
+<section class="slide">
+  <p class="kicker">Authoritative, not a guess</p>
+  <h2>Decline codes, sourced from the processors.</h2>
+  <p class="body">~190 codes transcribed verbatim from each payment processor’s own docs — every result cites its source. No invented codes.</p>
+  <div class="chips" style="margin:8px 0 26px">
+    <span class="chip">Stripe · 50 codes</span>
+    <span class="chip">Braintree / PayPal · full 2xxx</span>
+    <span class="chip">NMI · response codes</span>
+  </div>
+  <div class="two-col">
+    <div class="card"><span class="tag" style="color:var(--warn)">Soft</span><h3>Temporary — a retry can work</h3><p>Insufficient funds, issuer busy, processing error.</p></div>
+    <div class="card"><span class="tag" style="color:var(--error)">Hard</span><h3>Permanent for this card</h3><p>Expired, lost / stolen, do-not-honor — use another card.</p></div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>6</span></div>
+</section>
+
+<!-- 7 · POSTBACK -->
+<section class="slide">
+  <p class="kicker">Stop guessing tracker setup</p>
+  <h2>The right postback, per tracker.</h2>
+  <p class="body">Each tracker’s own param names, mapped to the BuyGoods token that fills them — sourced from the tracker’s docs, copy-ready.</p>
+  <div class="rows" style="gap:14px;margin-top:8px">
+    <div class="row"><span class="dot ok"></span><div><b>Voluum</b> &nbsp; <span class="code" style="display:inline-block;padding:5px 10px;font-size:13px">cid=<span class="tok">{SUBID}</span>&amp;payout=<span class="tok">{COMMISSION_AMOUNT}</span>&amp;txid=<span class="tok">{ORDERID}</span></span></div></div>
+    <div class="row"><span class="dot ok"></span><div><b>CPV Lab</b> &nbsp; <span class="code" style="display:inline-block;padding:5px 10px;font-size:13px">subid=<span class="tok">{SUBID}</span>&amp;revenue=<span class="tok">{COMMISSION_AMOUNT}</span></span></div></div>
+    <div class="row"><span class="dot ok"></span><div><b>AnyTrack</b> &nbsp; <span class="code" style="display:inline-block;padding:5px 10px;font-size:13px">click_id=<span class="tok">{SUBID}</span>&amp;value=<span class="tok">{COMMISSION_AMOUNT}</span></span></div></div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>7</span></div>
+</section>
+
+<!-- 8 · TRUST / CAPTURE -->
+<section class="slide">
+  <p class="kicker">Never bluffs</p>
+  <h2>A living dictionary the team grows.</h2>
+  <p class="body">Every param carries a trust level, so an AM always knows what to rely on:</p>
+  <div class="rows" style="gap:18px;margin:6px 0 24px">
+    <div class="row"><span class="tb confirmed">confirmed</span><div>Shipped, team-trusted — no badge in the table.</div></div>
+    <div class="row"><span class="tb inferred">inferred</span><div>A best guess from real links — flagged as not-yet-verified.</div></div>
+    <div class="row"><span class="tb noted">noted</span><div>A meaning <b>you</b> captured on this device — it then explains itself on every link.</div></div>
+  </div>
+  <p class="body">Describe an unknown param or confirm an inferred one, and the dictionary gets smarter — <b>without a deploy</b>.</p>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>8</span></div>
+</section>
+
+<!-- 9 · WHY NOT GENERIC -->
+<section class="slide">
+  <p class="kicker">Why not a generic URL decoder?</p>
+  <h2>It explains; a parser only echoes.</h2>
+  <div class="two-col" style="margin-top:10px">
+    <div class="card">
+      <span class="tag" style="color:var(--ink-faint)">Generic decoder</span>
+      <div class="code" style="margin-top:12px;background:var(--panel)"><span class="mut">aff_id =</span> 162939<br><span class="mut">subid2 =</span> {clickid}</div>
+      <p style="margin-top:12px">echoes the keys back</p>
+    </div>
+    <div class="card" style="border-color:color-mix(in srgb,var(--ok) 30%,var(--rule))">
+      <span class="tag">Param Decoder</span>
+      <div class="rows" style="gap:10px;margin-top:12px">
+        <div class="row" style="font-size:15px"><span class="dot ok" style="margin-top:5px"></span><div><b class="mono">aff_id</b> — earns the affiliate’s commission</div></div>
+        <div class="row" style="font-size:15px"><span class="dot ok" style="margin-top:5px"></span><div><b class="mono">subid2</b> — click ID, reports the sale to their tracker</div></div>
+      </div>
+      <p style="margin-top:12px;color:var(--ok)">explains, flags &amp; fixes — in BuyGoods terms</p>
+    </div>
+  </div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>9</span></div>
+</section>
+
+<!-- 10 · CLOSE -->
+<section class="slide section">
+  <p class="kicker">Where it lives</p>
+  <h2>One file. No install. Always current.</h2>
+  <p class="lead">A single self-contained page, hosted on GitHub Pages — open it and paste.</p>
+  <div class="stats" style="margin-top:34px">
+    <div class="stat" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="n ok" style="color:#5fd2a0">298</div><div class="l" style="color:#aeb6c0">passing tests</div></div>
+    <div class="stat" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="n" style="color:#fff">~190</div><div class="l" style="color:#aeb6c0">sourced decline codes</div></div>
+    <div class="stat" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12)"><div class="n" style="color:#fff">0</div><div class="l" style="color:#aeb6c0">bytes sent to any server</div></div>
+  </div>
+  <div class="cover-tag" style="margin-top:30px"><span class="pill">adelinalipsa.github.io/param-decoder</span></div>
+  <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>10</span></div>
+</section>
+
+</body>
+</html>

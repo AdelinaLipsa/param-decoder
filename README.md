@@ -94,6 +94,19 @@ npx playwright install chromium
 npm test
 ```
 
+## Presentations
+
+Slide decks live in [`presentation/`](presentation/) as HTML/CSS source plus rendered **PDF** (16:9, one slide per page):
+
+- **`overview.pdf`** — what the tool is, the moat, the modes, and why it beats a generic decoder (pitch / stakeholder).
+- **`how-to-use.pdf`** — a mode-by-mode walkthrough for affiliate managers and tech support (onboarding).
+
+The PDFs open natively on macOS in **Preview** (which has a built-in full-screen slideshow — *View ▸ Slideshow*) and in **Pages** — no PowerPoint or Keynote needed. The HTML source is the editable original; rebuild the PDFs after editing with:
+
+```bash
+node presentation/build-pdf.mjs
+```
+
 ## Design notes
 
 Implementation favours **declarative config + pure functions**: the param dictionary, decline tables, and decline categories are data, and behaviour is derived from them. Adding a param or a code is a one‑line change, not a logic edit. Design specs for larger changes live in `docs/superpowers/specs/`.
