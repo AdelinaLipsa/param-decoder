@@ -585,8 +585,20 @@
     font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
     margin: 4px 0 10px; line-height: 1.2;
   }
-  .help-hero .lead { font-size: 15px; color: var(--ink-soft); margin: 0; max-width: 60ch; }
-  .help-sec { margin: 30px 0 12px; }
+  .help-hero .lead { font-size: 16px; line-height: 1.6; color: var(--ink-soft); margin: 0; max-width: 62ch; }
+  /* section headings — real scan anchors, not faint micro-labels */
+  .help-sec {
+    font-size: 16.5px;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 34px 0 14px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+  /* a section heading's trailing caption stays lighter than the title */
+  .help-sec .hs-note { font-size: 12.5px; }
 
   /* looping screencast (a CSS "GIF" of the tool working) */
   .screencast { margin-bottom: 8px; }
@@ -655,14 +667,14 @@
   .dline .dv { font-family: var(--mono); color: var(--ink-soft); }
   .dline .dv.decoded { color: var(--ok); font-weight: 600; }
   .dline .arrow { color: var(--ink-faint); }
-  .dline .dm { font-size: 12px; color: var(--ink-faint); }
+  .dline .dm { font-size: 12.5px; color: var(--ink-soft); }
 
   .help-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .mode-card h3 { font-size: 15px; margin: 0 0 6px; }
   .mode-card p { font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
   .mode-card p em { font-style: normal; font-weight: 600; color: var(--ink); }
-  .mc-when { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); margin: 0 0 9px !important; }
-  .mc-when b { color: var(--ink-soft); font-weight: 700; text-transform: none; letter-spacing: 0; }
+  .mc-when { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin: 0 0 9px !important; }
+  .mc-when b { color: var(--ink); font-weight: 700; text-transform: none; letter-spacing: 0; }
   .mono { font-family: var(--mono); font-size: .92em; }
 
   /* mini demos inside mode cards */
@@ -711,7 +723,7 @@
   .help-card.concept { margin-bottom: 6px; }
   .concept-lead { font-size: 14px; color: var(--ink-soft); margin: 0 0 16px; line-height: 1.55; max-width: 64ch; }
   .concept-lead b, .concept-note b { color: var(--ink); font-weight: 600; }
-  .concept-note { font-size: 13px; color: var(--ink-faint); margin: 16px 0 0; line-height: 1.55; max-width: 64ch; }
+  .concept-note { font-size: 13px; color: var(--ink-soft); margin: 16px 0 0; line-height: 1.55; max-width: 64ch; }
 
   /* "two jobs of every link" — commission flow vs reporting flow */
   .twojobs {
@@ -790,7 +802,7 @@
   }
   .pbref-code .tok { color: var(--ok); font-weight: 600; }
   .pbref-copy { flex: none; font-size: 12px; padding: 7px 12px; }
-  .pbref-note { font-size: 12px; color: var(--ink-faint); margin: 7px 0 0; line-height: 1.45; }
+  .pbref-note { font-size: 12.5px; color: var(--ink-soft); margin: 7px 0 0; line-height: 1.45; }
 
   /* "why not a generic decoder" — animated generic-vs-ours comparison */
   .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
@@ -803,7 +815,7 @@
   .vs-k { font-family: var(--mono); font-weight: 600; color: var(--ink); }
   .vs-v { font-family: var(--mono); color: var(--ink-faint); }
   .vs-meaning { color: var(--ink-soft); }
-  .vs-cap { font-size: 11px; color: var(--ink-faint); margin: 10px 0 0; font-style: italic; }
+  .vs-cap { font-size: 11.5px; color: var(--ink-soft); margin: 10px 0 0; font-style: italic; }
   .why-points { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
   .why-points p { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.5; }
   .why-points b { color: var(--ink); font-weight: 600; }
@@ -961,7 +973,7 @@
 
   .hs-note { font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--ink-faint); }
   #savedNames.emptynames { color: var(--ink-faint); }
-  .hs-empty { margin: 0; font-size: 13px; color: var(--ink-faint); }
+  .hs-empty { margin: 0; font-size: 13px; color: var(--ink-soft); }
   .hs-group { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; font-weight: 600; color: var(--ink-faint); margin: 4px 0 8px; }
   .hs-group:not(:first-child) { margin-top: 16px; }
   .hs-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
