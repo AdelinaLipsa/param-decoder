@@ -58,9 +58,9 @@ This is the part a generic tool can't copy, the knowledge is encoded once so eve
 - **`aff_id`**, numeric, decides whether the link earns commission. Empty/malformed → flagged as an error.
 - **Five tracking slots**, `subid`, `subid2`…`subid5`. Never format‑checked (any value is valid); `subid2` usually carries the click ID a tracker needs to credit the conversion.
 - **The key distinction**, `aff_id` pays the *affiliate*; the click ID in a `subid` slot is what the affiliate's *tracker* needs to report the conversion. A link can pay the affiliate yet still not report back to their tracker. The tool calls this out explicitly.
-- **Secure‑checkout params**, `account_id`, `product_codename`, `redirect=<Base64>`, the `sub<N>` checkout‑tracking family, and session/funnel identifiers (`pfnid`, `vtid`, `external_order_id`, …).
+- **Secure‑checkout params**, `account_id`, `product_codename`, `redirect=<Base64>`, the `sub<N>` checkout‑tracking family, and the team‑confirmed identifiers `external_order_id`, `vid1`/`vid2`, `sessid2`. Params still pattern‑guessed (`pfnid`, `fnid`, `vtid`, `template`) carry an **inferred** badge so juniors know what's verified.
 - **VSL path intelligence**, advertorial/VSL funnels encode the funnel in the path (`/hu/vsl7/l1/af/` = Hungarian, VSL variant 7, lander 1, affiliate redirect). Recognised heuristically, never blocking.
-- **Postback tokens**, the fixed set BuyGoods fills at conversion time, and the postback **generator** maps them into the right param names for Voluum, CPV Lab, AnyTrack, RedTrack, Binom, BeMob, FunnelFlux, and ClickMagick (or a custom tracker).
+- **Postback tokens**, the exact set BuyGoods fills at conversion time, transcribed from its own postback‑pixel UI: `{SUBID}`…`{SUBID5}`, `{ORDERID}`, `{COMMISSION_AMOUNT}`, `{EMAILHASH}`, `{NAME}`, `{PHONE}` (the last three SHA256‑hashed), and `{CONV_TYPE}` (frontend or upsell). Anything outside that set (e.g. `{PRODUCT_CODENAME}`) is flagged as unsupported. The postback **generator** maps the tokens into the right param names for Voluum, CPV Lab, AnyTrack, RedTrack, Binom, BeMob, FunnelFlux, and ClickMagick (or a custom tracker).
 
 ## Decline codes
 
