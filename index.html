@@ -1715,7 +1715,17 @@ const PARAM_CONFIG = {
   fnid:              { label: "Funnel node ID", desc: "Checkout funnel step (seen paired with pfnid).", trust: "inferred" },
   template:          { label: "Checkout template", desc: "Which checkout page template / variant to show.", trust: "inferred" },
 
-  //, UTM family: where ad-platform traffic came from, 
+  //   offer-link + redirect-target funnel params seen on real links (inferred,
+  //   confirm with the dev): p/c mirror known values; the rest are best guesses.
+  f:         { label: "Offer flow tag", desc: "Offer-link flow / funnel tag (BuyGoods-internal; meaning not yet confirmed).", trust: "inferred" },
+  fid:       { label: "Funnel ID", desc: "Funnel identifier (seen paired with fnid).", trust: "inferred" },
+  fallbacku: { label: "Fallback flag", desc: "Whether to use the fallback post-checkout redirect (true/false).", trust: "inferred" },
+  pg:        { label: "Page / group ID", desc: "Checkout page or product-group ID (BuyGoods-internal; meaning not yet confirmed).", trust: "inferred" },
+  b:         { label: "Checkout flow value", desc: "Checkout flow value (BuyGoods-internal; meaning not yet confirmed).", trust: "inferred" },
+  p:         { label: "Product code", desc: "Product code on checkout / redirect links (mirrors product_codename).", trust: "inferred" },
+  c:         { label: "Customer token", desc: "Customer / transaction token (mirrors external_order_id).", trust: "inferred" },
+
+  //, UTM family: where ad-platform traffic came from,
   utm_source:   { label: "UTM source",   validate: utmToken("UTM source", "Where the traffic came from (ad platform / placement).") },
   utm_medium:   { label: "UTM medium",   validate: utmToken("UTM medium", "Traffic type, cpc, email, social, etc.") },
   utm_campaign: { label: "UTM campaign", desc: "Campaign name for reporting." },
@@ -1759,6 +1769,7 @@ function suggestParam(key) {
   // closest by edit distance (tight threshold to avoid false positives)
   let best = null, bestD = Infinity;
   for (const c of CANON_KEYS) {
+    if (normKey(c).length < 4) continue; // don't suggest short keys (f, p, c, pg, fid…) as typo targets
     const d = levenshtein(nk, normKey(c));
     if (d < bestD) { bestD = d; best = c; }
   }

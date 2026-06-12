@@ -1020,6 +1020,21 @@ async function pathChips() {
   const chips = await pathChips();
   check("VP4 no false upsell on 'sign-up'", !chips.some((c) => /Upsell/.test(c.mean)), JSON.stringify(chips));
 }
+{
+  // real offer/redirect funnel params now recognised (inferred), not bare unknowns
+  await inspect("https://pandastyle.life/purchase?aff_id=259107&f=szs6tw&fid=358&p=GLP6V1&c=tok9&b=132&pg=5540&fallbacku=true");
+  const t = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll("#inspectPanel .prow")];
+    const has = (k) => { const row = rows.find(r => r.querySelector(".k")?.textContent === k); return { noted: !!row?.querySelector(".snote")?.textContent, inferred: !!row?.querySelector(".trustbadge") }; };
+    return Object.fromEntries(["f","fid","p","c","b","pg","fallbacku"].map(k => [k, has(k)]));
+  });
+  check("PR1 all 7 funnel params labelled + inferred", ["f","fid","p","c","b","pg","fallbacku"].every(k => t[k].noted && t[k].inferred), JSON.stringify(t));
+}
+{
+  // guard: the new short keys do NOT cause a false typo suggestion on unrelated params
+  const r2 = await inspect("https://x.com/p?aff_id=639&fab=zzz");
+  check("PR2 no false typo from short keys", !/did you mean/i.test(rowFor(r2, "fab")?.note ?? ""), rowFor(r2,"fab")?.note);
+}
 
 // ============================================================
 //  FEATURE 17 — Base64 detected on any param
