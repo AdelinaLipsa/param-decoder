@@ -906,6 +906,21 @@ const build = (id, opts) => page.evaluate(([id, opts]) => {
 }
 
 // ============================================================
+//  FEATURE 11.8 — postback generator: custom tracker
+// ============================================================
+{
+  await page.click("#modePostback");
+  await page.click("#pbViewGenerate");
+  await page.selectOption("#pbTrackerSel", "custom");
+  await page.fill("#pbCustom_domain", "t.example.com");
+  await page.fill("#pbCustom_clickParam", "cid");
+  await page.fill("#pbCustom_payoutParam", "amount");
+  const url = await page.evaluate(() => document.querySelector("#pbGenOut .pbgen-url").textContent);
+  check("CUS1 custom builds from user params", url === "https://t.example.com?cid={SUBID2}&amount={COMMISSION_AMOUNT}", url);
+  check("CUS2 custom marked not-verified", await page.evaluate(() => /not verified/i.test(document.querySelector("#pbGenOut .pbgen-note p").textContent)), "no not-verified note");
+}
+
+// ============================================================
 //  FEATURE 12 — shareable URL hash
 // ============================================================
 {
