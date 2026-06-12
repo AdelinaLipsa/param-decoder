@@ -29,7 +29,7 @@ It's a single self‑contained `index.html`, no build, no install. Either:
 | One offer/checkout **link** | Why it does (or doesn't) track / pay commission | **Inspect** |
 | **Two links** | Why one tracks and the other doesn't | **Compare** |
 | A **column of links** | A quick pass/fail audit across many | **Batch** |
-| A tracker's **postback URL** | Whether its tokens match what BuyGoods sends | **Postback** |
+| A **tracker** (Voluum, RedTrack, Binom…) | The exact postback to paste, with BuyGoods tokens pre-filled | **Postback** |
 | A **decline code** from a failed charge | What it means, and whether to retry | **Decline** |
 
 > **Note:** a **decline code usually isn't a URL parameter**, it comes from the *transaction* (BuyGoods backoffice, the gateway response, a postback, or the error shown to the customer), so Decline mode is mostly a standalone lookup. The exception: if a failure/thank-you URL *does* carry the code (e.g. `?decline_code=do_not_honor`, `?response_code=202`), **Inspect detects it and explains it inline**, soft/hard, retry-or-not, without leaving the link view.
@@ -45,7 +45,7 @@ It's a single self‑contained `index.html`, no build, no install. Either:
   - exports a ticket‑ready **Copy diagnosis** report.
 - **Compare**, two links side by side, merged by param, so you can see *why one tracks and the other doesn't* (`aff_id` and `subid` differences stand out most).
 - **Batch**, paste a column of links and get a green/red pass‑fail audit, with CSV export and a bulk "fill missing `aff_id`" action.
-- **Postback**, check a tracker's postback URL against the exact tokens BuyGoods fills (`{SUBID}`…`{SUBID5}`, `{ORDERID}`, `{COMMISSION_AMOUNT}`, …).
+- **Postback**, generate‑first: pick your tracker and get a correct, paste‑ready postback with BuyGoods tokens already mapped (`{SUBID}`…`{ORDERID}`, `{COMMISSION_AMOUNT}`). Choose which `subid` slot your click ID rides in, optionally drop in your tracker domain for a complete URL, or pick "Other / custom" for any tracker. A **Check** tab still validates an existing postback against BuyGoods' token set. Param names for each tracker are sourced from that tracker's own docs.
 - **Decline**, paste a Stripe / Braintree / NMI decline code for a plain‑language read: soft vs hard, whether it's worth retrying, and the message to give the customer or HG agent. See [Decline codes](#decline-codes) below.
 - **How to use**, a built‑in guide.
 
@@ -60,7 +60,7 @@ This is the part a generic tool can't copy, the knowledge is encoded once so eve
 - **The key distinction**, `aff_id` pays the *affiliate*; the click ID in a `subid` slot is what the affiliate's *tracker* needs to report the conversion. A link can pay the affiliate yet still not report back to their tracker. The tool calls this out explicitly.
 - **Secure‑checkout params**, `account_id`, `product_codename`, `redirect=<Base64>`, the `sub<N>` checkout‑tracking family, and session/funnel identifiers (`pfnid`, `vtid`, `external_order_id`, …).
 - **VSL path intelligence**, advertorial/VSL funnels encode the funnel in the path (`/hu/vsl7/l1/af/` = Hungarian, VSL variant 7, lander 1, affiliate redirect). Recognised heuristically, never blocking.
-- **Postback tokens**, the fixed set BuyGoods fills at conversion time.
+- **Postback tokens**, the fixed set BuyGoods fills at conversion time, and the postback **generator** maps them into the right param names for Voluum, CPV Lab, AnyTrack, RedTrack, Binom, BeMob, FunnelFlux, and ClickMagick (or a custom tracker).
 
 ## Decline codes
 

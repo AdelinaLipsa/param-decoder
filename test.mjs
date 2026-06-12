@@ -761,6 +761,7 @@ async function batch(text) {
 // ============================================================
 async function postback(text) {
   await page.click("#modePostback");
+  await page.click("#pbViewCheck");
   await page.fill("#srcPostback", "");
   await page.fill("#srcPostback", text);
   return page.evaluate(() => {
@@ -802,31 +803,139 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
   check("PB4 static value ok", pbRow(r, "fixed=42")?.status === "ok", JSON.stringify(pbRow(r,"fixed=42")));
   check("PB4 static meaning", /Static value/i.test(pbRow(r, "fixed=42")?.meaning ?? ""), pbRow(r,"fixed=42")?.meaning);
 }
+
+// ============================================================
+//  FEATURE 11.5 — postback generator: pure builder
+// ============================================================
+const build = (id, opts) => page.evaluate(([id, opts]) => {
+  const t = TRACKER_POSTBACKS.find(x => x.id === id);
+  return buildPostback(t, opts || {});
+}, [id, opts]);
+
 {
-  // per-tracker postback reference: correct param names per tracker, each sourced
-  await postback("https://trk.com/pb?subid={SUBID}");
-  const ref = await page.evaluate(() => {
-    const card = document.querySelector("#pbOut .pbref");
-    if (!card) return null;
-    return {
-      names: [...card.querySelectorAll(".pbref-name")].map(e => e.textContent),
-      codes: [...card.querySelectorAll(".pbref-code")].map(e => e.textContent),
-      srcs: [...card.querySelectorAll(".pbref-src")].map(a => a.getAttribute("href")),
-      copyBtns: card.querySelectorAll(".pbref-copy").length,
-    };
-  });
-  check("PB5 reference shows 3 trackers", ref && /Voluum/.test(ref.names.join()) && /CPV Lab/.test(ref.names.join()) && /AnyTrack/.test(ref.names.join()), JSON.stringify(ref?.names));
-  check("PB5 voluum click ID = cid", ref && ref.codes.some(c => /cid=\{SUBID\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 cpvlab = subid + revenue", ref && ref.codes.some(c => /subid=\{SUBID\}.*revenue=\{COMMISSION_AMOUNT\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 anytrack click ID = click_id", ref && ref.codes.some(c => /click_id=\{SUBID\}/.test(c)), JSON.stringify(ref?.codes));
-  check("PB5 each tracker cites a source", ref && ref.srcs.length === 3 && ref.srcs.every(s => /^https?:/.test(s)), JSON.stringify(ref?.srcs));
-  check("PB5 copy buttons present", ref && ref.copyBtns === 3, JSON.stringify(ref));
+  // default click slot is subid2 for every curated tracker
+  check("BLD1 voluum default", await build("voluum") ===
+    "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum"));
+  check("BLD1 cpvlab default", await build("cpvlab") ===
+    "https://YOUR-CPVLAB-DOMAIN/adclick.php?subid={SUBID2}&revenue={COMMISSION_AMOUNT}", await build("cpvlab"));
+  check("BLD1 anytrack default", await build("anytrack") ===
+    "https://YOUR-ANYTRACK-POSTBACK?click_id={SUBID2}&value={COMMISSION_AMOUNT}&transactionId={ORDERID}", await build("anytrack"));
+  check("BLD1 redtrack default", await build("redtrack") ===
+    "https://YOUR-REDTRACK-DOMAIN/postback?clickid={SUBID2}&sum={COMMISSION_AMOUNT}&type=Sale", await build("redtrack"));
+  check("BLD1 binom default", await build("binom") ===
+    "https://YOUR-BINOM-DOMAIN/click.php?cnv_id={SUBID2}&payout={COMMISSION_AMOUNT}", await build("binom"));
+  check("BLD1 bemob default", await build("bemob") ===
+    "https://YOUR-BEMOB-DOMAIN/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("bemob"));
+  check("BLD1 funnelflux default", await build("funnelflux") ===
+    "https://YOUR-FUNNELFLUX-DOMAIN/pb/?hit={SUBID2}&rev={COMMISSION_AMOUNT}&tx={ORDERID}", await build("funnelflux"));
+  check("BLD1 clickmagick default", await build("clickmagick") ===
+    "https://www.clkmg.com/api/s/post/?uid=XXXXXX&s1={SUBID2}&amt={COMMISSION_AMOUNT}", await build("clickmagick"));
 }
 {
-  // reference is available even before pasting (empty state)
+  // click-slot selector rewrites ONLY the click token
+  check("BLD2 slot subid (slot 1)", await build("voluum", { clickSlot: "" }) ===
+    "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{clickSlot:""}));
+  check("BLD2 slot subid3", await build("voluum", { clickSlot: "3" }) ===
+    "https://YOUR-VOLUUM-DOMAIN/postback?cid={SUBID3}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{clickSlot:"3"}));
+}
+{
+  // personalize: domain trackers strip scheme/trailing slash; clickmagick fills uid
+  check("BLD3 voluum domain", await build("voluum", { personalize: "abc.voluum.com" }) ===
+    "https://abc.voluum.com/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{personalize:"abc.voluum.com"}));
+  check("BLD3 voluum domain sanitized", await build("voluum", { personalize: "https://abc.voluum.com/" }) ===
+    "https://abc.voluum.com/postback?cid={SUBID2}&payout={COMMISSION_AMOUNT}&txid={ORDERID}", await build("voluum",{personalize:"https://abc.voluum.com/"}));
+  check("BLD3 clickmagick uid", await build("clickmagick", { personalize: "9f2a10" }) ===
+    "https://www.clkmg.com/api/s/post/?uid=9f2a10&s1={SUBID2}&amt={COMMISSION_AMOUNT}", await build("clickmagick",{personalize:"9f2a10"}));
+}
+{
+  // every curated tracker cites a source URL
+  const srcs = await page.evaluate(() => TRACKER_POSTBACKS.map(t => t.source));
+  check("BLD4 all trackers sourced", srcs.length === 8 && srcs.every(s => /^https?:\/\//.test(s)), JSON.stringify(srcs));
+}
+{
+  // custom tracker builds from user-named params, marked not-verified
+  const customUrl = await page.evaluate(() => buildPostback(
+    customTracker({ domain: "t.example.com", clickParam: "cid", payoutParam: "amount", orderParam: "oid" }),
+    { personalize: "" }));
+  check("BLD5 custom url", customUrl ===
+    "https://t.example.com?cid={SUBID2}&amount={COMMISSION_AMOUNT}&oid={ORDERID}", customUrl);
+}
+
+// ============================================================
+//  FEATURE 11.6 — postback generate/check toggle
+// ============================================================
+{
   await page.click("#modePostback");
+  check("TG1 generate is default view", await page.isVisible("#pbGenerate") && !(await page.isVisible("#pbCheck")), "generate not default");
+  await page.click("#pbViewCheck");
+  check("TG2 check shows validator", await page.isVisible("#pbCheck") && await page.isVisible("#srcPostback"), "check not shown");
+  await page.click("#pbViewGenerate");
+  check("TG3 back to generate", await page.isVisible("#pbGenerate") && !(await page.isVisible("#pbCheck")), "generate not restored");
+}
+
+// ============================================================
+//  FEATURE 11.7 — postback generator behavior
+// ============================================================
+{
+  await page.click("#modePostback");
+  await page.click("#pbViewGenerate");
+  await page.selectOption("#pbTrackerSel", "redtrack");
+  let url = await page.evaluate(() => document.querySelector("#pbGenOut .pbgen-url").textContent);
+  check("GEN1 tracker select drives output", /clickid=\{SUBID2\}&sum=\{COMMISSION_AMOUNT\}&type=Sale/.test(url), url);
+
+  await page.selectOption("#pbSlotSel", "3");
+  url = await page.evaluate(() => document.querySelector("#pbGenOut .pbgen-url").textContent);
+  check("GEN2 slot selector rewrites click token", /clickid=\{SUBID3\}/.test(url) && /sum=\{COMMISSION_AMOUNT\}/.test(url), url);
+
+  await page.selectOption("#pbSlotSel", "2");
+  await page.fill("#pbPersonalize", "abc.redtrack.io");
+  const full = await page.evaluate(() => document.querySelector("#pbGenFull .pbgen-url")?.textContent ?? null);
+  check("GEN3 personalize builds complete URL", full === "https://abc.redtrack.io/postback?clickid={SUBID2}&sum={COMMISSION_AMOUNT}&type=Sale", full);
+
+  check("GEN4 has 'what do I do' note", await page.evaluate(() => !!document.querySelector("#pbGenOut .pbgen-note")), "no note");
+  check("GEN5 note cites source", await page.evaluate(() => /redtrack\.io/.test(document.querySelector("#pbGenOut .pbgen-src a")?.getAttribute("href") || "")), "no source link");
+}
+{
+  // Check view still validates exactly as before
+  await page.click("#modePostback");
+  await page.click("#pbViewCheck");
   await page.fill("#srcPostback", "");
-  check("PB6 reference shown in empty state", await page.evaluate(() => !!document.querySelector("#pbOut .pbref")), "no reference in empty state");
+  await page.fill("#srcPostback", "https://trk.com/pb?subid={SUBID}&amount={COMMISSION_AMOUNT}");
+  const ok = await page.evaluate(() => [...document.querySelectorAll("#pbOut .prow.pb:not(.colhead) .gutter")].every(g => g.classList.contains("ok")));
+  check("GEN6 check still validates", ok, "check broke");
+}
+
+// ============================================================
+//  FEATURE 11.8 — postback generator: custom tracker
+// ============================================================
+{
+  await page.click("#modePostback");
+  await page.click("#pbViewGenerate");
+  await page.selectOption("#pbTrackerSel", "custom");
+  await page.fill("#pbCustom_domain", "t.example.com");
+  await page.fill("#pbCustom_clickParam", "cid");
+  await page.fill("#pbCustom_payoutParam", "amount");
+  const url = await page.evaluate(() => document.querySelector("#pbGenOut .pbgen-url").textContent);
+  check("CUS1 custom builds from user params", url === "https://t.example.com?cid={SUBID2}&amount={COMMISSION_AMOUNT}", url);
+  check("CUS2 custom marked not-verified", await page.evaluate(() => /not verified/i.test(document.querySelector("#pbGenOut .pbgen-note p").textContent)), "no not-verified note");
+}
+
+// ============================================================
+//  FEATURE 11.9 — postback generator: shareable hash
+// ============================================================
+{
+  await page.click("#modePostback");
+  await page.click("#pbViewGenerate");
+  await page.selectOption("#pbTrackerSel", "binom");
+  await page.selectOption("#pbSlotSel", "4");
+  await page.fill("#pbPersonalize", "go.binom.dev");
+  const hash = await page.evaluate(() => location.hash);
+  check("SH1 hash carries generator state", /pv=generate/.test(hash) && /pt=binom/.test(hash) && /ps=4/.test(hash) && /pd=go\.binom\.dev/.test(hash), hash);
+
+  await page.evaluate((h) => { location.hash = h; }, hash);
+  await page.evaluate(() => restoreFromHash());
+  const url = await page.evaluate(() => document.querySelector("#pbGenFull .pbgen-url")?.textContent ?? null);
+  check("SH2 restore rebuilds personalized URL", url === "https://go.binom.dev/click.php?cnv_id={SUBID4}&payout={COMMISSION_AMOUNT}", url);
 }
 
 // ============================================================
@@ -967,6 +1076,7 @@ const pbRow = (r, part) => r.rows.find(x => (x.tok || "").includes(part));
 // ============================================================
 {
   await page.click("#modePostback");
+  await page.click("#pbViewCheck");
   await page.fill("#srcPostback", "");
   check("EX1 postback example btn", await page.isVisible("#pbOut .ex-btn"), "no example button");
   await page.click("#pbOut .ex-btn");
