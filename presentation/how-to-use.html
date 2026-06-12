@@ -69,7 +69,8 @@
     <div class="row"><span class="dot ok"></span><div><b>CPV Lab</b>: <span class="mono">subid</span> = click ID, <span class="mono">revenue</span> = payout.</div></div>
     <div class="row"><span class="dot ok"></span><div><b>AnyTrack</b>: <span class="mono">click_id</span>, <span class="mono">value</span>, <span class="mono">transactionId</span>.</div></div>
   </div>
-  <p class="body" style="margin-top:16px;font-size:16px;color:var(--ink-faint)">Each template is sourced from the tracker’s own docs, with a copy button.</p>
+  <p class="body" style="margin-top:14px;font-size:15px;color:var(--ink-faint)">It validates against the exact set BuyGoods fills: <span class="mono">{SUBID}</span>…<span class="mono">{SUBID5}</span>, <span class="mono">{ORDERID}</span>, <span class="mono">{COMMISSION_AMOUNT}</span>, <span class="mono">{EMAILHASH}</span>, <span class="mono">{NAME}</span>, <span class="mono">{PHONE}</span> (those three SHA256‑hashed), <span class="mono">{CONV_TYPE}</span>. Anything else is flagged as unsupported.</p>
+  <p class="body" style="margin-top:10px;font-size:16px;color:var(--ink-faint)">Each template is sourced from the tracker’s own docs, with a copy button.</p>
   <div class="foot"><span class="brand"><span class="mk">●</span> Param Decoder</span><span>5</span></div>
 </section>
 
