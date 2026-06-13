@@ -1069,6 +1069,22 @@
     margin-bottom: 8px;
   }
   .empty .ex-btn { margin-top: 16px; }
+  .empty .ex-chips {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .empty .ex-chips .ex-btn { margin-top: 0; }
+  .ex-chips-label {
+    width: 100%;
+    font-size: 12px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--rule-strong);
+    margin-bottom: -2px;
+  }
 
   /* ---------- motion ---------- */
   @media (prefers-reduced-motion: no-preference) {
@@ -2648,7 +2664,7 @@ function el(tag, className, text) {
 }
 
 /* worked examples used by the empty-state "Try an example" buttons */
-const EXAMPLE_POSTBACK = "https://yourtracker.com/postback?subid={SUBID}&subid2={SUBID2}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}";
+const EXAMPLE_POSTBACK = "https://trk.example.com/postback?subid={SUBID}&subid2={SUBID2}&orderid={ORDERID}&amount={COMMISSION_AMOUNT}";
 const EXAMPLE_BATCH = [
   "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=162939&subid=facebook",
   "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=",
@@ -2656,12 +2672,64 @@ const EXAMPLE_BATCH = [
   "https://x.com/p?aff_id=639&subid=fb&subid=tiktok",
 ].join("\n");
 
+/* ---- Compare worked examples (each chip loads BOTH links) ---- */
+const EXAMPLE_COMPARE_TRACKED = {
+  a: "https://getcellucare.com/dtc/?aff_id=88001&subid2={clickid}",
+  b: "https://getcellucare.com/dtc/?aff_id=88001",
+};
+const EXAMPLE_COMPARE_AFFILIATES = {
+  a: "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=162939&subid=facebook",
+  b: "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=53838&subid=facebook",
+};
+
+/* ---- Batch worked examples ---- */
+const EXAMPLE_BATCH_CLEAN = [
+  "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=162939&subid2={clickid}",
+  "https://getcellucare.com/dtc/?aff_id=88001&subid2=fb_12345",
+  "https://buytrumpbucks.com/?aff_id=53838&subid=tt_998&subid2=abc123",
+].join("\n");
+const EXAMPLE_BATCH_MISTAKES = [
+  "https://nationlifenews.com/hu/vsl7/l1/af/?aff_id=",
+  "https://getcellucare.com/dtc/?aff_id=88001",
+  "https://buytrumpbucks.com/?aff_id=53838&subid=fb&subid=tiktok",
+].join("\n");
+
+/* ---- Postback Check worked examples ---- */
+const EXAMPLE_PB_VALID = EXAMPLE_POSTBACK;
+const EXAMPLE_PB_UNSUPPORTED = "https://trk.example.com/postback?subid={SUBID}&product={PRODUCT_CODENAME}&amount={COMMISSION_AMOUNT}";
+const EXAMPLE_PB_LOWERCASE = "https://trk.example.com/postback?subid={subid}&orderid={ORDERID}";
+
+/* ---- Decline worked examples (code → story) ---- */
+const EXAMPLE_DECLINES = {
+  soft: "insufficient_funds",
+  hard: "fraudulent",
+  numeric: "2001",
+  customer: "incorrect_cvc",
+};
+
 /** A small "Try an example" button for empty states. */
 function exampleButton(onClick) {
   const btn = el("button", "btn ghost ex-btn", "Try an example");
   btn.type = "button";
   btn.addEventListener("click", onClick);
   return btn;
+}
+
+/**
+ * A labeled row of example buttons for an empty state. Each entry is
+ * { label, run }; clicking a chip runs its loader (set input + render + hash).
+ * Used by the secondary modes to demo a range of scenarios, not just one.
+ */
+function exampleChips(examples) {
+  const wrap = el("div", "ex-chips");
+  wrap.append(el("span", "ex-chips-label", "Try an example"));
+  examples.forEach(({ label, run }) => {
+    const btn = el("button", "btn ghost ex-btn", label);
+    btn.type = "button";
+    btn.addEventListener("click", run);
+    wrap.append(btn);
+  });
+  return wrap;
 }
 
 function renderEmpty() {
@@ -3563,6 +3631,13 @@ function renderCompare() {
     const box = el("div", "empty reveal");
     box.append(el("div", "big", "A | B"));
     box.append(el("div", null, "Paste two links to compare them side by side."));
+    const loadCompare = (ex) => () => {
+      srcA.value = ex.a; srcB.value = ex.b; renderCompare(); syncHash();
+    };
+    box.append(exampleChips([
+      { label: "Tracked vs not",  run: loadCompare(EXAMPLE_COMPARE_TRACKED) },
+      { label: "Two affiliates",  run: loadCompare(EXAMPLE_COMPARE_AFFILIATES) },
+    ]));
     cmpTarget.append(box);
     compareHasContent = false;
     return;
@@ -3679,7 +3754,12 @@ function renderBatch() {
     const box = el("div", "empty reveal");
     box.append(el("div", "big", "≡"));
     box.append(el("div", null, "Paste a column of links, one per line, for a pass/fail audit."));
-    box.append(exampleButton(() => { srcBatch.value = EXAMPLE_BATCH; renderBatch(); syncHash(); }));
+    const loadBatch = (text) => () => { srcBatch.value = text; renderBatch(); syncHash(); };
+    box.append(exampleChips([
+      { label: "Campaign audit",  run: loadBatch(EXAMPLE_BATCH) },
+      { label: "All clean",       run: loadBatch(EXAMPLE_BATCH_CLEAN) },
+      { label: "Common mistakes", run: loadBatch(EXAMPLE_BATCH_MISTAKES) },
+    ]));
     batchTarget.append(box);
     return;
   }
@@ -3883,7 +3963,12 @@ function renderPostbackCheck() {
     const box = el("div", "empty reveal");
     box.append(el("div", "big", "{ }"));
     box.append(el("div", null, "Paste the tracker's postback URL to check it against BuyGoods' tokens."));
-    box.append(exampleButton(() => { srcPostback.value = EXAMPLE_POSTBACK; renderPostbackCheck(); syncHash(); }));
+    const loadPb = (text) => () => { srcPostback.value = text; renderPostbackCheck(); syncHash(); };
+    box.append(exampleChips([
+      { label: "Valid",             run: loadPb(EXAMPLE_PB_VALID) },
+      { label: "Unsupported token", run: loadPb(EXAMPLE_PB_UNSUPPORTED) },
+      { label: "Lowercase token",   run: loadPb(EXAMPLE_PB_LOWERCASE) },
+    ]));
     pbTarget.append(box);
     return;
   }
@@ -4068,7 +4153,13 @@ function renderDecline() {
     const box = el("div", "empty reveal");
     box.append(el("div", "big", "✗→"));
     box.append(el("div", null, "Paste a Stripe, Braintree, or NMI decline code for a plain-language read."));
-    box.append(exampleButton(() => { srcDecline.value = "insufficient_funds"; renderDecline(); syncHash(); }));
+    const loadDecline = (code) => () => { srcDecline.value = code; renderDecline(); syncHash(); };
+    box.append(exampleChips([
+      { label: "Soft / retry",        run: loadDecline(EXAMPLE_DECLINES.soft) },
+      { label: "Hard",                run: loadDecline(EXAMPLE_DECLINES.hard) },
+      { label: "Numeric (Braintree)", run: loadDecline(EXAMPLE_DECLINES.numeric) },
+      { label: "Fixable by customer", run: loadDecline(EXAMPLE_DECLINES.customer) },
+    ]));
     declineTarget.append(box);
     return;
   }
