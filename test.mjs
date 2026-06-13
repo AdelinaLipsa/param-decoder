@@ -1368,6 +1368,9 @@ async function decline(code) {
     const card = cards[0];
     return {
       title: card?.querySelector(".dc-title")?.textContent ?? null,
+      owner: card?.querySelector(".dc-owner-label")?.textContent ?? null,
+      ownerTone: ["ok","warn","error"].find(t => card?.querySelector(".dc-owner")?.classList.contains(t)) ?? null,
+      route: card?.querySelector(".dc-owner-route")?.textContent ?? null,
       chips: [...out.querySelectorAll(".dc-chip")].map(c => c.textContent.trim()),
       message: card?.querySelector(".dc-msg-text")?.textContent ?? null,
       source: card?.querySelector(".dc-seen a")?.getAttribute("href") ?? null,
@@ -1425,11 +1428,34 @@ async function decline(code) {
       if (v.type !== "soft" && v.type !== "hard") problems.push("cat " + c + " bad type");
       if (typeof v.retry !== "boolean") problems.push("cat " + c + " bad retry");
       if (!v.customer) problems.push("cat " + c + " missing customer message");
+      if (!v.owner || !DECLINE_OWNERS[v.owner]) problems.push("cat " + c + " bad owner " + v.owner);
     }
     return { problems, count };
   });
   check("DC6 every decline entry well-formed", integ.problems.length === 0, JSON.stringify(integ.problems));
   check("DC6 table is substantial (>100 codes)", integ.count > 100, "count=" + integ.count);
+}
+{
+  // DC7 — the reframe: a decline leads with WHO fixes it + the internal action
+  const ins = await decline("insufficient_funds");
+  check("DC7 customer-bank owner", /Customer \+ their bank/.test(ins.owner ?? ""), JSON.stringify(ins));
+  check("DC7 route is actionable", /different card|contact their bank/i.test(ins.route ?? ""), ins.route);
+
+  const fraud = await decline("fraudulent");
+  check("DC7 fraud owner", /Risk \/ fraud/.test(fraud.owner ?? ""), JSON.stringify(fraud));
+  check("DC7 fraud tone error", fraud.ownerTone === "error", fraud.ownerTone);
+  check("DC7 fraud flags affiliate signal", /card-testing/i.test(fraud.route ?? "") && /flag the traffic/i.test(fraud.route ?? ""), fraud.route);
+
+  const plat = await decline("2026"); // Braintree "Invalid Merchant ID" → platform
+  check("DC7 platform owner", /BuyGoods platform/.test(plat.owner ?? ""), JSON.stringify(plat));
+  check("DC7 platform escalates", /escalate to BuyGoods/i.test(plat.route ?? ""), plat.route);
+
+  const tran = await decline("processing_error"); // → transient
+  check("DC7 transient owner", /Temporary/.test(tran.owner ?? ""), JSON.stringify(tran));
+  check("DC7 transient tone ok", tran.ownerTone === "ok", tran.ownerTone);
+
+  const cust = await decline("expired_card"); // → customer
+  check("DC7 customer owner", /Customer can fix it/.test(cust.owner ?? ""), JSON.stringify(cust));
 }
 {
   // copy the customer message
