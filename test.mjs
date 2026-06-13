@@ -1564,6 +1564,26 @@ async function decline(code) {
   check("CL3 note listed in Help manager", /mystery_param/.test(listed) && /internal campaign tag/i.test(listed), listed);
 }
 
+// ============================================================
+//  FEATURE 27 — per-mode explainer subtitle
+// ============================================================
+{
+  const cases = [
+    ["#modeInspect",  "#inspectPanel .mode-intro", /every parameter explained/i],
+    ["#modeCompare",  "#comparePanel .mode-intro", /side by side/i],
+    ["#modeBatch",    "#batchPanel .mode-intro",   /whole column/i],
+    ["#modePostback", "#postbackPanel .mode-intro", /Generate.*Check|postback/i],
+    ["#modeDecline",  "#declinePanel .mode-intro", /who fixes it/i],
+  ];
+  for (const [tab, sel, re] of cases) {
+    await page.click(tab);
+    const visible = await page.isVisible(sel);
+    const text = visible ? await page.textContent(sel) : "";
+    check("MX " + tab + " intro visible", visible, "no mode-intro");
+    check("MX " + tab + " intro on-topic", re.test(text), text);
+  }
+}
+
 await browser.close();
 
 console.log(`\n  PASS ${pass}   FAIL ${fail}\n`);
