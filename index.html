@@ -881,70 +881,68 @@
     .help-modes { grid-template-columns: 1fr; }
   }
 
-  /* help animations, gentle, gated, freeze to a meaningful state */
-  @media (prefers-reduced-motion: no-preference) {
-    /* worked-example rows reveal each time the Help tab opens */
-    .demo-decode .dline { opacity: 0; animation: rise .4s ease forwards; }
-    .demo-decode .d1 { animation-delay: .15s; }
-    .demo-decode .d2 { animation-delay: .45s; }
-    .demo-decode .d3 { animation-delay: .75s; }
-    .demo-decode .d4 { animation-delay: 1.05s; }
-    .demo-decode .d3 .arrow,
-    .demo-decode .d3 .decoded { opacity: 0; animation: rise .4s ease 1.3s forwards; }
+  /* help animations, gentle, freeze to a meaningful state */
+  /* worked-example rows reveal each time the Help tab opens */
+  .demo-decode .dline { opacity: 0; animation: rise .4s ease forwards; }
+  .demo-decode .d1 { animation-delay: .15s; }
+  .demo-decode .d2 { animation-delay: .45s; }
+  .demo-decode .d3 { animation-delay: .75s; }
+  .demo-decode .d4 { animation-delay: 1.05s; }
+  .demo-decode .d3 .arrow,
+  .demo-decode .d3 .decoded { opacity: 0; animation: rise .4s ease 1.3s forwards; }
 
-    /* Inspect mini-demo: a red row gets fixed to green, looping */
-    .demo-inspect .fixrow .mg { animation: fixGutter 3.4s ease-in-out infinite; }
-    .demo-inspect .fixrow .tick { animation: fixTick 3.4s ease-in-out infinite; }
-    @keyframes fixGutter { 0%,45% { background: var(--error); } 60%,100% { background: var(--ok); } }
-    @keyframes fixTick   { 0%,45% { opacity: 0; } 65%,100% { opacity: 1; } }
+  /* Inspect mini-demo: a red row gets fixed to green, looping */
+  .demo-inspect .fixrow .mg { animation: fixGutter 3.4s ease-in-out infinite; }
+  .demo-inspect .fixrow .tick { animation: fixTick 3.4s ease-in-out infinite; }
+  @keyframes fixGutter { 0%,45% { background: var(--error); } 60%,100% { background: var(--ok); } }
+  @keyframes fixTick   { 0%,45% { opacity: 0; } 65%,100% { opacity: 1; } }
 
-    /* Compare mini-demo: the differing rows pulse */
-    .demo-compare .mr.diff .ml { animation: diffPulse 3s ease-in-out infinite; }
-    @keyframes diffPulse {
-      0%,100% { background: color-mix(in srgb, var(--error) 20%, var(--rule-strong)); }
-      50%     { background: color-mix(in srgb, var(--error) 60%, var(--rule-strong)); }
-    }
-
-    /* Batch mini-demo: dots settle in sequence */
-    .demo-batch .mr { opacity: 0; animation: rise .4s ease forwards; }
-    .demo-batch .mr:nth-child(1) { animation-delay: .1s; }
-    .demo-batch .mr:nth-child(2) { animation-delay: .25s; }
-    .demo-batch .mr:nth-child(3) { animation-delay: .4s; }
-    .demo-batch .mr:nth-child(4) { animation-delay: .55s; }
-
-    /* two-jobs: a pulse travels each wire, the two flows staggered */
-    .twojobs .tj-flow.comm  .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite; }
-    .twojobs .tj-flow.track .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite .55s; }
-    @keyframes tjPulse {
-      0%   { left: -3px; opacity: 0; }
-      12%  { opacity: 1; }
-      88%  { opacity: 1; }
-      100% { left: calc(100% - 3px); opacity: 0; }
-    }
-
-    /* path anatomy: a reader lights each segment in sequence */
-    .pathana .pa-seg { animation: paScan 6s ease-in-out infinite; }
-    .pathana .s2 { animation-delay: 1.5s; }
-    .pathana .s3 { animation-delay: 3s; }
-    .pathana .s4 { animation-delay: 4.5s; }
-    @keyframes paScan {
-      0%, 10%   { background: var(--ok-bg); color: var(--ok); }
-      22%, 100% { background: transparent;  color: var(--ink); }
-    }
-    .pathana .demo-decode .d1 { animation-delay: .15s; }
-    .pathana .demo-decode .d2 { animation-delay: .4s; }
-    .pathana .demo-decode .d3 { animation-delay: .65s; }
-    .pathana .demo-decode .d4 { animation-delay: .9s; }
-
-    /* decline demo: the verdict chip breathes */
-    .decl-demo .chip { animation: declPulse 2.8s ease-in-out infinite; }
-    @keyframes declPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
-
-    /* why-comparison: the green gutters on "our" side gently pulse */
-    .vs-side.ours .vs-g { animation: gShimmer 2.6s ease-in-out infinite; }
-    .vs-side.ours .vs-row:nth-child(3) .vs-g { animation-delay: .5s; }
-    @keyframes gShimmer { 0%,100% { background: color-mix(in srgb, var(--ok) 55%, var(--rule-strong)); } 50% { background: var(--ok); } }
+  /* Compare mini-demo: the differing rows pulse */
+  .demo-compare .mr.diff .ml { animation: diffPulse 3s ease-in-out infinite; }
+  @keyframes diffPulse {
+    0%,100% { background: color-mix(in srgb, var(--error) 20%, var(--rule-strong)); }
+    50%     { background: color-mix(in srgb, var(--error) 60%, var(--rule-strong)); }
   }
+
+  /* Batch mini-demo: dots settle in sequence */
+  .demo-batch .mr { opacity: 0; animation: rise .4s ease forwards; }
+  .demo-batch .mr:nth-child(1) { animation-delay: .1s; }
+  .demo-batch .mr:nth-child(2) { animation-delay: .25s; }
+  .demo-batch .mr:nth-child(3) { animation-delay: .4s; }
+  .demo-batch .mr:nth-child(4) { animation-delay: .55s; }
+
+  /* two-jobs: a pulse travels each wire, the two flows staggered */
+  .twojobs .tj-flow.comm  .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite; }
+  .twojobs .tj-flow.track .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite .55s; }
+  @keyframes tjPulse {
+    0%   { left: -3px; opacity: 0; }
+    12%  { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { left: calc(100% - 3px); opacity: 0; }
+  }
+
+  /* path anatomy: a reader lights each segment in sequence */
+  .pathana .pa-seg { animation: paScan 6s ease-in-out infinite; }
+  .pathana .s2 { animation-delay: 1.5s; }
+  .pathana .s3 { animation-delay: 3s; }
+  .pathana .s4 { animation-delay: 4.5s; }
+  @keyframes paScan {
+    0%, 10%   { background: var(--ok-bg); color: var(--ok); }
+    22%, 100% { background: transparent;  color: var(--ink); }
+  }
+  .pathana .demo-decode .d1 { animation-delay: .15s; }
+  .pathana .demo-decode .d2 { animation-delay: .4s; }
+  .pathana .demo-decode .d3 { animation-delay: .65s; }
+  .pathana .demo-decode .d4 { animation-delay: .9s; }
+
+  /* decline demo: the verdict chip breathes */
+  .decl-demo .chip { animation: declPulse 2.8s ease-in-out infinite; }
+  @keyframes declPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+
+  /* why-comparison: the green gutters on "our" side gently pulse */
+  .vs-side.ours .vs-g { animation: gShimmer 2.6s ease-in-out infinite; }
+  .vs-side.ours .vs-row:nth-child(3) .vs-g { animation-delay: .5s; }
+  @keyframes gShimmer { 0%,100% { background: color-mix(in srgb, var(--ok) 55%, var(--rule-strong)); } 50% { background: var(--ok); } }
 
   /* ---------- messages / empty ---------- */
   .msg {
@@ -1126,67 +1124,89 @@
   }
 
   /* ---------- motion ---------- */
-  @media (prefers-reduced-motion: no-preference) {
-    /* entrance fade, used only on fresh renders (not on every keystroke) */
-    .reveal { animation: rise .3s ease both; }
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(5px); }
-      to   { opacity: 1; transform: none; }
-    }
-
-    /* staggered table rows, the signature reveal */
-    .ptable.stagger .prow { animation: rowIn .36s cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--i, 0) * 26ms); }
-    @keyframes rowIn {
-      from { opacity: 0; transform: translateY(7px); }
-      to   { opacity: 1; transform: none; }
-    }
-
-    /* status colour glides during live edits */
-    .gutter, .dot { transition: background-color .3s ease; }
-    .snote { transition: color .2s ease; }
-
-    /* panel crossfade on Inspect/Compare switch */
-    .panelIn { animation: panelFade .3s ease both; }
-    @keyframes panelFade {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: none; }
-    }
-
-    /* rebuilt link pulses when its value changes */
-    .rebuilt-url.flash { animation: urlFlash .6s ease; }
-    @keyframes urlFlash {
-      0%   { background: color-mix(in srgb, var(--ink) 8%, var(--field)); }
-      100% { background: var(--field); }
-    }
-
-    /* one-shot pulse on the privacy dot at load */
-    .privacy .lock { animation: lockPulse 2s ease-out 2; }
-    @keyframes lockPulse {
-      0%   { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 3px  rgba(22,133,90,.5); }
-      100% { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 13px rgba(22,133,90,0); }
-    }
-
-    /* ===== looping help screencast, one 13s timeline, all synced ===== */
-    .sc-typed { clip-path: inset(0 100% 0 0); animation: scType 13s linear infinite; }
-    @keyframes scType {
-      0% { clip-path: inset(0 100% 0 0); } 14% { clip-path: inset(0 0 0 0); }
-      92% { clip-path: inset(0 0 0 0); } 96%,100% { clip-path: inset(0 100% 0 0); }
-    }
-    .sc-rows .sc-row { opacity: 0; animation: scRow 13s ease infinite; }
-    @keyframes scRow {
-      0%,16% { opacity: 0; transform: translateY(5px); }
-      24%,90% { opacity: 1; transform: none; } 96%,100% { opacity: 0; }
-    }
-    .sc-bad { animation: scBad 13s ease infinite; }
-    @keyframes scBad { 0%,17% { opacity: 0; } 23%,42% { opacity: 1; } 50%,100% { opacity: 0; } }
-    .sc-ok  { opacity: 0; animation: scOk 13s ease infinite; }
-    @keyframes scOk { 0%,48% { opacity: 0; } 56%,90% { opacity: 1; } 96%,100% { opacity: 0; } }
-    .sc-g.aff, .sc-chip { animation: scAff 13s ease infinite; }
-    @keyframes scAff { 0%,44% { background: var(--error); } 54%,100% { background: var(--ok); } }
-    .av-empty { animation: scBad 13s ease infinite; }
-    .av-set   { opacity: 0; animation: scOk 13s ease infinite; }
-    .sc-tick  { opacity: 0; animation: scOk 13s ease infinite; }
+  /* entrance fade, used only on fresh renders (not on every keystroke) */
+  .reveal { animation: rise .3s ease both; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: none; }
   }
+
+  /* staggered table rows, the signature reveal */
+  .ptable.stagger .prow { animation: rowIn .36s cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--i, 0) * 26ms); }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* status colour glides during live edits */
+  .gutter, .dot { transition: background-color .3s ease; }
+  .snote { transition: color .2s ease; }
+
+  /* panel crossfade on Inspect/Compare switch */
+  .panelIn { animation: panelFade .3s ease both; }
+  @keyframes panelFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* rebuilt link pulses when its value changes */
+  .rebuilt-url.flash { animation: urlFlash .6s ease; }
+  @keyframes urlFlash {
+    0%   { background: color-mix(in srgb, var(--ink) 8%, var(--field)); }
+    100% { background: var(--field); }
+  }
+
+  /* one-shot pulse on the privacy dot at load */
+  .privacy .lock { animation: lockPulse 2s ease-out 2; }
+  @keyframes lockPulse {
+    0%   { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 3px  rgba(22,133,90,.5); }
+    100% { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 13px rgba(22,133,90,0); }
+  }
+
+  /* masthead settles in on first paint, brand mark lands last */
+  .mast .lockup { animation: rise .45s ease both; }
+  .mast .org    { animation: rise .45s ease .07s both; }
+  .lockup .glyph {
+    transition: transform .18s ease, box-shadow .18s ease;
+    animation: glyphPop .5s cubic-bezier(.2,.8,.25,1.3) .12s backwards;
+  }
+  .lockup:hover .glyph {
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: 0 3px 8px rgba(20,24,29,0.28);
+  }
+  @keyframes glyphPop {
+    0%   { opacity: 0; transform: scale(.5) rotate(-10deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+
+  /* tactile confirmation pop when a copy button flips to "Copied" */
+  .btn.copied { animation: copiedPop .32s cubic-bezier(.2,.7,.3,1.4); }
+  @keyframes copiedPop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.07); }
+    100% { transform: scale(1); }
+  }
+
+  /* ===== looping help screencast, one 13s timeline, all synced ===== */
+  .sc-typed { clip-path: inset(0 100% 0 0); animation: scType 13s linear infinite; }
+  @keyframes scType {
+    0% { clip-path: inset(0 100% 0 0); } 14% { clip-path: inset(0 0 0 0); }
+    92% { clip-path: inset(0 0 0 0); } 96%,100% { clip-path: inset(0 100% 0 0); }
+  }
+  .sc-rows .sc-row { opacity: 0; animation: scRow 13s ease infinite; }
+  @keyframes scRow {
+    0%,16% { opacity: 0; transform: translateY(5px); }
+    24%,90% { opacity: 1; transform: none; } 96%,100% { opacity: 0; }
+  }
+  .sc-bad { animation: scBad 13s ease infinite; }
+  @keyframes scBad { 0%,17% { opacity: 0; } 23%,42% { opacity: 1; } 50%,100% { opacity: 0; } }
+  .sc-ok  { opacity: 0; animation: scOk 13s ease infinite; }
+  @keyframes scOk { 0%,48% { opacity: 0; } 56%,90% { opacity: 1; } 96%,100% { opacity: 0; } }
+  .sc-g.aff, .sc-chip { animation: scAff 13s ease infinite; }
+  @keyframes scAff { 0%,44% { background: var(--error); } 54%,100% { background: var(--ok); } }
+  .av-empty { animation: scBad 13s ease infinite; }
+  .av-set   { opacity: 0; animation: scOk 13s ease infinite; }
+  .sc-tick  { opacity: 0; animation: scOk 13s ease infinite; }
 
   /* ---------- responsive ---------- */
   @media (max-width: 640px) {
