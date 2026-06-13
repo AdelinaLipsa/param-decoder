@@ -3515,7 +3515,7 @@ function compareBanners(rows) {
         level,
         title: `${r.key} differs`,
         message: r.key === "aff_id"
-          ? `Link A uses ${r.aStr}, Link B uses ${r.bStr}, they attribute to different accounts.`
+          ? `Link A uses ${r.aStr}, Link B uses ${r.bStr}, they credit different affiliates. BuyGoods attributes last-touch on a 90-day cookie, so whichever link the customer clicks last wins the commission, not both.`
           : `Link A: "${r.aStr}", Link B: "${r.bStr}", tracking buckets these separately.`,
       });
     } else {
@@ -3704,7 +3704,7 @@ const batchTarget = document.getElementById("batchOut");
 function auditLink(line) {
   const parsed = parseInput(line);
   if (!parsed.ok) {
-    return { line, status: "error", aff: null, affMissing: true, verdict: "Doesn't parse as a URL" };
+    return { line, status: "error", aff: null, affMissing: true, verdict: "Doesn't parse as a URL", dest: null };
   }
   const { rows, banners, summary } = validate(parsed.params);
   const worst = summary.error ? "error" : summary.warn ? "warn" : "ok";
@@ -3713,7 +3713,26 @@ function auditLink(line) {
   if (worst === "error") { const s = pick("error"); verdict = s.title || s.note || "Error"; }
   else if (worst === "warn") { const s = pick("warn"); verdict = s.title || s.note || "Warning"; }
   const affRow = rows.find((r) => r.key === "aff_id");
-  return { line, status: worst, aff: affRow ? affRow.value : null, affMissing: !affRow, verdict };
+  // destination = host + path (no query): identifies the offer regardless of tracking
+  const dest = (parsed.host || "") + (parsed.path || "").replace(/\/+$/, "");
+  return { line, status: worst, aff: affRow ? affRow.value : null, affMissing: !affRow, verdict, dest };
+}
+
+/**
+ * Same offer (host+path) promoted under more than one aff_id in the batch.
+ * Last-touch attribution means these compete for the same conversions, only
+ * the last click is credited, so it's usually a mislabeled link, not intent.
+ */
+function affCollisions(results) {
+  const byDest = new Map();
+  results.forEach((r) => {
+    if (!r.dest || r.affMissing || r.aff == null || r.aff === "") return;
+    if (!byDest.has(r.dest)) byDest.set(r.dest, new Set());
+    byDest.get(r.dest).add(r.aff);
+  });
+  const out = [];
+  byDest.forEach((affs, dest) => { if (affs.size > 1) out.push({ dest, affs: [...affs] }); });
+  return out;
 }
 
 function renderBatchSummary(counts) {
@@ -3792,6 +3811,20 @@ function renderBatch() {
   results.forEach((r) => counts[r.status]++);
   batchTarget.append(renderBatchSummary(counts));
   batchTarget.append(renderBatchActions(results, counts));
+
+  // attribution-collision check: the same offer under different affiliate IDs
+  const collisions = affCollisions(results);
+  if (collisions.length) {
+    const banners = collisions.map((c) => ({
+      level: "warn",
+      title: "Same offer, different affiliate IDs",
+      message: `${c.dest} appears with aff_id ${c.affs.join(" and ")}. Last-touch attribution means these compete for the same conversions, only the last click is credited. Check for a mislabeled link.`,
+    }));
+    const bEl = el("div", "banners");
+    fillBanners(bEl, banners);
+    batchTarget.append(bEl);
+  }
+
   batchTarget.append(renderBatchTable(results));
 }
 
