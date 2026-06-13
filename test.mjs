@@ -1086,24 +1086,88 @@ const build = (id, opts) => page.evaluate(([id, opts]) => {
 }
 
 // ============================================================
-//  FEATURE 15 — "Try an example" in empty states
+//  FEATURE 15 — example chips in empty states (per-mode demo)
 // ============================================================
+// Postback Check chips: Valid / Unsupported token / Lowercase token
 {
   await page.click("#modePostback");
   await page.click("#pbViewCheck");
   await page.fill("#srcPostback", "");
-  check("EX1 postback example btn", await page.isVisible("#pbOut .ex-btn"), "no example button");
-  await page.click("#pbOut .ex-btn");
-  check("EX1 fills postback", (await page.inputValue("#srcPostback")).includes("{COMMISSION_AMOUNT}"), await page.inputValue("#srcPostback"));
-  check("EX1 renders tokens", await page.isVisible(".prow.pb"), "no token rows after example");
+  check("EX1 postback chips", (await page.$$("#pbOut .ex-chips .ex-btn")).length === 3, "expected 3 chips");
+
+  await page.click('#pbOut .ex-btn:has-text("Valid")');
+  check("EX1 valid fills", (await page.inputValue("#srcPostback")).includes("{COMMISSION_AMOUNT}"), await page.inputValue("#srcPostback"));
+  check("EX1 valid banner", await page.isVisible("#pbOut .banners .msg.info"), "no valid/info banner");
+
+  await page.fill("#srcPostback", "");
+  await page.click('#pbOut .ex-btn:has-text("Unsupported")');
+  check("EX1 unsupported error", await page.isVisible("#pbOut .banners .msg.error"), "no error banner for {PRODUCT_CODENAME}");
+
+  await page.fill("#srcPostback", "");
+  await page.click('#pbOut .ex-btn:has-text("Lowercase")');
+  check("EX1 lowercase warn", (await page.$$("#pbOut .prow.pb .gutter.warn")).length >= 1, "no warn row for {subid}");
 }
+// Batch chips: Campaign audit / All clean / Common mistakes
 {
   await page.click("#modeBatch");
   await page.fill("#srcBatch", "");
-  check("EX2 batch example btn", await page.isVisible("#batchOut .ex-btn"), "no example button");
-  await page.click("#batchOut .ex-btn");
-  check("EX2 fills batch", (await page.inputValue("#srcBatch")).split("\n").length >= 4, await page.inputValue("#srcBatch"));
-  check("EX2 renders audit", (await page.$$(".prow.batch:not(.colhead)")).length >= 4, "no audit rows");
+  check("EX2 batch chips", (await page.$$("#batchOut .ex-chips .ex-btn")).length === 3, "expected 3 chips");
+
+  await page.click('#batchOut .ex-btn:has-text("Campaign audit")');
+  check("EX2 audit fills", (await page.inputValue("#srcBatch")).split("\n").length >= 4, await page.inputValue("#srcBatch"));
+  check("EX2 audit rows", (await page.$$(".prow.batch:not(.colhead)")).length >= 4, "no audit rows");
+
+  await page.fill("#srcBatch", "");
+  await page.click('#batchOut .ex-btn:has-text("All clean")');
+  check("EX2 all-clean no errors", (await page.$$(".prow.batch:not(.colhead) .gutter.error")).length === 0, "clean set has an error row");
+
+  await page.fill("#srcBatch", "");
+  await page.click('#batchOut .ex-btn:has-text("Common mistakes")');
+  check("EX2 mistakes has error", (await page.$$(".prow.batch:not(.colhead) .gutter.error")).length >= 1, "mistakes set has no error row");
+}
+// Compare chips: Tracked vs not / Two affiliates
+{
+  await page.click("#modeCompare");
+  await page.fill("#srcA", "");
+  await page.fill("#srcB", "");
+  check("EX3 compare chips", (await page.$$("#cmpOut .ex-chips .ex-btn")).length === 2, "expected 2 chips");
+
+  await page.click('#cmpOut .ex-btn:has-text("Tracked vs not")');
+  check("EX3 tracked fills A", (await page.inputValue("#srcA")).includes("{clickid}"), await page.inputValue("#srcA"));
+  check("EX3 tracked fills B", (await page.inputValue("#srcB")).length > 0, await page.inputValue("#srcB"));
+  check("EX3 tracked renders", await page.isVisible("#cmpOut .summary, #cmpOut .ctable, #cmpOut .prow"), "no comparison rendered");
+
+  await page.fill("#srcA", "");
+  await page.fill("#srcB", "");
+  await page.click('#cmpOut .ex-btn:has-text("Two affiliates")');
+  check("EX3 affiliates differ", (await page.inputValue("#srcA")) !== (await page.inputValue("#srcB")), "links identical");
+}
+// Decline chips: Soft / Hard / Numeric / Fixable by customer
+{
+  await page.click("#modeDecline");
+  await page.fill("#srcDecline", "");
+  check("EX4 decline chips", (await page.$$("#declineOut .ex-chips .ex-btn")).length === 4, "expected 4 chips");
+
+  const declineChip = async (label) => {
+    await page.fill("#srcDecline", "");
+    await page.click(`#declineOut .ex-btn:has-text("${label}")`);
+    return page.evaluate(() => {
+      const out = document.getElementById("declineOut");
+      const card = out.querySelector(".decline-card");
+      return {
+        title: card?.querySelector(".dc-title")?.textContent ?? null,
+        chips: [...out.querySelectorAll(".dc-chip")].map(c => c.textContent.trim()),
+      };
+    });
+  };
+  const soft = await declineChip("Soft / retry");
+  check("EX4 soft", /Insufficient funds/i.test(soft.title ?? "") && soft.chips.some(c => /Soft decline/.test(c)), JSON.stringify(soft));
+  const hard = await declineChip("Hard");
+  check("EX4 hard", hard.chips.some(c => /Hard decline/.test(c)), JSON.stringify(hard));
+  const numeric = await declineChip("Numeric");
+  check("EX4 numeric", /Insufficient Funds/i.test(numeric.title ?? ""), JSON.stringify(numeric));
+  const cust = await declineChip("Fixable by customer");
+  check("EX4 customer", /CVC|security code/i.test(cust.title ?? ""), JSON.stringify(cust));
 }
 
 // ============================================================
