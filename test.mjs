@@ -498,6 +498,7 @@ const cBanner = (r, frag) => r.banners.find((x) => x.text.includes(frag));
   const r = await compare("https://x.com/p?aff_id=639&subid=facebook", "https://x.com/p?aff_id=1234&subid=facebook");
   check("C2 aff_id error", cRow(r, "aff_id").status === "error", JSON.stringify(cRow(r,"aff_id")));
   check("C2 banner", cBanner(r, "aff_id differs")?.level === "error", JSON.stringify(r.banners));
+  check("C2 last-touch insight", /last-touch/i.test(cBanner(r, "aff_id differs")?.text ?? ""), JSON.stringify(r.banners));
   check("C2 both highlighted", cRow(r, "aff_id").aHl && cRow(r, "aff_id").bHl, "");
   check("C2 subid same", cRow(r, "subid").status === "same", "");
 }
@@ -727,7 +728,8 @@ async function batch(text) {
       const n = parseInt(p.querySelector("b")?.textContent ?? "0", 10);
       if (/fail/.test(label)) counts.error = n; else if (/check/.test(label)) counts.warn = n; else counts.ok = n;
     });
-    return { rows, counts, empty: out.querySelector(".empty")?.textContent ?? null };
+    const banners = [...out.querySelectorAll(".banners .msg")].map(m => m.textContent);
+    return { rows, counts, banners, empty: out.querySelector(".empty")?.textContent ?? null };
   });
 }
 {
@@ -747,6 +749,33 @@ async function batch(text) {
 {
   const r = await batch("   "); // whitespace only
   check("BA2 empty prompt", /one per line/i.test(r.empty ?? ""), JSON.stringify(r.empty));
+}
+{
+  // BA3 — attribution collision: same offer (host+path) under two aff_ids
+  const r = await batch([
+    "https://getcellucare.com/dtc/?aff_id=88001&subid=fb",
+    "https://getcellucare.com/dtc/?aff_id=53838&subid=fb",
+  ].join("\n"));
+  const col = r.banners.find(b => /Same offer, different affiliate IDs/.test(b));
+  check("BA3 collision flagged", !!col, JSON.stringify(r.banners));
+  check("BA3 names both IDs", col && /88001/.test(col) && /53838/.test(col), col ?? "");
+  check("BA3 explains last-touch", col && /last-touch/i.test(col), col ?? "");
+}
+{
+  // BA4 — same offer, SAME aff_id: not a collision (no false positive)
+  const r = await batch([
+    "https://getcellucare.com/dtc/?aff_id=88001&subid=fb",
+    "https://getcellucare.com/dtc/?aff_id=88001&subid=tiktok",
+  ].join("\n"));
+  check("BA4 no false collision", !r.banners.some(b => /Same offer, different affiliate IDs/.test(b)), JSON.stringify(r.banners));
+}
+{
+  // BA5 — different offers with different aff_ids: not a collision
+  const r = await batch([
+    "https://getcellucare.com/dtc/?aff_id=88001",
+    "https://buytrumpbucks.com/?aff_id=53838",
+  ].join("\n"));
+  check("BA5 different offers ok", !r.banners.some(b => /Same offer, different affiliate IDs/.test(b)), JSON.stringify(r.banners));
 }
 // batch -> Inspect deep-link
 {
