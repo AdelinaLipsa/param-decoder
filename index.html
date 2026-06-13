@@ -564,7 +564,15 @@
   .dc-chip.error { color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); background: var(--error-bg); }
   .dc-chip.warn  { color: var(--warn);  border-color: color-mix(in srgb, var(--warn) 40%, transparent);  background: var(--warn-bg); }
   .dc-chip.ok    { color: var(--ok);    border-color: color-mix(in srgb, var(--ok) 40%, transparent);    background: var(--ok-bg); }
-  .dc-title { font-size: 17px; font-weight: 600; margin: 0 0 16px; color: var(--ink); }
+  .dc-title { font-size: 13.5px; font-weight: 600; margin: 0 0 16px; color: var(--ink-soft); }
+  /* owner verdict — the lead block: who fixes this + the internal next step */
+  .dc-owner { border: 1px solid var(--rule-strong); border-left-width: 3px; border-radius: 8px; padding: 13px 15px; margin: 0 0 18px; background: var(--field); }
+  .dc-owner.error { border-left-color: var(--error); background: var(--error-bg); }
+  .dc-owner.warn  { border-left-color: var(--warn);  background: var(--warn-bg); }
+  .dc-owner.ok    { border-left-color: var(--ok);    background: var(--ok-bg); }
+  .dc-owner-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .dc-owner-label { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .dc-owner-route { margin: 7px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
   .dc-eyebrow { margin: 0 0 8px; }
   .dc-msg { display: flex; align-items: flex-start; gap: 12px; background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 13px 15px; }
   .dc-msg-text { flex: 1 1 auto; font-size: 14px; line-height: 1.5; color: var(--ink); }
@@ -1419,12 +1427,12 @@
 
           <div class="help-card mode-card">
             <div class="mc-demo demo-postback" aria-hidden="true">
-              <span class="chip ok">insufficient_funds</span>
-              <span class="chip ok">soft · retry</span>
+              <span class="chip ok">do_not_honor</span>
+              <span class="chip bad">who fixes it →</span>
             </div>
             <h3>Decline</h3>
             <p class="mc-when">When you have <b>a decline code from a failed charge</b> (from the transaction, not a URL)</p>
-            <p>Paste a Stripe, Braintree, or NMI decline code for a plain-language read, soft vs hard, whether it's worth a retry, and the message for the customer. Backed by ~190 codes transcribed from each processor's own docs, with the <em>source cited</em> on every result.</p>
+            <p>Paste a Stripe, Braintree, or NMI code and get the part Google won't: <b>who fixes it and what to do</b>, customer, customer's bank, BuyGoods tech, or a fraud signal to flag to the AM, plus the ready message for the HelpGrid agent. Backed by ~190 codes from each processor's own docs, <em>source cited</em>.</p>
             <button class="btn ghost" data-open="decline" type="button">Open Decline</button>
           </div>
         </div>
@@ -1441,13 +1449,14 @@
 
         <p class="eyebrow help-sec">Reading a decline code</p>
         <div class="help-card concept">
-          <p class="concept-lead">Decline mode answers a different question, not "why won't this link track?" but "<b>why did this charge fail?</b>" A decline code usually comes from the <b>transaction</b>, the BuyGoods backoffice, the gateway response, or the error shown to the customer, so you paste the <b>code</b> here, not a link. <b>(And if a failure URL does carry the code</b>, e.g. <span class="mono">?decline_code=do_not_honor</span>, Inspect spots it and explains it inline.)</p>
+          <p class="concept-lead">The code's <em>meaning</em> is a Google search away. What it doesn't give you is the decision: <b>who fixes this, and what do I do?</b> That's what Decline mode leads with, mapped to BuyGoods' three pillars, so a junior knows whether to coach the buyer, wait on the bank, escalate to tech, or flag an affiliate. You paste the <b>code</b> (from the transaction / backoffice / gateway response), not a link. <b>(If a failure URL carries the code</b>, e.g. <span class="mono">?decline_code=do_not_honor</span>, Inspect explains it inline.)</p>
           <div class="decl-axes" aria-hidden="true">
-            <div class="decl-ax"><span class="decl-chip warn"><span class="dot"></span>Soft</span><span class="decl-desc"><b>Temporary.</b> A retry can still go through, insufficient funds, issuer busy, processing error.</span></div>
-            <div class="decl-ax"><span class="decl-chip error"><span class="dot"></span>Hard</span><span class="decl-desc"><b>Permanent for this card.</b> Use a different one, expired, lost / stolen, do-not-honor.</span></div>
+            <div class="decl-ax"><span class="decl-chip warn"><span class="dot"></span>Customer</span><span class="decl-desc">HelpGrid coaches the buyer, re-enter card, use a different one, or contact their bank.</span></div>
+            <div class="decl-ax"><span class="decl-chip error"><span class="dot"></span>Fraud</span><span class="decl-desc">Don't retry. A burst off one affiliate = card-testing, flag the traffic (chargeback / 1% risk).</span></div>
+            <div class="decl-ax"><span class="decl-chip error"><span class="dot"></span>Platform</span><span class="decl-desc">Gateway / merchant config, not the buyer's or affiliate's fault, escalate to BuyGoods tech.</span></div>
           </div>
-          <div class="decl-demo" aria-hidden="true"><span>202</span><span class="arrow">→</span><span class="chip">soft · worth a retry</span></div>
-          <p class="concept-note"><span class="srcstamp">✓ sourced</span> Every code is transcribed verbatim from <b>Stripe</b>, <b>Braintree</b>, or <b>NMI</b>'s own docs, about 190 in all, and each result links its source, so the read isn't a guess.</p>
+          <div class="decl-demo" aria-hidden="true"><span>do_not_honor</span><span class="arrow">→</span><span class="chip">customer + their bank</span></div>
+          <p class="concept-note"><span class="srcstamp">✓ sourced</span> The code definition is transcribed verbatim from <b>Stripe</b>, <b>Braintree</b>, or <b>NMI</b>'s own docs (~190 codes), each result links its source. Soft vs hard and worth-a-retry are still shown as supporting detail.</p>
         </div>
 
         <p class="eyebrow help-sec">Saved names <span class="hs-note">, stored on this device only, never sent</span></p>
@@ -1728,12 +1737,12 @@ function utmToken(label, desc) {
 }
 
 const PARAM_CONFIG = {
-  //, the param that decides whether the link earns commission, 
-  aff_id:     { label: "Affiliate ID", desc: "Who earns commission on this sale.", numeric: true, critical: true },
+  //, the param that decides whether the link earns commission,
+  aff_id:     { label: "Affiliate ID", desc: "The affiliate's account nickname, who earns the commission on this sale. BuyGoods uses last-touch attribution on a 90-day cookie, so the last aff_id a customer clicked is the one credited.", numeric: true, critical: true },
 
-  //, BuyGoods' five tracking slots: non-empty only, NEVER format-checked, 
-  subid:      { label: "Tracking slot 1", desc: "Pass-through tracking value, often the click ID.", required: true },
-  subid2:     { label: "Tracking slot 2", desc: "Pass-through tracking value, usually the click ID from your tracker.", required: true },
+  //, BuyGoods' five tracking slots: non-empty only, NEVER format-checked,
+  subid:      { label: "Tracking slot 1", desc: "Campaign tracking tag the affiliate adds to split their traffic (e.g. subid=facebook). Shows in the Sales by SubID report; often carries the click ID.", required: true },
+  subid2:     { label: "Tracking slot 2", desc: "Second tracking tag, usually the click ID from the affiliate's tracker. Shows in the Sales by SID2 report.", required: true },
   subid3:     { label: "Tracking slot 3", desc: "Free tracking value.", required: true },
   subid4:     { label: "Tracking slot 4", desc: "Free tracking value, often a creative or placement code.", required: true },
   subid5:     { label: "Tracking slot 5", desc: "Free tracking value, often the campaign or VSL name.", required: true },
@@ -2086,32 +2095,46 @@ function customTracker({ domain, clickParam, payoutParam, orderParam }) {
      NMI       https://docs.nmi.com/reference/response-codes
    ------------------------------------------------------------ */
 
+/* WHO fixes a decline, the question an AM / HelpGrid agent actually has, and
+   the part a generic code lookup (Stripe's own docs, a Google search) does NOT
+   answer. Each owner carries the internal next step (`route`), grounded in the
+   BuyGoods three-pillar model (customer / affiliate / platform) and standard
+   merchant decline handling. The per-code `customer` line is the buyer-facing
+   message; the owner is what staff do with the code. */
+const DECLINE_OWNERS = {
+  customer:      { label: "Customer can fix it",   tone: "warn",  route: "HelpGrid walks the buyer through it, no escalation needed." },
+  customer_bank: { label: "Customer + their bank", tone: "warn",  route: "HelpGrid: have the buyer use a different card or contact their bank. Don't re-run the same card right away (24h+), repeated attempts can lock the card and hurt the approval rate." },
+  transient:     { label: "Temporary, retry",      tone: "ok",    route: "A technical hiccup, usually clears on a retry shortly after. If it keeps happening, escalate to BuyGoods tech." },
+  fraud:         { label: "Risk / fraud",          tone: "error", route: "Don't retry, and don't share specifics with the buyer. A burst of these off one affiliate's traffic is a card-testing signal, flag the traffic to the AM. It drives up declines and chargebacks, which BuyGoods (the processor) owns against the 1% ceiling." },
+  platform:      { label: "BuyGoods platform",     tone: "error", route: "Not the buyer's or affiliate's fault, escalate to BuyGoods tech (gateway / processor / merchant-account config)." },
+};
+
 /* Category → guidance. type: soft (temporary, may clear) | hard
    (permanent for this card). retry: is simply re-submitting worth it?
-   The two axes are independent: a wrong CVC is a "hard" reason but a
-   re-entry retry IS worth it; a "call issuer" is temporary (soft) but a
-   blind retry is NOT. customer: message for the buyer or HG agent. */
+   owner: who actually resolves it (key into DECLINE_OWNERS). The axes are
+   independent: a wrong CVC is "hard" but a re-entry retry IS worth it; a
+   "call issuer" is soft but a blind retry is NOT. customer: buyer/HG message. */
 const DECLINE_CATS = {
-  insufficient:     { type: "soft", retry: true,  customer: "This card doesn't have enough funds. Use a different card, or try again later." },
-  limit:            { type: "soft", retry: true,  customer: "This card hit a spending or activity limit. Try a smaller amount, a different card, or again later." },
-  generic_bank:     { type: "soft", retry: false, customer: "The bank declined the charge without giving a reason. Ask the customer to contact their bank, or use a different card." },
-  call_issuer:      { type: "soft", retry: false, customer: "The bank wants to speak with the cardholder before approving. Ask the customer to call their bank, then try again." },
-  processing:       { type: "soft", retry: true,  customer: "A temporary processing or network issue stopped the charge. Wait a moment and try again." },
-  auth_required:    { type: "soft", retry: true,  customer: "The bank needs to verify this purchase (3-D Secure). Ask the customer to complete the verification step." },
-  duplicate:        { type: "soft", retry: false, customer: "This looks like a repeat of a recent charge. Check whether the customer was already charged before retrying." },
-  expired:          { type: "hard", retry: false, customer: "The card has expired. Ask the customer to use a different card." },
-  card_data:        { type: "hard", retry: true,  customer: "The card details look incorrect. Re-check the number, expiry, and security code, then try again." },
-  security_code:    { type: "hard", retry: true,  customer: "The security code (CVC/CVV) didn't match. Re-enter it carefully and try again." },
-  account_invalid:  { type: "hard", retry: false, customer: "There's a problem with this card or account. Ask the customer to use a different card." },
-  not_allowed:      { type: "hard", retry: false, customer: "This card can't be used for this purchase. Ask the customer to use a different card or payment method." },
-  lost_stolen_fraud:{ type: "hard", retry: false, customer: "This card can't be processed. Ask the customer to use a different card. (Reason is masked on purpose, don't share specifics.)" },
-  pickup:           { type: "hard", retry: false, customer: "The bank has flagged this card to be retained. It can't be used, ask the customer to use a different card." },
-  do_not_retry:     { type: "hard", retry: false, customer: "The bank declined and asked that this not be retried. Use a different card or have the customer contact their bank." },
-  stop_recurring:   { type: "hard", retry: false, customer: "The cardholder has stopped billing on this card. Contact the customer, do not retry." },
-  test_card:        { type: "hard", retry: false, customer: "A test card was used on a live charge. Enter a real card to complete the purchase." },
-  merchant_config:  { type: "hard", retry: false, customer: "Gateway / merchant configuration issue, this is not customer-fixable. Escalate to BuyGoods." },
-  paypal_buyer:     { type: "hard", retry: false, customer: "There's an issue with the buyer's PayPal account. Ask them to check their PayPal or pay with a card." },
-  paypal_merchant:  { type: "hard", retry: false, customer: "PayPal merchant-account configuration issue, escalate to BuyGoods." },
+  insufficient:     { type: "soft", retry: true,  owner: "customer_bank", customer: "This card doesn't have enough funds. Use a different card, or try again later." },
+  limit:            { type: "soft", retry: true,  owner: "customer_bank", customer: "This card hit a spending or activity limit. Try a smaller amount, a different card, or again later." },
+  generic_bank:     { type: "soft", retry: false, owner: "customer_bank", customer: "The bank declined the charge without giving a reason. Ask the customer to contact their bank, or use a different card." },
+  call_issuer:      { type: "soft", retry: false, owner: "customer_bank", customer: "The bank wants to speak with the cardholder before approving. Ask the customer to call their bank, then try again." },
+  processing:       { type: "soft", retry: true,  owner: "transient",     customer: "A temporary processing or network issue stopped the charge. Wait a moment and try again." },
+  auth_required:    { type: "soft", retry: true,  owner: "customer",      customer: "The bank needs to verify this purchase (3-D Secure). Ask the customer to complete the verification step." },
+  duplicate:        { type: "soft", retry: false, owner: "customer",      customer: "This looks like a repeat of a recent charge. Check whether the customer was already charged before retrying." },
+  expired:          { type: "hard", retry: false, owner: "customer",      customer: "The card has expired. Ask the customer to use a different card." },
+  card_data:        { type: "hard", retry: true,  owner: "customer",      customer: "The card details look incorrect. Re-check the number, expiry, and security code, then try again." },
+  security_code:    { type: "hard", retry: true,  owner: "customer",      customer: "The security code (CVC/CVV) didn't match. Re-enter it carefully and try again." },
+  account_invalid:  { type: "hard", retry: false, owner: "customer_bank", customer: "There's a problem with this card or account. Ask the customer to use a different card." },
+  not_allowed:      { type: "hard", retry: false, owner: "customer_bank", customer: "This card can't be used for this purchase. Ask the customer to use a different card or payment method." },
+  lost_stolen_fraud:{ type: "hard", retry: false, owner: "fraud",         customer: "This card can't be processed. Ask the customer to use a different card. (Reason is masked on purpose, don't share specifics.)" },
+  pickup:           { type: "hard", retry: false, owner: "fraud",         customer: "The bank has flagged this card to be retained. It can't be used, ask the customer to use a different card." },
+  do_not_retry:     { type: "hard", retry: false, owner: "customer_bank", customer: "The bank declined and asked that this not be retried. Use a different card or have the customer contact their bank." },
+  stop_recurring:   { type: "hard", retry: false, owner: "customer",      customer: "The cardholder has stopped billing on this card. Contact the customer, do not retry." },
+  test_card:        { type: "hard", retry: false, owner: "customer",      customer: "A test card was used on a live charge. Enter a real card to complete the purchase." },
+  merchant_config:  { type: "hard", retry: false, owner: "platform",      customer: "Gateway / merchant configuration issue, this is not customer-fixable. Escalate to BuyGoods." },
+  paypal_buyer:     { type: "hard", retry: false, owner: "customer_bank", customer: "There's an issue with the buyer's PayPal account. Ask them to check their PayPal or pay with a card." },
+  paypal_merchant:  { type: "hard", retry: false, owner: "platform",      customer: "PayPal merchant-account configuration issue, escalate to BuyGoods." },
 };
 
 const DECLINE_TABLES = {
@@ -2357,6 +2380,7 @@ function lookupDecline(code, processor = null) {
       processor: key, processorLabel: table.label, source: table.source,
       code: raw, title: hit.title, category: hit.cat,
       type: cat.type, retry: cat.retry, customer: cat.customer,
+      owner: cat.owner, ownerInfo: DECLINE_OWNERS[cat.owner] || DECLINE_OWNERS.customer_bank,
     });
   }
   return matches;
@@ -2512,7 +2536,7 @@ function validate(params) {
     banners.push({
       level: "info",
       title: "No click ID",
-      message: "This link can pay the affiliate, but no subid slot carries a click ID, so conversions won't report back to an external tracker. Fine for direct links; add e.g. subid2={clickid} if you track.",
+      message: "This link can pay the affiliate, but no subid slot carries a click ID, so conversions won't report back to an external tracker. Fine for direct links; the affiliate adds e.g. subid2={clickid} when they track.",
     });
   }
 
@@ -3879,7 +3903,7 @@ function analyzePostback(params) {
       return { ...p, display: v, status: "ok", meaning: known };
     }
     if (v === "") return { ...p, display: "(empty)", status: "warn", meaning: "Empty, no token to send." };
-    return { ...p, display: v, status: "ok", meaning: "Static value, sent to your tracker as-is." };
+    return { ...p, display: v, status: "ok", meaning: "Static value, sent to the tracker as-is." };
   });
 
   const banners = [];
@@ -4030,6 +4054,7 @@ function refreshGenOut() {
   const note = el("details", "pbgen-note");
   note.append(el("summary", null, "What do I do with this?"));
   note.append(el("p", null, "This goes into the tracker's postback / S2S settings. BuyGoods fills the {TOKEN} values automatically at sale time, those are not edited by hand. " + tracker.note));
+  note.append(el("p", null, "BuyGoods supports up to 5 subid tracking slots in a postback. Postback (server-to-server) is the recommended method over a pixel: it's more reliable and works on mobile, where pixels often miss."));
   wrap.append(note);
 
   if (tracker.source) {
@@ -4123,6 +4148,18 @@ function declineCard(entry) {
   head.append(retry);
   card.append(head);
 
+  // LEAD: who fixes this + the internal next step. The decision, not the
+  // definition, this is what a generic code lookup can't tell you.
+  const owner = entry.ownerInfo || DECLINE_OWNERS.customer_bank;
+  const verdict = el("div", "dc-owner " + owner.tone);
+  const vline = el("div", "dc-owner-line");
+  vline.append(el("span", "dot " + owner.tone));
+  vline.append(el("span", "dc-owner-label", owner.label));
+  verdict.append(vline);
+  verdict.append(el("p", "dc-owner-route", owner.route));
+  card.append(verdict);
+
+  // the definition, demoted to a supporting line (the Googleable part)
   card.append(el("p", "dc-title", entry.title));
 
   card.append(el("p", "eyebrow dc-eyebrow", "Tell the customer / HG agent"));
