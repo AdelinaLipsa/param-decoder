@@ -158,6 +158,16 @@
   .mode.on { background: var(--ink); color: #fff; }
   .mode:focus-visible { outline: 2px solid var(--ink-soft); outline-offset: 2px; }
 
+  /* per-mode one-line explainer, shown at the top of each panel */
+  .mode-intro {
+    margin: -6px 0 20px;
+    max-width: 70ch;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .mode-intro b { color: var(--ink); font-weight: 600; }
+
   /* ---------- input ---------- */
   .input-block { margin-bottom: 22px; }
   .cmp-inputs {
@@ -1199,6 +1209,7 @@
     </div>
 
     <section id="inspectPanel" role="tabpanel" aria-labelledby="modeInspect">
+      <p class="mode-intro">Read one link end to end: every parameter explained in plain English, problems flagged red / amber / green, then fix the values inline and copy a clean rebuilt link.</p>
       <div class="input-block">
         <p class="eyebrow">Paste a URL</p>
         <textarea id="src" spellcheck="false" autocomplete="off"
@@ -1208,6 +1219,7 @@
     </section>
 
     <section id="comparePanel" role="tabpanel" aria-labelledby="modeCompare" hidden>
+      <p class="mode-intro">Put two links side by side to see exactly where they differ, the affiliate ID, tracking slots, and campaign params, so you can spot what changed between a working link and a broken one.</p>
       <div class="cmp-inputs">
         <div class="input-block">
           <p class="eyebrow">Link A</p>
@@ -1224,6 +1236,7 @@
     </section>
 
     <section id="batchPanel" role="tabpanel" aria-labelledby="modeBatch" hidden>
+      <p class="mode-intro">Audit a whole column of links at once: a green / red pass-fail table with the reason for each, plus bulk fixes and a CSV export. Good for checking a campaign's worth of links in one go.</p>
       <div class="input-block">
         <p class="eyebrow">Paste one link per line</p>
         <textarea id="srcBatch" class="tall" spellcheck="false" autocomplete="off"
@@ -1233,6 +1246,7 @@
     </section>
 
     <section id="postbackPanel" role="tabpanel" aria-labelledby="modePostback" hidden>
+      <p class="mode-intro">Work with a tracker's postback (S2S) URL: <b>Generate</b> a ready-to-paste one per tracker with the right BuyGoods tokens, or <b>Check</b> an existing one against the tokens BuyGoods actually fills.</p>
       <div class="pb-toggle" role="tablist" aria-label="Postback tool">
         <button id="pbViewGenerate" class="pb-vtab on" type="button" role="tab" aria-selected="true">Generate</button>
         <button id="pbViewCheck" class="pb-vtab" type="button" role="tab" aria-selected="false">Check</button>
@@ -1254,6 +1268,7 @@
     </section>
 
     <section id="declinePanel" role="tabpanel" aria-labelledby="modeDecline" hidden>
+      <p class="mode-intro">Look up a Stripe, Braintree, or NMI decline code to see <b>who fixes it and what to do</b>, customer, their bank, BuyGoods tech, or a fraud signal to flag, plus the ready message for the HelpGrid agent.</p>
       <div class="input-block">
         <p class="eyebrow">Paste a decline code</p>
         <input id="srcDecline" class="code-input" spellcheck="false" autocomplete="off"
