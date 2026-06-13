@@ -590,12 +590,15 @@
 
   .decline-card { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); padding: 18px 20px; }
   .dc-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  .dc-code { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink); }
+  .dc-title { font-size: 15px; font-weight: 700; color: var(--ink); margin: 0; }
   .dc-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--rule-strong); color: var(--ink-faint); }
   .dc-chip.error { color: var(--error); border-color: color-mix(in srgb, var(--error) 40%, transparent); background: var(--error-bg); }
   .dc-chip.warn  { color: var(--warn);  border-color: color-mix(in srgb, var(--warn) 40%, transparent);  background: var(--warn-bg); }
   .dc-chip.ok    { color: var(--ok);    border-color: color-mix(in srgb, var(--ok) 40%, transparent);    background: var(--ok-bg); }
-  .dc-title { font-size: 13.5px; font-weight: 600; margin: 0 0 16px; color: var(--ink-soft); }
+  /* the raw gateway string, explicitly labelled so it reads as a value */
+  .dc-codeline { display: flex; align-items: baseline; gap: 9px; margin: 0 0 16px; }
+  .dc-codelabel { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--ink-faint); }
+  .dc-code { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink-soft); background: var(--field); border: 1px solid var(--rule); border-radius: 5px; padding: 2px 8px; }
   /* owner verdict — the lead block: who fixes this + the internal next step */
   .dc-owner { border: 1px solid var(--rule-strong); border-left-width: 3px; border-radius: 8px; padding: 13px 15px; margin: 0 0 18px; background: var(--field); }
   .dc-owner.error { border-left-color: var(--error); background: var(--error-bg); }
@@ -625,6 +628,7 @@
   .dc-eyebrow { margin: 0 0 8px; }
   .dc-msg { display: flex; align-items: flex-start; gap: 12px; background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 13px 15px; }
   .dc-msg-text { flex: 1 1 auto; font-size: 14px; line-height: 1.5; color: var(--ink); }
+  .dc-note-text { white-space: pre-line; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); }
   .dc-copy { flex: none; font-size: 12px; padding: 6px 11px; }
   .dc-seen { margin: 14px 0 0; font-size: 12px; color: var(--ink-faint); }
   .dc-seen code { font-family: var(--mono); color: var(--ink-soft); }
@@ -2254,8 +2258,12 @@ const DECLINE_OWNERS = {
   customer:      { label: "Customer can fix it",   tone: "warn",  route: "HelpGrid walks the buyer through it, no escalation needed." },
   customer_bank: { label: "Customer + their bank", tone: "warn",  route: "HelpGrid: have the buyer use a different card or contact their bank. Don't re-run the same card right away (24h+), repeated attempts can lock the card and hurt the approval rate." },
   transient:     { label: "Temporary, retry",      tone: "ok",    route: `A technical hiccup, usually clears on a retry shortly after. If it keeps happening, escalate to ${TECH_ESCALATION}.` },
-  fraud:         { label: "Risk / fraud",          tone: "error", route: "Don't retry, and don't share specifics with the buyer. A burst of these off one affiliate's traffic is a card-testing signal, flag the traffic to the AM. It drives up declines and chargebacks, which BuyGoods (the processor) owns against the 1% ceiling." },
-  platform:      { label: "BuyGoods platform",     tone: "error", route: `Not the buyer's or affiliate's fault, escalate to ${TECH_ESCALATION}, it's a gateway / processor / merchant-account config issue.` },
+  // escalates: this decline needs an internal handoff, so the card offers a
+  // ready-to-paste note. escalateTo names who it goes to. The route is the
+  // INTERNAL next step only, what to tell the buyer lives in the customer
+  // message block so the two don't duplicate each other.
+  fraud:         { label: "Risk / fraud",          tone: "error", escalates: true, escalateTo: "the AM",          route: "Don't retry. A burst of these off one affiliate's traffic is a card-testing signal, flag the traffic to the AM. It drives up declines and chargebacks, which BuyGoods (the processor) owns against the 1% ceiling." },
+  platform:      { label: "BuyGoods platform",     tone: "error", escalates: true, escalateTo: TECH_ESCALATION, route: `Not the buyer's or affiliate's fault, escalate to ${TECH_ESCALATION}, it's a gateway / processor / merchant-account config issue.` },
 };
 
 /* Category → guidance. type: soft (temporary, may clear) | hard
@@ -4311,12 +4319,28 @@ function renderPostbackGenerate() {
 const srcDecline = document.getElementById("srcDecline");
 const declineTarget = document.getElementById("declineOut");
 
+/* A ready-to-paste internal handoff for declines that need escalating, the
+   "flag it" instruction made executable. One line per fact so it drops cleanly
+   into a ticket or a message. */
+function buildInternalNote(entry) {
+  return [
+    `Decline: ${entry.code} (${entry.processorLabel}) — ${entry.title}.`,
+    `${entry.type === "hard" ? "Hard decline" : "Soft decline"}, ${entry.retry ? "worth a retry" : "do not retry"}.`,
+    `${entry.ownerInfo.label}: ${entry.ownerInfo.route}`,
+    `Per ${entry.processorLabel} docs: ${entry.source}`,
+  ].join("\n");
+}
+
 /** Build one result card for a single processor match. */
 function declineCard(entry) {
   const card = el("div", "decline-card reveal");
+  const owner = entry.ownerInfo || DECLINE_OWNERS.customer_bank;
 
+  // headline is the plain-English MEANING; the raw gateway string is a
+  // labelled value below it, so a word like "fraudulent" reads as a code,
+  // not as a verdict the tool is passing.
   const head = el("div", "dc-head");
-  head.append(el("span", "dc-code", entry.code));
+  head.append(el("span", "dc-title", entry.title));
   const proc = el("span", "dc-chip");
   proc.append(document.createTextNode(entry.processorLabel));
   head.append(proc);
@@ -4330,9 +4354,13 @@ function declineCard(entry) {
   head.append(retry);
   card.append(head);
 
-  // LEAD: who fixes this + the internal next step. The decision, not the
+  const codeline = el("div", "dc-codeline");
+  codeline.append(el("span", "dc-codelabel", "Decline code"));
+  codeline.append(el("span", "dc-code", entry.code));
+  card.append(codeline);
+
+  // LEAD: who fixes this + the INTERNAL next step. The decision, not the
   // definition, this is what a generic code lookup can't tell you.
-  const owner = entry.ownerInfo || DECLINE_OWNERS.customer_bank;
   const verdict = el("div", "dc-owner " + owner.tone);
   const vline = el("div", "dc-owner-line");
   vline.append(el("span", "dot " + owner.tone));
@@ -4341,9 +4369,7 @@ function declineCard(entry) {
   verdict.append(el("p", "dc-owner-route", owner.route));
   card.append(verdict);
 
-  // the definition, demoted to a supporting line (the Googleable part)
-  card.append(el("p", "dc-title", entry.title));
-
+  // what the buyer hears (HelpGrid's side), kept separate from the internal step
   card.append(el("p", "eyebrow dc-eyebrow", "Tell the customer / HG agent"));
   const msg = el("div", "dc-msg");
   msg.append(el("span", "dc-msg-text", entry.customer));
@@ -4352,6 +4378,19 @@ function declineCard(entry) {
   copy.addEventListener("click", () => copyAndFlash(entry.customer, copy));
   msg.append(copy);
   card.append(msg);
+
+  // when it needs escalating, hand over a ready-to-paste internal note
+  if (owner.escalates) {
+    card.append(el("p", "eyebrow dc-eyebrow", "Note for " + owner.escalateTo));
+    const note = buildInternalNote(entry);
+    const ibox = el("div", "dc-msg dc-note");
+    ibox.append(el("span", "dc-msg-text dc-note-text", note));
+    const icopy = el("button", "btn ghost dc-copy", "Copy internal note");
+    icopy.type = "button"; icopy.dataset.label = "Copy internal note";
+    icopy.addEventListener("click", () => copyAndFlash(note, icopy));
+    ibox.append(icopy);
+    card.append(ibox);
+  }
 
   // cited source, the trust signal that replaces "verify before trusting"
   const src = el("p", "dc-seen");
