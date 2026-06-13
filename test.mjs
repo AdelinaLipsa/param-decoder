@@ -1565,6 +1565,58 @@ async function decline(code) {
 }
 
 // ============================================================
+//  FEATURE 28 — share param notes across the team (export / import)
+// ============================================================
+{
+  // export + import controls live in the Help notes manager
+  await page.click("#modeHelp");
+  const acts = await page.evaluate(() => [...document.querySelectorAll("#savedParams .hs-act")].map(b => b.textContent));
+  check("SH1 export control present", acts.some(t => /export/i.test(t)), JSON.stringify(acts));
+  check("SH1 import control present", acts.some(t => /import/i.test(t)), JSON.stringify(acts));
+
+  // a valid bundle merges: new key added, a conflicting key with a new desc updated
+  // (mystery_param was captured as "Our internal campaign tag" by the capture-loop tests)
+  const merged = await page.evaluate(() => {
+    const bundle = JSON.stringify({
+      kind: "param-decoder/param-notes", version: 1,
+      notes: {
+        mystery_param: { desc: "Updated meaning from a teammate" },
+        teammate_param: { desc: "Brought in by import" },
+      },
+    });
+    const r = mergeParamNotesBundle(bundle);
+    return { r, teammate: getParamNote("teammate_param")?.desc ?? null, mystery: getParamNote("mystery_param")?.desc ?? null };
+  });
+  check("SH2 import adds a new note", merged.r.added === 1 && merged.teammate === "Brought in by import", JSON.stringify(merged));
+  check("SH2 import updates a changed note", merged.r.updated === 1 && merged.mystery === "Updated meaning from a teammate", JSON.stringify(merged));
+
+  // re-importing identical content is a no-op, no phantom "updated"
+  const again = await page.evaluate(() => mergeParamNotesBundle(JSON.stringify({
+    kind: "param-decoder/param-notes", version: 1, notes: { teammate_param: { desc: "Brought in by import" } },
+  })));
+  check("SH3 identical re-import is a no-op", again.added === 0 && again.updated === 0, JSON.stringify(again));
+
+  // junk and foreign files are rejected, never silently merged
+  const rejects = await page.evaluate(() => ({
+    badJson: mergeParamNotesBundle("not json {"),
+    wrongKind: mergeParamNotesBundle(JSON.stringify({ kind: "something-else", notes: { x: { desc: "y" } } })),
+    noNotes: mergeParamNotesBundle(JSON.stringify({ kind: "param-decoder/param-notes", version: 1 })),
+  }));
+  check("SH4 bad JSON rejected", rejects.badJson === null, JSON.stringify(rejects));
+  check("SH4 foreign bundle rejected", rejects.wrongKind === null, JSON.stringify(rejects));
+  check("SH4 bundle without notes rejected", rejects.noNotes === null, JSON.stringify(rejects));
+
+  // an invalid import surfaces an error message, not a silent failure
+  await page.evaluate(() => renderSavedParams({ ok: false }));
+  const errShown = await page.evaluate(() => document.querySelector("#savedParams .hs-feedback.err")?.textContent ?? "");
+  check("SH5 invalid import shows an error", /isn't a Param Decoder notes export/i.test(errShown), errShown);
+
+  // the exact shape export writes is valid input to import (round-trips)
+  const roundtrips = await page.evaluate(() => mergeParamNotesBundle(JSON.stringify({ kind: "param-decoder/param-notes", version: 1, notes: PARAM_NOTES })) !== null);
+  check("SH6 exported shape re-imports cleanly", roundtrips, "round-trip failed");
+}
+
+// ============================================================
 //  FEATURE 27 — per-mode explainer subtitle
 // ============================================================
 {

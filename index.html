@@ -1032,6 +1032,12 @@
   .hs-name { font-size: 13.5px; color: var(--ink-soft); flex: 1 1 auto; }
   .hs-remove { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--ink-faint); background: none; border: none; cursor: pointer; text-decoration: underline; }
   .hs-remove:hover { color: var(--error); }
+  /* share notes across the team without leaving the device, file in, file out */
+  .hs-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .hs-act { font-size: 12px; padding: 6px 11px; }
+  .hs-feedback { margin: 0 0 12px; font-size: 12.5px; }
+  .hs-feedback.ok  { color: var(--ok); }
+  .hs-feedback.err { color: var(--error); }
 
   /* ---------- QA template card ---------- */
   .tmpl-card {
@@ -1976,6 +1982,61 @@ const getParamNote = (key) => PARAM_NOTES[noteKey(key)] || null;
 function saveParamNote(key, desc) { PARAM_NOTES[noteKey(key)] = { desc: desc.trim() }; persistParamNotes(); }
 function removeParamNote(key) { delete PARAM_NOTES[noteKey(key)]; persistParamNotes(); }
 const userParamNotes = () => Object.keys(PARAM_NOTES).map((k) => ({ key: k, desc: PARAM_NOTES[k].desc }));
+
+/* ------------------------------------------------------------
+   SHARING param notes — the moat only compounds if one person's
+   verified meanings can reach the rest of the team. Notes stay
+   device-local (no network), so sharing is a file you hand over:
+   export to JSON, a teammate imports and merges. Seniors export,
+   juniors import; verified entries later get promoted into the
+   shipped builtin dictionary via a normal PR.
+   ------------------------------------------------------------ */
+const PARAM_NOTES_BUNDLE_KIND = "param-decoder/param-notes";
+
+function exportParamNotes() {
+  const bundle = { kind: PARAM_NOTES_BUNDLE_KIND, version: 1, notes: PARAM_NOTES };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = el("a"); a.href = url; a.download = "param-decoder-notes.json";
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* Merge a bundle into PARAM_NOTES. Returns { added, updated } on success,
+   or null if the text isn't a valid notes export. Imported entries win on
+   conflict, the importer just pulled them in deliberately. */
+function mergeParamNotesBundle(raw) {
+  let data;
+  try { data = JSON.parse(raw); } catch { return null; }
+  if (!data || data.kind !== PARAM_NOTES_BUNDLE_KIND || typeof data.notes !== "object" || !data.notes) return null;
+  let added = 0, updated = 0;
+  for (const [k, v] of Object.entries(data.notes)) {
+    const key = noteKey(k);
+    const desc = v && typeof v.desc === "string" ? v.desc.trim() : "";
+    if (!key || !desc) continue;
+    if (PARAM_NOTES[key]) { if (PARAM_NOTES[key].desc !== desc) updated++; }
+    else added++;
+    PARAM_NOTES[key] = { desc };
+  }
+  persistParamNotes();
+  return { added, updated };
+}
+
+function importParamNotes() {
+  const input = el("input"); input.type = "file"; input.accept = "application/json,.json";
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = mergeParamNotesBundle(String(reader.result));
+      renderSavedParams(result ? { ok: true, ...result } : { ok: false });
+      if (result && state.rows && state.rows.length) rebuildTable();
+    };
+    reader.readAsText(file);
+  });
+  input.click();
+}
 
 loadParamNotes();
 
@@ -4437,10 +4498,33 @@ function renderSavedTemplates() {
 }
 
 /** Help-tab manager for device-saved param notes (the capture loop). */
-function renderSavedParams() {
+function renderSavedParams(feedback) {
   const box = document.getElementById("savedParams");
   box.replaceChildren();
   const notes = userParamNotes();
+
+  // export / import live above the list so notes can be shared, or received
+  // onto a fresh device, even when there's nothing captured here yet
+  const actions = el("div", "hs-actions");
+  const exportBtn = el("button", "btn ghost hs-act", "Export notes");
+  exportBtn.type = "button";
+  exportBtn.disabled = notes.length === 0;
+  exportBtn.title = notes.length ? "Download your param notes as a file to hand to a teammate" : "Capture a note first, then you can export";
+  exportBtn.addEventListener("click", exportParamNotes);
+  const importBtn = el("button", "btn ghost hs-act", "Import notes");
+  importBtn.type = "button";
+  importBtn.title = "Merge param notes from a teammate's exported file";
+  importBtn.addEventListener("click", importParamNotes);
+  actions.append(exportBtn, importBtn);
+  box.append(actions);
+
+  if (feedback) {
+    const msg = feedback.ok
+      ? `Imported ${feedback.added} new, ${feedback.updated} updated.`
+      : "That file isn't a Param Decoder notes export.";
+    box.append(el("p", "hs-feedback " + (feedback.ok ? "ok" : "err"), msg));
+  }
+
   if (notes.length === 0) {
     box.classList.add("emptynames");
     box.append(el("p", "hs-empty", "No param notes yet. In Inspect, click “+ describe” on an unrecognised param, or “confirm / correct” on an inferred one, to capture what it means, it'll show here and explain itself on every link, on this device only."));
