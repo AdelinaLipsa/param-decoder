@@ -913,6 +913,16 @@ const build = (id, opts) => page.evaluate(([id, opts]) => {
   check("TG2 check shows validator", await page.isVisible("#pbCheck") && await page.isVisible("#srcPostback"), "check not shown");
   await page.click("#pbViewGenerate");
   check("TG3 back to generate", await page.isVisible("#pbGenerate") && !(await page.isVisible("#pbCheck")), "generate not restored");
+
+  // the active subtab must be visibly highlighted (regression: .pb-vtab.on
+  // referenced an undefined --bg var, so the active pill rendered transparent)
+  const bg = await page.evaluate(() => {
+    const cs = (id) => getComputedStyle(document.getElementById(id)).backgroundColor;
+    return { active: cs("pbViewGenerate"), inactive: cs("pbViewCheck") };
+  });
+  const transparent = (c) => c === "rgba(0, 0, 0, 0)" || c === "transparent";
+  check("TG4 active subtab has a visible background", !transparent(bg.active), JSON.stringify(bg));
+  check("TG4 active subtab differs from inactive", bg.active !== bg.inactive, JSON.stringify(bg));
 }
 
 // ============================================================
