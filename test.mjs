@@ -1477,7 +1477,7 @@ async function decline(code) {
 
   const plat = await decline("2026"); // Braintree "Invalid Merchant ID" → platform
   check("DC7 platform owner", /BuyGoods platform/.test(plat.owner ?? ""), JSON.stringify(plat));
-  check("DC7 platform escalates", /escalate to BuyGoods/i.test(plat.route ?? ""), plat.route);
+  check("DC7 platform escalates to a named person", /escalate to Virgil/i.test(plat.route ?? ""), plat.route);
 
   const tran = await decline("processing_error"); // → transient
   check("DC7 transient owner", /Temporary/.test(tran.owner ?? ""), JSON.stringify(tran));
@@ -1491,6 +1491,64 @@ async function decline(code) {
   await decline("expired_card");
   await page.click('.dc-msg button:has-text("Copy message")');
   check("DC5 copied message", /expired/i.test(await copied() ?? ""), await copied());
+}
+
+// ============================================================
+//  FEATURE 29 — batch decline triage (group many codes by owner)
+// ============================================================
+async function triage(codes) {
+  await page.click("#modeDecline");
+  await page.fill("#srcDecline", "");
+  await page.fill("#srcDecline", codes);
+  return page.evaluate(() => {
+    const out = document.getElementById("declineOut");
+    const groups = [...out.querySelectorAll(".dc-tgroup")].map(g => ({
+      label: g.querySelector(".dc-tgroup-label")?.textContent ?? null,
+      count: g.querySelector(".dc-tgroup-count")?.textContent ?? null,
+      tone: ["ok","warn","error"].find(t => g.classList.contains(t)) ?? "",
+      route: g.querySelector(".dc-tgroup-route")?.textContent ?? null,
+      codes: [...g.querySelectorAll(".dc-trow")].map(r => ({
+        code: r.querySelector(".dc-tcode")?.textContent ?? null,
+        count: r.querySelector(".dc-tcount")?.textContent ?? null,
+      })),
+    }));
+    return {
+      isTriage: !!out.querySelector(".dc-sum"),
+      chips: [...out.querySelectorAll(".dc-sum-chip")].map(c => c.textContent.trim()),
+      groups,
+      headEyebrow: out.querySelector(".dc-triage-head .eyebrow")?.textContent ?? null,
+    };
+  });
+}
+{
+  // a mixed batch: 2 customer-bank, 1 fraud, 1 platform, 1 unknown
+  const t = await triage("insufficient_funds, card_declined, fraudulent, 2026, zzz_not_real");
+  check("BT1 batch renders a triage view", t.isTriage, JSON.stringify(t).slice(0, 200));
+  check("BT1 header counts all codes", /5 codes/i.test(t.headEyebrow ?? ""), t.headEyebrow);
+
+  const labels = t.groups.map(g => g.label);
+  check("BT2 action-owners come first", /platform/i.test(labels[0] ?? "") || /fraud/i.test(labels[0] ?? ""), JSON.stringify(labels));
+  check("BT2 fraud bucket present", labels.some(l => /Risk \/ fraud/i.test(l ?? "")), JSON.stringify(labels));
+  check("BT2 platform bucket escalates to Virgil",
+    t.groups.some(g => /platform/i.test(g.label ?? "") && /escalate to Virgil/i.test(g.route ?? "")),
+    JSON.stringify(t.groups.map(g => g.route)));
+  check("BT2 unknown bucket present", labels.some(l => /not in the table/i.test(l ?? "")), JSON.stringify(labels));
+
+  // summary chips total the codes (sum of the leading numbers === 5)
+  const chipSum = t.chips.reduce((n, c) => n + (parseInt(c, 10) || 0), 0);
+  check("BT3 summary chips total the batch", chipSum === 5, JSON.stringify(t.chips));
+}
+{
+  // duplicates are volume, not dedup: the same code three times collapses to ×3
+  const t = await triage("insufficient_funds insufficient_funds insufficient_funds");
+  const bank = t.groups.find(g => /Customer \+ their bank/i.test(g.label ?? ""));
+  check("BT4 duplicates counted as one bucket", bank && /3 codes/i.test(bank.count ?? ""), JSON.stringify(t.groups));
+  check("BT4 repeated code shown as xN", bank?.codes?.some(c => /3/.test(c.count ?? "")), JSON.stringify(bank?.codes));
+}
+{
+  // a single code still gets the full rich card, not the triage view (regression)
+  const single = await decline("insufficient_funds");
+  check("BT5 single code keeps the rich card", single.cardCount >= 1 && /Customer \+ their bank/.test(single.owner ?? ""), JSON.stringify(single));
 }
 
 // ============================================================
@@ -1562,6 +1620,58 @@ async function decline(code) {
   await page.click("#modeHelp");
   const listed = await page.evaluate(() => document.querySelector("#savedParams")?.textContent ?? "");
   check("CL3 note listed in Help manager", /mystery_param/.test(listed) && /internal campaign tag/i.test(listed), listed);
+}
+
+// ============================================================
+//  FEATURE 28 — share param notes across the team (export / import)
+// ============================================================
+{
+  // export + import controls live in the Help notes manager
+  await page.click("#modeHelp");
+  const acts = await page.evaluate(() => [...document.querySelectorAll("#savedParams .hs-act")].map(b => b.textContent));
+  check("SH1 export control present", acts.some(t => /export/i.test(t)), JSON.stringify(acts));
+  check("SH1 import control present", acts.some(t => /import/i.test(t)), JSON.stringify(acts));
+
+  // a valid bundle merges: new key added, a conflicting key with a new desc updated
+  // (mystery_param was captured as "Our internal campaign tag" by the capture-loop tests)
+  const merged = await page.evaluate(() => {
+    const bundle = JSON.stringify({
+      kind: "param-decoder/param-notes", version: 1,
+      notes: {
+        mystery_param: { desc: "Updated meaning from a teammate" },
+        teammate_param: { desc: "Brought in by import" },
+      },
+    });
+    const r = mergeParamNotesBundle(bundle);
+    return { r, teammate: getParamNote("teammate_param")?.desc ?? null, mystery: getParamNote("mystery_param")?.desc ?? null };
+  });
+  check("SH2 import adds a new note", merged.r.added === 1 && merged.teammate === "Brought in by import", JSON.stringify(merged));
+  check("SH2 import updates a changed note", merged.r.updated === 1 && merged.mystery === "Updated meaning from a teammate", JSON.stringify(merged));
+
+  // re-importing identical content is a no-op, no phantom "updated"
+  const again = await page.evaluate(() => mergeParamNotesBundle(JSON.stringify({
+    kind: "param-decoder/param-notes", version: 1, notes: { teammate_param: { desc: "Brought in by import" } },
+  })));
+  check("SH3 identical re-import is a no-op", again.added === 0 && again.updated === 0, JSON.stringify(again));
+
+  // junk and foreign files are rejected, never silently merged
+  const rejects = await page.evaluate(() => ({
+    badJson: mergeParamNotesBundle("not json {"),
+    wrongKind: mergeParamNotesBundle(JSON.stringify({ kind: "something-else", notes: { x: { desc: "y" } } })),
+    noNotes: mergeParamNotesBundle(JSON.stringify({ kind: "param-decoder/param-notes", version: 1 })),
+  }));
+  check("SH4 bad JSON rejected", rejects.badJson === null, JSON.stringify(rejects));
+  check("SH4 foreign bundle rejected", rejects.wrongKind === null, JSON.stringify(rejects));
+  check("SH4 bundle without notes rejected", rejects.noNotes === null, JSON.stringify(rejects));
+
+  // an invalid import surfaces an error message, not a silent failure
+  await page.evaluate(() => renderSavedParams({ ok: false }));
+  const errShown = await page.evaluate(() => document.querySelector("#savedParams .hs-feedback.err")?.textContent ?? "");
+  check("SH5 invalid import shows an error", /isn't a Param Decoder notes export/i.test(errShown), errShown);
+
+  // the exact shape export writes is valid input to import (round-trips)
+  const roundtrips = await page.evaluate(() => mergeParamNotesBundle(JSON.stringify({ kind: "param-decoder/param-notes", version: 1, notes: PARAM_NOTES })) !== null);
+  check("SH6 exported shape re-imports cleanly", roundtrips, "round-trip failed");
 }
 
 // ============================================================

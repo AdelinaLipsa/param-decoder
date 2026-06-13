@@ -604,6 +604,24 @@
   .dc-owner-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .dc-owner-label { font-size: 15px; font-weight: 700; color: var(--ink); }
   .dc-owner-route { margin: 7px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
+
+  /* batch triage — many codes grouped by who owns them */
+  .dc-triage-head { margin: 0 0 12px; }
+  .dc-sum { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+  .dc-sum-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink); padding: 5px 11px; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--field); }
+  .dc-tgroup { border: 1px solid var(--rule-strong); border-left-width: 3px; border-radius: 8px; padding: 12px 14px; margin: 0 0 12px; background: var(--field); }
+  .dc-tgroup.error { border-left-color: var(--error); background: var(--error-bg); }
+  .dc-tgroup.warn  { border-left-color: var(--warn);  background: var(--warn-bg); }
+  .dc-tgroup.ok    { border-left-color: var(--ok);    background: var(--ok-bg); }
+  .dc-tgroup-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .dc-tgroup-label { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .dc-tgroup-count { font-size: 12.5px; font-weight: 600; color: var(--ink-faint); }
+  .dc-tgroup-route { margin: 6px 0 10px; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+  .dc-trow { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; border-top: 1px solid var(--rule); }
+  .dc-trow:first-of-type { border-top: none; }
+  .dc-tcode { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+  .dc-tcount { font-size: 12px; color: var(--ink-faint); }
+  .dc-ttitle { font-size: 12.5px; color: var(--ink-soft); flex: 1 1 auto; }
   .dc-eyebrow { margin: 0 0 8px; }
   .dc-msg { display: flex; align-items: flex-start; gap: 12px; background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 13px 15px; }
   .dc-msg-text { flex: 1 1 auto; font-size: 14px; line-height: 1.5; color: var(--ink); }
@@ -1032,6 +1050,12 @@
   .hs-name { font-size: 13.5px; color: var(--ink-soft); flex: 1 1 auto; }
   .hs-remove { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--ink-faint); background: none; border: none; cursor: pointer; text-decoration: underline; }
   .hs-remove:hover { color: var(--error); }
+  /* share notes across the team without leaving the device, file in, file out */
+  .hs-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .hs-act { font-size: 12px; padding: 6px 11px; }
+  .hs-feedback { margin: 0 0 12px; font-size: 12.5px; }
+  .hs-feedback.ok  { color: var(--ok); }
+  .hs-feedback.err { color: var(--error); }
 
   /* ---------- QA template card ---------- */
   .tmpl-card {
@@ -1318,11 +1342,11 @@
     </section>
 
     <section id="declinePanel" role="tabpanel" aria-labelledby="modeDecline" hidden>
-      <p class="mode-intro">Look up a Stripe, Braintree, or NMI decline code to see <b>who fixes it and what to do</b>, customer, their bank, BuyGoods tech, or a fraud signal to flag, plus the ready message for the HelpGrid agent.</p>
+      <p class="mode-intro">Look up a Stripe, Braintree, or NMI decline code to see <b>who fixes it and what to do</b>, customer, their bank, BuyGoods tech, or a fraud signal to flag, plus the ready message for the HelpGrid agent. <b>Paste several codes</b> (comma or space separated) to triage a batch by who owns them.</p>
       <div class="input-block">
-        <p class="eyebrow">Paste a decline code</p>
+        <p class="eyebrow">Paste a decline code, or several</p>
         <input id="srcDecline" class="code-input" spellcheck="false" autocomplete="off"
-          placeholder="e.g. insufficient_funds, 2001, or 51, Stripe / Braintree / NMI">
+          placeholder="e.g. insufficient_funds, 2001, do_not_honor, 51, Stripe / Braintree / NMI">
       </div>
       <div id="declineOut" aria-live="polite"></div>
     </section>
@@ -1977,6 +2001,61 @@ function saveParamNote(key, desc) { PARAM_NOTES[noteKey(key)] = { desc: desc.tri
 function removeParamNote(key) { delete PARAM_NOTES[noteKey(key)]; persistParamNotes(); }
 const userParamNotes = () => Object.keys(PARAM_NOTES).map((k) => ({ key: k, desc: PARAM_NOTES[k].desc }));
 
+/* ------------------------------------------------------------
+   SHARING param notes — the moat only compounds if one person's
+   verified meanings can reach the rest of the team. Notes stay
+   device-local (no network), so sharing is a file you hand over:
+   export to JSON, a teammate imports and merges. Seniors export,
+   juniors import; verified entries later get promoted into the
+   shipped builtin dictionary via a normal PR.
+   ------------------------------------------------------------ */
+const PARAM_NOTES_BUNDLE_KIND = "param-decoder/param-notes";
+
+function exportParamNotes() {
+  const bundle = { kind: PARAM_NOTES_BUNDLE_KIND, version: 1, notes: PARAM_NOTES };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = el("a"); a.href = url; a.download = "param-decoder-notes.json";
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* Merge a bundle into PARAM_NOTES. Returns { added, updated } on success,
+   or null if the text isn't a valid notes export. Imported entries win on
+   conflict, the importer just pulled them in deliberately. */
+function mergeParamNotesBundle(raw) {
+  let data;
+  try { data = JSON.parse(raw); } catch { return null; }
+  if (!data || data.kind !== PARAM_NOTES_BUNDLE_KIND || typeof data.notes !== "object" || !data.notes) return null;
+  let added = 0, updated = 0;
+  for (const [k, v] of Object.entries(data.notes)) {
+    const key = noteKey(k);
+    const desc = v && typeof v.desc === "string" ? v.desc.trim() : "";
+    if (!key || !desc) continue;
+    if (PARAM_NOTES[key]) { if (PARAM_NOTES[key].desc !== desc) updated++; }
+    else added++;
+    PARAM_NOTES[key] = { desc };
+  }
+  persistParamNotes();
+  return { added, updated };
+}
+
+function importParamNotes() {
+  const input = el("input"); input.type = "file"; input.accept = "application/json,.json";
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = mergeParamNotesBundle(String(reader.result));
+      renderSavedParams(result ? { ok: true, ...result } : { ok: false });
+      if (result && state.rows && state.rows.length) rebuildTable();
+    };
+    reader.readAsText(file);
+  });
+  input.click();
+}
+
 loadParamNotes();
 
 /* ------------------------------------------------------------
@@ -2166,12 +2245,17 @@ function customTracker({ domain, clickParam, payoutParam, orderParam }) {
    BuyGoods three-pillar model (customer / affiliate / platform) and standard
    merchant decline handling. The per-code `customer` line is the buyer-facing
    message; the owner is what staff do with the code. */
+// Who an "escalate to BuyGoods tech" decline goes to. One place to change
+// if the owner moves; keep it a real, named person so juniors know exactly
+// who to ping rather than chasing a vague "tech team".
+const TECH_ESCALATION = "Virgil (BuyGoods dev lead)";
+
 const DECLINE_OWNERS = {
   customer:      { label: "Customer can fix it",   tone: "warn",  route: "HelpGrid walks the buyer through it, no escalation needed." },
   customer_bank: { label: "Customer + their bank", tone: "warn",  route: "HelpGrid: have the buyer use a different card or contact their bank. Don't re-run the same card right away (24h+), repeated attempts can lock the card and hurt the approval rate." },
-  transient:     { label: "Temporary, retry",      tone: "ok",    route: "A technical hiccup, usually clears on a retry shortly after. If it keeps happening, escalate to BuyGoods tech." },
+  transient:     { label: "Temporary, retry",      tone: "ok",    route: `A technical hiccup, usually clears on a retry shortly after. If it keeps happening, escalate to ${TECH_ESCALATION}.` },
   fraud:         { label: "Risk / fraud",          tone: "error", route: "Don't retry, and don't share specifics with the buyer. A burst of these off one affiliate's traffic is a card-testing signal, flag the traffic to the AM. It drives up declines and chargebacks, which BuyGoods (the processor) owns against the 1% ceiling." },
-  platform:      { label: "BuyGoods platform",     tone: "error", route: "Not the buyer's or affiliate's fault, escalate to BuyGoods tech (gateway / processor / merchant-account config)." },
+  platform:      { label: "BuyGoods platform",     tone: "error", route: `Not the buyer's or affiliate's fault, escalate to ${TECH_ESCALATION}, it's a gateway / processor / merchant-account config issue.` },
 };
 
 /* Category → guidance. type: soft (temporary, may clear) | hard
@@ -4280,9 +4364,97 @@ function declineCard(entry) {
   return card;
 }
 
+// Owner sort order for triage: the ones that need someone to ACT come first
+// (escalations and fraud), then the customer-facing buckets, then unknowns.
+const TRIAGE_ORDER = ["platform", "fraud", "customer_bank", "customer", "transient"];
+
+/* Bucket a list of pasted codes by who owns them. Each pasted token counts as
+   one decline event (duplicates are kept — volume is the signal), and within a
+   bucket identical codes collapse to "code ×N". Pure classification, no traffic
+   data: this stays a parameter/decline utility, analytics lives in clickcrm. */
+function triageDeclines(codes) {
+  const groups = {};            // owner key -> { ownerInfo, total, codes: Map }
+  const unknown = { total: 0, codes: new Map() };
+  let total = 0;
+  const bump = (map, raw, title) => {
+    const k = raw.toLowerCase();
+    const e = map.get(k) || { code: raw, title, count: 0 };
+    e.count++; map.set(k, e);
+  };
+  codes.forEach((raw) => {
+    total++;
+    const m = lookupDecline(raw)[0];   // primary reading drives triage
+    if (!m) { unknown.total++; bump(unknown.codes, raw); return; }
+    const g = groups[m.owner] || (groups[m.owner] = { ownerInfo: m.ownerInfo, total: 0, codes: new Map() });
+    g.total++; bump(g.codes, raw, m.title);
+  });
+  return { total, groups, unknown };
+}
+
+function buildTriageGroup(tone, label, count, route, codes) {
+  const sec = el("div", "dc-tgroup " + (tone || ""));
+  const line = el("div", "dc-tgroup-line");
+  if (tone) line.append(el("span", "dot " + tone));
+  line.append(el("span", "dc-tgroup-label", label));
+  line.append(el("span", "dc-tgroup-count", count === 1 ? "1 code" : count + " codes"));
+  sec.append(line);
+  if (route) sec.append(el("p", "dc-tgroup-route", route));
+  [...codes.values()].sort((a, b) => b.count - a.count).forEach(({ code, title, count }) => {
+    const row = el("div", "dc-trow");
+    row.append(el("span", "dc-tcode", code));
+    if (count > 1) row.append(el("span", "dc-tcount", "×" + count));
+    if (title) row.append(el("span", "dc-ttitle", title));
+    sec.append(row);
+  });
+  return sec;
+}
+
+function buildDeclineTriage(triage) {
+  const frag = document.createDocumentFragment();
+  const head = el("div", "dc-triage-head");
+  head.append(el("p", "eyebrow dc-eyebrow", "Triage, " + triage.total + " codes by who owns them"));
+  frag.append(head);
+
+  // summary chips, action-owners first
+  const sum = el("div", "dc-sum");
+  TRIAGE_ORDER.forEach((key) => {
+    const g = triage.groups[key];
+    if (!g) return;
+    const chip = el("span", "dc-sum-chip " + g.ownerInfo.tone);
+    chip.append(el("span", "dot " + g.ownerInfo.tone));
+    chip.append(document.createTextNode(g.total + " " + g.ownerInfo.label));
+    sum.append(chip);
+  });
+  if (triage.unknown.total) {
+    const chip = el("span", "dc-sum-chip");
+    chip.append(document.createTextNode(triage.unknown.total + " not in table"));
+    sum.append(chip);
+  }
+  frag.append(sum);
+
+  // one section per owner, with the next step spelled out
+  TRIAGE_ORDER.forEach((key) => {
+    const g = triage.groups[key];
+    if (!g) return;
+    frag.append(buildTriageGroup(g.ownerInfo.tone, g.ownerInfo.label, g.total, g.ownerInfo.route, g.codes));
+  });
+  if (triage.unknown.total) {
+    frag.append(buildTriageGroup("", "Not in the table", triage.unknown.total,
+      "No match in the Stripe, Braintree, or NMI tables, look them up at the gateway or add them to the dictionary.", triage.unknown.codes));
+  }
+  return frag;
+}
+
 function renderDecline() {
-  const code = srcDecline.value.trim();
+  // accept one code or many (comma / whitespace / newline separated)
+  const codes = srcDecline.value.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+  const code = codes.length === 1 ? codes[0] : srcDecline.value.trim();
   declineTarget.replaceChildren();
+
+  if (codes.length > 1) {
+    declineTarget.append(buildDeclineTriage(triageDeclines(codes)));
+    return;
+  }
 
   if (code === "") {
     const box = el("div", "empty reveal");
@@ -4437,10 +4609,33 @@ function renderSavedTemplates() {
 }
 
 /** Help-tab manager for device-saved param notes (the capture loop). */
-function renderSavedParams() {
+function renderSavedParams(feedback) {
   const box = document.getElementById("savedParams");
   box.replaceChildren();
   const notes = userParamNotes();
+
+  // export / import live above the list so notes can be shared, or received
+  // onto a fresh device, even when there's nothing captured here yet
+  const actions = el("div", "hs-actions");
+  const exportBtn = el("button", "btn ghost hs-act", "Export notes");
+  exportBtn.type = "button";
+  exportBtn.disabled = notes.length === 0;
+  exportBtn.title = notes.length ? "Download your param notes as a file to hand to a teammate" : "Capture a note first, then you can export";
+  exportBtn.addEventListener("click", exportParamNotes);
+  const importBtn = el("button", "btn ghost hs-act", "Import notes");
+  importBtn.type = "button";
+  importBtn.title = "Merge param notes from a teammate's exported file";
+  importBtn.addEventListener("click", importParamNotes);
+  actions.append(exportBtn, importBtn);
+  box.append(actions);
+
+  if (feedback) {
+    const msg = feedback.ok
+      ? `Imported ${feedback.added} new, ${feedback.updated} updated.`
+      : "That file isn't a Param Decoder notes export.";
+    box.append(el("p", "hs-feedback " + (feedback.ok ? "ok" : "err"), msg));
+  }
+
   if (notes.length === 0) {
     box.classList.add("emptynames");
     box.append(el("p", "hs-empty", "No param notes yet. In Inspect, click “+ describe” on an unrecognised param, or “confirm / correct” on an inferred one, to capture what it means, it'll show here and explain itself on every link, on this device only."));
