@@ -3882,7 +3882,7 @@ function renderPostbackCheck() {
   if (parsed.empty) {
     const box = el("div", "empty reveal");
     box.append(el("div", "big", "{ }"));
-    box.append(el("div", null, "Paste your tracker's postback URL to check it against BuyGoods' tokens."));
+    box.append(el("div", null, "Paste the tracker's postback URL to check it against BuyGoods' tokens."));
     box.append(exampleButton(() => { srcPostback.value = EXAMPLE_POSTBACK; renderPostbackCheck(); syncHash(); }));
     pbTarget.append(box);
     return;
@@ -3944,7 +3944,7 @@ function refreshGenOut() {
 
   const note = el("details", "pbgen-note");
   note.append(el("summary", null, "What do I do with this?"));
-  note.append(el("p", null, "Paste this into your tracker's postback / S2S settings. BuyGoods fills the {TOKEN} values automatically at sale time, you do not edit those. " + tracker.note));
+  note.append(el("p", null, "This goes into the tracker's postback / S2S settings. BuyGoods fills the {TOKEN} values automatically at sale time, those are not edited by hand. " + tracker.note));
   wrap.append(note);
 
   if (tracker.source) {
