@@ -1397,11 +1397,16 @@ async function decline(code) {
     const card = cards[0];
     return {
       title: card?.querySelector(".dc-title")?.textContent ?? null,
+      codeLabel: card?.querySelector(".dc-codelabel")?.textContent ?? null,
+      code: card?.querySelector(".dc-code")?.textContent ?? null,
       owner: card?.querySelector(".dc-owner-label")?.textContent ?? null,
       ownerTone: ["ok","warn","error"].find(t => card?.querySelector(".dc-owner")?.classList.contains(t)) ?? null,
       route: card?.querySelector(".dc-owner-route")?.textContent ?? null,
       chips: [...out.querySelectorAll(".dc-chip")].map(c => c.textContent.trim()),
       message: card?.querySelector(".dc-msg-text")?.textContent ?? null,
+      noteText: card?.querySelector(".dc-note-text")?.textContent ?? null,
+      noteEyebrow: [...card?.querySelectorAll(".dc-eyebrow") ?? []].map(e => e.textContent).find(t => /Note for/i.test(t)) ?? null,
+      hasInternalNote: !!card?.querySelector(".dc-note"),
       source: card?.querySelector(".dc-seen a")?.getAttribute("href") ?? null,
       cardCount: cards.length,
       unknown: !!out.querySelector(".msg.warn"),
@@ -1491,6 +1496,40 @@ async function decline(code) {
   await decline("expired_card");
   await page.click('.dc-msg button:has-text("Copy message")');
   check("DC5 copied message", /expired/i.test(await copied() ?? ""), await copied());
+}
+// ============================================================
+//  FEATURE 30 — decline card clarity (labelled code, audience split, note)
+// ============================================================
+{
+  // the raw gateway string is shown as a clearly labelled value, so a word
+  // like "fraudulent" reads as a code, not a verdict
+  const f = await decline("fraudulent");
+  check("CC1 headline is the plain meaning", /Suspected fraud/i.test(f.title ?? ""), JSON.stringify(f.title));
+  check("CC1 raw code is labelled", /decline code/i.test(f.codeLabel ?? ""), JSON.stringify(f.codeLabel));
+  check("CC1 raw code shows the literal string", f.code === "fraudulent", JSON.stringify(f.code));
+
+  // a fraud decline carries a ready-to-paste internal note, addressed to the AM
+  check("CC2 fraud has an internal note", f.hasInternalNote, JSON.stringify(f));
+  check("CC2 note addressed to the AM", /Note for the AM/i.test(f.noteEyebrow ?? ""), JSON.stringify(f.noteEyebrow));
+  check("CC2 note carries code, flag action, source",
+    /fraudulent/.test(f.noteText ?? "") && /flag the traffic/i.test(f.noteText ?? "") && /stripe\.com/i.test(f.noteText ?? ""),
+    JSON.stringify(f.noteText));
+
+  // verdict route is internal-only now: no "don't share specifics" duplicating
+  // the (separate) customer message
+  check("CC2 route is internal-only", !/share specifics/i.test(f.route ?? ""), f.route);
+
+  // copying the internal note yields the note, not the customer message
+  await page.click('.dc-note button:has-text("Copy internal note")');
+  check("CC3 copies the internal note", /Decline: fraudulent/i.test(await copied() ?? ""), await copied());
+
+  // a platform decline escalates to the named person
+  const plat = await decline("2026");
+  check("CC4 platform note addressed to Virgil", /Note for Virgil/i.test(plat.noteEyebrow ?? ""), JSON.stringify(plat.noteEyebrow));
+
+  // a customer-fixable decline has NO internal note (no escalation needed)
+  const cust = await decline("expired_card");
+  check("CC5 customer decline has no internal note", !cust.hasInternalNote, JSON.stringify(cust));
 }
 
 // ============================================================
