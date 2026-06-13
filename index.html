@@ -34,6 +34,9 @@
 
     --gut: 4px;          /* status gutter bar width */
     --radius: 6px;
+    --card-radius: 12px; /* larger radius for elevated surfaces */
+    --shadow-sm:   0 1px 2px rgba(20,24,29,0.05);
+    --shadow-card: 0 1px 3px rgba(20,24,29,0.06);
   }
 
   * { box-sizing: border-box; }
@@ -64,37 +67,53 @@
   /* ---------- masthead ---------- */
   header.mast {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    padding-bottom: 14px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--rule-strong);
   }
-  .mast h1 {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .mast h1 .glyph {
+  .lockup { display: flex; align-items: center; gap: 12px; }
+  .lockup .glyph {
+    display: grid;
+    place-items: center;
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--ink);
+    color: #fff;
     font-family: var(--mono);
     font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 1px 2px rgba(20,24,29,0.18);
+  }
+  .lockup .name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    display: block;
+    line-height: 1.15;
+  }
+  .lockup .sub {
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--ink-faint);
+    display: block;
+  }
+  .mast .org { display: flex; align-items: center; gap: 10px; }
+  .mast .org-logo { height: 19px; display: block; opacity: 0.92; }
+  .mast .org-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
     color: var(--ink-soft);
     border: 1px solid var(--rule-strong);
     border-radius: 5px;
-    padding: 1px 7px;
-    font-size: 13px;
-  }
-  .mast .org {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--ink-faint);
-    font-weight: 600;
+    padding: 3px 7px;
+    background: var(--panel);
   }
 
   /* ---------- privacy line ---------- */
@@ -136,10 +155,11 @@
   .modebar {
     display: inline-flex;
     gap: 3px;
-    padding: 3px;
+    padding: 4px;
     background: var(--panel);
     border: 1px solid var(--rule-strong);
-    border-radius: 9px;
+    border-radius: 11px;
+    box-shadow: var(--shadow-sm);
   }
   .btn.share { font-size: 12.5px; padding: 7px 13px; }
   .mode {
@@ -191,6 +211,7 @@
     border: 1px solid var(--rule-strong);
     border-radius: var(--radius);
     padding: 13px 15px;
+    box-shadow: inset 0 1px 2px rgba(20,24,29,0.03);
     transition: border-color .15s, box-shadow .15s;
   }
   .input-block textarea::placeholder { color: var(--ink-faint); }
@@ -860,70 +881,68 @@
     .help-modes { grid-template-columns: 1fr; }
   }
 
-  /* help animations, gentle, gated, freeze to a meaningful state */
-  @media (prefers-reduced-motion: no-preference) {
-    /* worked-example rows reveal each time the Help tab opens */
-    .demo-decode .dline { opacity: 0; animation: rise .4s ease forwards; }
-    .demo-decode .d1 { animation-delay: .15s; }
-    .demo-decode .d2 { animation-delay: .45s; }
-    .demo-decode .d3 { animation-delay: .75s; }
-    .demo-decode .d4 { animation-delay: 1.05s; }
-    .demo-decode .d3 .arrow,
-    .demo-decode .d3 .decoded { opacity: 0; animation: rise .4s ease 1.3s forwards; }
+  /* help animations, gentle, freeze to a meaningful state */
+  /* worked-example rows reveal each time the Help tab opens */
+  .demo-decode .dline { opacity: 0; animation: rise .4s ease forwards; }
+  .demo-decode .d1 { animation-delay: .15s; }
+  .demo-decode .d2 { animation-delay: .45s; }
+  .demo-decode .d3 { animation-delay: .75s; }
+  .demo-decode .d4 { animation-delay: 1.05s; }
+  .demo-decode .d3 .arrow,
+  .demo-decode .d3 .decoded { opacity: 0; animation: rise .4s ease 1.3s forwards; }
 
-    /* Inspect mini-demo: a red row gets fixed to green, looping */
-    .demo-inspect .fixrow .mg { animation: fixGutter 3.4s ease-in-out infinite; }
-    .demo-inspect .fixrow .tick { animation: fixTick 3.4s ease-in-out infinite; }
-    @keyframes fixGutter { 0%,45% { background: var(--error); } 60%,100% { background: var(--ok); } }
-    @keyframes fixTick   { 0%,45% { opacity: 0; } 65%,100% { opacity: 1; } }
+  /* Inspect mini-demo: a red row gets fixed to green, looping */
+  .demo-inspect .fixrow .mg { animation: fixGutter 3.4s ease-in-out infinite; }
+  .demo-inspect .fixrow .tick { animation: fixTick 3.4s ease-in-out infinite; }
+  @keyframes fixGutter { 0%,45% { background: var(--error); } 60%,100% { background: var(--ok); } }
+  @keyframes fixTick   { 0%,45% { opacity: 0; } 65%,100% { opacity: 1; } }
 
-    /* Compare mini-demo: the differing rows pulse */
-    .demo-compare .mr.diff .ml { animation: diffPulse 3s ease-in-out infinite; }
-    @keyframes diffPulse {
-      0%,100% { background: color-mix(in srgb, var(--error) 20%, var(--rule-strong)); }
-      50%     { background: color-mix(in srgb, var(--error) 60%, var(--rule-strong)); }
-    }
-
-    /* Batch mini-demo: dots settle in sequence */
-    .demo-batch .mr { opacity: 0; animation: rise .4s ease forwards; }
-    .demo-batch .mr:nth-child(1) { animation-delay: .1s; }
-    .demo-batch .mr:nth-child(2) { animation-delay: .25s; }
-    .demo-batch .mr:nth-child(3) { animation-delay: .4s; }
-    .demo-batch .mr:nth-child(4) { animation-delay: .55s; }
-
-    /* two-jobs: a pulse travels each wire, the two flows staggered */
-    .twojobs .tj-flow.comm  .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite; }
-    .twojobs .tj-flow.track .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite .55s; }
-    @keyframes tjPulse {
-      0%   { left: -3px; opacity: 0; }
-      12%  { opacity: 1; }
-      88%  { opacity: 1; }
-      100% { left: calc(100% - 3px); opacity: 0; }
-    }
-
-    /* path anatomy: a reader lights each segment in sequence */
-    .pathana .pa-seg { animation: paScan 6s ease-in-out infinite; }
-    .pathana .s2 { animation-delay: 1.5s; }
-    .pathana .s3 { animation-delay: 3s; }
-    .pathana .s4 { animation-delay: 4.5s; }
-    @keyframes paScan {
-      0%, 10%   { background: var(--ok-bg); color: var(--ok); }
-      22%, 100% { background: transparent;  color: var(--ink); }
-    }
-    .pathana .demo-decode .d1 { animation-delay: .15s; }
-    .pathana .demo-decode .d2 { animation-delay: .4s; }
-    .pathana .demo-decode .d3 { animation-delay: .65s; }
-    .pathana .demo-decode .d4 { animation-delay: .9s; }
-
-    /* decline demo: the verdict chip breathes */
-    .decl-demo .chip { animation: declPulse 2.8s ease-in-out infinite; }
-    @keyframes declPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
-
-    /* why-comparison: the green gutters on "our" side gently pulse */
-    .vs-side.ours .vs-g { animation: gShimmer 2.6s ease-in-out infinite; }
-    .vs-side.ours .vs-row:nth-child(3) .vs-g { animation-delay: .5s; }
-    @keyframes gShimmer { 0%,100% { background: color-mix(in srgb, var(--ok) 55%, var(--rule-strong)); } 50% { background: var(--ok); } }
+  /* Compare mini-demo: the differing rows pulse */
+  .demo-compare .mr.diff .ml { animation: diffPulse 3s ease-in-out infinite; }
+  @keyframes diffPulse {
+    0%,100% { background: color-mix(in srgb, var(--error) 20%, var(--rule-strong)); }
+    50%     { background: color-mix(in srgb, var(--error) 60%, var(--rule-strong)); }
   }
+
+  /* Batch mini-demo: dots settle in sequence */
+  .demo-batch .mr { opacity: 0; animation: rise .4s ease forwards; }
+  .demo-batch .mr:nth-child(1) { animation-delay: .1s; }
+  .demo-batch .mr:nth-child(2) { animation-delay: .25s; }
+  .demo-batch .mr:nth-child(3) { animation-delay: .4s; }
+  .demo-batch .mr:nth-child(4) { animation-delay: .55s; }
+
+  /* two-jobs: a pulse travels each wire, the two flows staggered */
+  .twojobs .tj-flow.comm  .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite; }
+  .twojobs .tj-flow.track .tj-pulse { animation: tjPulse 2.6s ease-in-out infinite .55s; }
+  @keyframes tjPulse {
+    0%   { left: -3px; opacity: 0; }
+    12%  { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { left: calc(100% - 3px); opacity: 0; }
+  }
+
+  /* path anatomy: a reader lights each segment in sequence */
+  .pathana .pa-seg { animation: paScan 6s ease-in-out infinite; }
+  .pathana .s2 { animation-delay: 1.5s; }
+  .pathana .s3 { animation-delay: 3s; }
+  .pathana .s4 { animation-delay: 4.5s; }
+  @keyframes paScan {
+    0%, 10%   { background: var(--ok-bg); color: var(--ok); }
+    22%, 100% { background: transparent;  color: var(--ink); }
+  }
+  .pathana .demo-decode .d1 { animation-delay: .15s; }
+  .pathana .demo-decode .d2 { animation-delay: .4s; }
+  .pathana .demo-decode .d3 { animation-delay: .65s; }
+  .pathana .demo-decode .d4 { animation-delay: .9s; }
+
+  /* decline demo: the verdict chip breathes */
+  .decl-demo .chip { animation: declPulse 2.8s ease-in-out infinite; }
+  @keyframes declPulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+
+  /* why-comparison: the green gutters on "our" side gently pulse */
+  .vs-side.ours .vs-g { animation: gShimmer 2.6s ease-in-out infinite; }
+  .vs-side.ours .vs-row:nth-child(3) .vs-g { animation-delay: .5s; }
+  @keyframes gShimmer { 0%,100% { background: color-mix(in srgb, var(--ok) 55%, var(--rule-strong)); } 50% { background: var(--ok); } }
 
   /* ---------- messages / empty ---------- */
   .msg {
@@ -1105,67 +1124,89 @@
   }
 
   /* ---------- motion ---------- */
-  @media (prefers-reduced-motion: no-preference) {
-    /* entrance fade, used only on fresh renders (not on every keystroke) */
-    .reveal { animation: rise .3s ease both; }
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(5px); }
-      to   { opacity: 1; transform: none; }
-    }
-
-    /* staggered table rows, the signature reveal */
-    .ptable.stagger .prow { animation: rowIn .36s cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--i, 0) * 26ms); }
-    @keyframes rowIn {
-      from { opacity: 0; transform: translateY(7px); }
-      to   { opacity: 1; transform: none; }
-    }
-
-    /* status colour glides during live edits */
-    .gutter, .dot { transition: background-color .3s ease; }
-    .snote { transition: color .2s ease; }
-
-    /* panel crossfade on Inspect/Compare switch */
-    .panelIn { animation: panelFade .3s ease both; }
-    @keyframes panelFade {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: none; }
-    }
-
-    /* rebuilt link pulses when its value changes */
-    .rebuilt-url.flash { animation: urlFlash .6s ease; }
-    @keyframes urlFlash {
-      0%   { background: color-mix(in srgb, var(--ink) 8%, var(--field)); }
-      100% { background: var(--field); }
-    }
-
-    /* one-shot pulse on the privacy dot at load */
-    .privacy .lock { animation: lockPulse 2s ease-out 2; }
-    @keyframes lockPulse {
-      0%   { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 3px  rgba(22,133,90,.5); }
-      100% { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 13px rgba(22,133,90,0); }
-    }
-
-    /* ===== looping help screencast, one 13s timeline, all synced ===== */
-    .sc-typed { clip-path: inset(0 100% 0 0); animation: scType 13s linear infinite; }
-    @keyframes scType {
-      0% { clip-path: inset(0 100% 0 0); } 14% { clip-path: inset(0 0 0 0); }
-      92% { clip-path: inset(0 0 0 0); } 96%,100% { clip-path: inset(0 100% 0 0); }
-    }
-    .sc-rows .sc-row { opacity: 0; animation: scRow 13s ease infinite; }
-    @keyframes scRow {
-      0%,16% { opacity: 0; transform: translateY(5px); }
-      24%,90% { opacity: 1; transform: none; } 96%,100% { opacity: 0; }
-    }
-    .sc-bad { animation: scBad 13s ease infinite; }
-    @keyframes scBad { 0%,17% { opacity: 0; } 23%,42% { opacity: 1; } 50%,100% { opacity: 0; } }
-    .sc-ok  { opacity: 0; animation: scOk 13s ease infinite; }
-    @keyframes scOk { 0%,48% { opacity: 0; } 56%,90% { opacity: 1; } 96%,100% { opacity: 0; } }
-    .sc-g.aff, .sc-chip { animation: scAff 13s ease infinite; }
-    @keyframes scAff { 0%,44% { background: var(--error); } 54%,100% { background: var(--ok); } }
-    .av-empty { animation: scBad 13s ease infinite; }
-    .av-set   { opacity: 0; animation: scOk 13s ease infinite; }
-    .sc-tick  { opacity: 0; animation: scOk 13s ease infinite; }
+  /* entrance fade, used only on fresh renders (not on every keystroke) */
+  .reveal { animation: rise .3s ease both; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: none; }
   }
+
+  /* staggered table rows, the signature reveal */
+  .ptable.stagger .prow { animation: rowIn .36s cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--i, 0) * 26ms); }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* status colour glides during live edits */
+  .gutter, .dot { transition: background-color .3s ease; }
+  .snote { transition: color .2s ease; }
+
+  /* panel crossfade on Inspect/Compare switch */
+  .panelIn { animation: panelFade .3s ease both; }
+  @keyframes panelFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* rebuilt link pulses when its value changes */
+  .rebuilt-url.flash { animation: urlFlash .6s ease; }
+  @keyframes urlFlash {
+    0%   { background: color-mix(in srgb, var(--ink) 8%, var(--field)); }
+    100% { background: var(--field); }
+  }
+
+  /* one-shot pulse on the privacy dot at load */
+  .privacy .lock { animation: lockPulse 2s ease-out 2; }
+  @keyframes lockPulse {
+    0%   { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 3px  rgba(22,133,90,.5); }
+    100% { box-shadow: 0 0 0 3px var(--ok-bg), 0 0 0 13px rgba(22,133,90,0); }
+  }
+
+  /* masthead settles in on first paint, brand mark lands last */
+  .mast .lockup { animation: rise .45s ease both; }
+  .mast .org    { animation: rise .45s ease .07s both; }
+  .lockup .glyph {
+    transition: transform .18s ease, box-shadow .18s ease;
+    animation: glyphPop .5s cubic-bezier(.2,.8,.25,1.3) .12s backwards;
+  }
+  .lockup:hover .glyph {
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: 0 3px 8px rgba(20,24,29,0.28);
+  }
+  @keyframes glyphPop {
+    0%   { opacity: 0; transform: scale(.5) rotate(-10deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+
+  /* tactile confirmation pop when a copy button flips to "Copied" */
+  .btn.copied { animation: copiedPop .32s cubic-bezier(.2,.7,.3,1.4); }
+  @keyframes copiedPop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.07); }
+    100% { transform: scale(1); }
+  }
+
+  /* ===== looping help screencast, one 13s timeline, all synced ===== */
+  .sc-typed { clip-path: inset(0 100% 0 0); animation: scType 13s linear infinite; }
+  @keyframes scType {
+    0% { clip-path: inset(0 100% 0 0); } 14% { clip-path: inset(0 0 0 0); }
+    92% { clip-path: inset(0 0 0 0); } 96%,100% { clip-path: inset(0 100% 0 0); }
+  }
+  .sc-rows .sc-row { opacity: 0; animation: scRow 13s ease infinite; }
+  @keyframes scRow {
+    0%,16% { opacity: 0; transform: translateY(5px); }
+    24%,90% { opacity: 1; transform: none; } 96%,100% { opacity: 0; }
+  }
+  .sc-bad { animation: scBad 13s ease infinite; }
+  @keyframes scBad { 0%,17% { opacity: 0; } 23%,42% { opacity: 1; } 50%,100% { opacity: 0; } }
+  .sc-ok  { opacity: 0; animation: scOk 13s ease infinite; }
+  @keyframes scOk { 0%,48% { opacity: 0; } 56%,90% { opacity: 1; } 96%,100% { opacity: 0; } }
+  .sc-g.aff, .sc-chip { animation: scAff 13s ease infinite; }
+  @keyframes scAff { 0%,44% { background: var(--error); } 54%,100% { background: var(--ok); } }
+  .av-empty { animation: scBad 13s ease infinite; }
+  .av-set   { opacity: 0; animation: scOk 13s ease infinite; }
+  .sc-tick  { opacity: 0; animation: scOk 13s ease infinite; }
 
   /* ---------- responsive ---------- */
   @media (max-width: 640px) {
@@ -1187,8 +1228,17 @@
 <body>
   <div class="wrap">
     <header class="mast">
-      <h1><span class="glyph">?=</span> Param Decoder</h1>
-      <span class="org">BuyGoods · Internal</span>
+      <div class="lockup">
+        <span class="glyph">?=</span>
+        <span class="lockup-text">
+          <span class="name">Param Decoder</span>
+          <span class="sub">Link &amp; parameter inspector</span>
+        </span>
+      </div>
+      <div class="org">
+        <img class="org-logo" alt="buygoods" src="data:image/png;base64,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">
+        <span class="org-tag">Internal</span>
+      </div>
     </header>
 
     <p class="privacy">
